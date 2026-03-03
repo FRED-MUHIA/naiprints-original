@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Nai Prints Admin</title>
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    </head>
+    <body class="min-h-screen bg-slate-100 text-slate-900">
+        <div class="flex min-h-screen gap-6 p-6">
+            <aside class="w-72 shrink-0">
+                <div class="admin-panel flex h-full flex-col p-5">
+                    <div class="rounded-[24px] bg-brand px-4 py-4 text-white">
+                        <div class="flex items-center gap-3">
+                            <div class="flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-sm font-semibold">
+                                NP
+                            </div>
+                            <div>
+                                <p class="text-sm font-semibold uppercase tracking-[0.2em]">Nai Prints</p>
+                                <p class="text-xs text-white/70">Product management</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex-1">
+                        <p class="px-3 text-xs font-semibold uppercase tracking-[0.35em] text-slate-400">Content management</p>
+                        <nav class="mt-3 space-y-2 text-sm font-semibold">
+                            <a href="{{ route('admin.dashboard') }}"
+                               class="block rounded-2xl px-4 py-3 transition {{ request()->routeIs('admin.dashboard') ? 'bg-brand text-white shadow-md' : 'text-slate-600 hover:bg-slate-100' }}">
+                                Dashboard
+                            </a>
+                            <a href="{{ route('admin.products.index') }}"
+                               class="block rounded-2xl px-4 py-3 transition {{ request()->routeIs('admin.products.*') ? 'bg-brand text-white shadow-md' : 'text-slate-600 hover:bg-slate-100' }}">
+                                Products
+                            </a>
+                            <a href="{{ route('admin.categories.index') }}"
+                               class="block rounded-2xl px-4 py-3 transition {{ request()->routeIs('admin.categories.*') ? 'bg-brand text-white shadow-md' : 'text-slate-600 hover:bg-slate-100' }}">
+                                Catalogue
+                            </a>
+                            <a href="{{ route('admin.brands.index') }}"
+                               class="block rounded-2xl px-4 py-3 transition {{ request()->routeIs('admin.brands.*') ? 'bg-brand text-white shadow-md' : 'text-slate-600 hover:bg-slate-100' }}">
+                                Brands
+                            </a>
+                    <a href="{{ route('admin.tags.index') }}"
+                       class="block rounded-2xl px-4 py-3 transition {{ request()->routeIs('admin.tags.*') ? 'bg-brand text-white shadow-md' : 'text-slate-600 hover:bg-slate-100' }}">
+                        Tags
+                    </a>
+                    <a href="{{ route('admin.builder.index') }}"
+                       class="block rounded-2xl px-4 py-3 transition {{ request()->routeIs('admin.builder.*') ? 'bg-brand text-white shadow-md' : 'text-slate-600 hover:bg-slate-100' }}">
+                        Page Builder
+                    </a>
+                    <a href="{{ route('admin.media.index') }}"
+                       class="block rounded-2xl px-4 py-3 transition {{ request()->routeIs('admin.media.*') ? 'bg-brand text-white shadow-md' : 'text-slate-600 hover:bg-slate-100' }}">
+                        Media Library
+                    </a>
+                    <a href="{{ route('admin.attributes.index') }}"
+                       class="block rounded-2xl px-4 py-3 transition {{ request()->routeIs('admin.attributes.*') ? 'bg-brand text-white shadow-md' : 'text-slate-600 hover:bg-slate-100' }}">
+                        Attributes
+                    </a>
+                            <a href="{{ route('admin.sizes.index') }}"
+                               class="block rounded-2xl px-4 py-3 transition {{ request()->routeIs('admin.sizes.*') ? 'bg-brand text-white shadow-md' : 'text-slate-600 hover:bg-slate-100' }}">
+                                Sizes
+                            </a>
+                        </nav>
+                    </div>
+
+                    <div class="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-xs text-slate-500">
+                        Manage your catalog, pricing, and inventory in one place.
+                    </div>
+                </div>
+            </aside>
+
+            <div class="flex-1 space-y-6">
+                <header class="admin-card">
+                    <div class="flex flex-wrap items-center justify-between gap-4">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-[0.35em] text-slate-400">Nai Prints Admin</p>
+                            <h1 class="mt-2 text-4xl font-semibold tracking-tight">@yield('title')</h1>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-3 text-sm text-slate-500">
+                            <a href="{{ route('admin.dashboard') }}" class="admin-btn-primary text-xs uppercase tracking-[0.3em]">
+                                Admin
+                            </a>
+                            <span class="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
+                                {{ now()->format('M d, Y') }}
+                            </span>
+                            <form method="POST" action="{{ route('admin.logout') }}">
+                                @csrf
+                                <button type="submit" class="admin-btn-outline text-xs uppercase tracking-[0.3em]">
+                                    Logout
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </header>
+
+                <main class="space-y-6 pb-6">
+                    @if (session('success'))
+                        <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                            {{ session('success') }}
+                        </div>
+                    @endif
+
+                    @if ($errors->any())
+                        <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                            <p class="font-semibold">Please fix the following:</p>
+                            <ul class="mt-2 list-disc pl-5">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
+                    @yield('content')
+                </main>
+            </div>
+        </div>
+    </body>
+</html>
