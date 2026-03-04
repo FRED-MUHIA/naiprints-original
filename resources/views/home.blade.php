@@ -32,7 +32,8 @@
                                     ?? $product->alternateImages->first()
                                     ?? $product->images->first();
                                 if ($fallback && $fallback->image_path) {
-                                    $imageUrl = \App\Support\StorageUrl::fromPath($fallback->image_path);
+                                    $basePath = rtrim((string) request()->getBasePath(), '/');
+                                    $imageUrl = ($basePath ?: '') . '/storage/' . ltrim($fallback->image_path, '/');
                                 }
                             }
                             $brand = $product->brand?->name;
@@ -401,7 +402,8 @@
                                         if ($isModel) {
                                             $alt = $product->alternateImages->first() ?: $product->galleryImages->first();
                                             if ($alt) {
-                                                $hoverImage = \App\Support\StorageUrl::fromPath($alt->image_path);
+                                                $basePath = rtrim((string) request()->getBasePath(), '/');
+                                                $hoverImage = ($basePath ?: '') . '/storage/' . ltrim($alt->image_path, '/');
                                             }
                                         }
                                         $colorOptions = $isModel ? ($product->color_options ?? []) : ($product['color_options'] ?? []);

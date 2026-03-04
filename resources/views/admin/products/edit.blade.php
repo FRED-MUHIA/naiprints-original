@@ -16,6 +16,16 @@
         $colorValue = is_array($oldColors) ? implode(', ', $oldColors) : $oldColors;
         $alternateImages = $product->alternateImages->values();
         $galleryImages = $product->galleryImages->values();
+        $toStorageUrl = static function (?string $path): ?string {
+            if (!$path) {
+                return null;
+            }
+            if (preg_match('/^https?:\/\//i', $path) || str_starts_with($path, '//')) {
+                return $path;
+            }
+            $basePath = rtrim((string) request()->getBasePath(), '/');
+            return ($basePath ?: '') . '/storage/' . ltrim($path, '/');
+        };
     @endphp
 
     <form method="POST" action="{{ route('admin.products.update', $product) }}" class="space-y-8" enctype="multipart/form-data">
@@ -75,7 +85,7 @@
                                     @foreach ($alternateImages as $image)
                                         <label class="flex flex-col gap-2 rounded-2xl border border-slate-200 p-3 text-xs text-slate-500">
                                             <div class="product-image-gallery overflow-hidden rounded-xl">
-                                                <img src="{{ \App\Support\StorageUrl::fromPath($image->image_path) }}" alt="Alternate image" class="h-full w-full object-cover">
+                                                <img src="{{ $toStorageUrl($image->image_path) }}" alt="Alternate image" class="h-full w-full object-cover">
                                             </div>
                                             <span class="flex items-center gap-2">
                                                 <input type="checkbox" name="remove_alternates[]" value="{{ $image->id }}" class="h-4 w-4 rounded border-slate-300">
@@ -110,7 +120,7 @@
                                 @foreach ($galleryImages as $image)
                                     <label class="flex flex-col gap-2 rounded-2xl border border-slate-200 p-3 text-xs text-slate-500">
                                         <div class="product-image-gallery overflow-hidden rounded-xl">
-                                            <img src="{{ \App\Support\StorageUrl::fromPath($image->image_path) }}" alt="Gallery image" class="h-full w-full object-cover">
+                                            <img src="{{ $toStorageUrl($image->image_path) }}" alt="Gallery image" class="h-full w-full object-cover">
                                         </div>
                                         <span class="flex items-center gap-2">
                                             <input type="checkbox" name="remove_gallery[]" value="{{ $image->id }}" class="h-4 w-4 rounded border-slate-300">

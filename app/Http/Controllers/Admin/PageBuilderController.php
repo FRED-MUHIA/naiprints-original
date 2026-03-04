@@ -7,7 +7,6 @@ use App\Models\GlobalSection;
 use App\Models\Page;
 use App\Models\Product;
 use App\Support\PageDefaults;
-use App\Support\StorageUrl;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -450,7 +449,25 @@ class PageBuilderController extends Controller
 
     private function storageUrl(string $path): string
     {
-        return StorageUrl::fromPath($path) ?? '';
+        if ($path === '') {
+            return '';
+        }
+
+        if (preg_match('/^https?:\/\//i', $path) || str_starts_with($path, '//')) {
+            return $path;
+        }
+
+        $normalized = '/'.ltrim($path, '/');
+        $storagePath = str_starts_with($normalized, '/storage/')
+            ? $normalized
+            : '/storage/'.ltrim($path, '/');
+
+        $basePath = rtrim((string) request()->getBasePath(), '/');
+        if ($basePath === '') {
+            $basePath = rtrim((string) parse_url((string) config('app.url', ''), PHP_URL_PATH), '/');
+        }
+
+        return ($basePath ?: '').$storagePath;
     }
 
     private function sanitizeTileVideos(array $sections): array
