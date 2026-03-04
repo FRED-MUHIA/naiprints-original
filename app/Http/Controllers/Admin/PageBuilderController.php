@@ -462,6 +462,11 @@ class PageBuilderController extends Controller
             ? $normalized
             : '/storage/'.ltrim($path, '/');
 
+        $assetRoot = rtrim((string) config('app.asset_url', ''), '/');
+        if ($assetRoot !== '') {
+            return $assetRoot.$storagePath;
+        }
+
         $basePath = rtrim((string) request()->getBasePath(), '/');
         if ($basePath === '') {
             $basePath = rtrim((string) parse_url((string) config('app.url', ''), PHP_URL_PATH), '/');

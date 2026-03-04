@@ -27,6 +27,12 @@ class AppServiceProvider extends ServiceProvider
         $request = request();
         $basePath = rtrim((string) $request->getBasePath(), '/');
         if ($basePath === '') {
+            $uriPath = parse_url((string) $request->getRequestUri(), PHP_URL_PATH) ?? '';
+            if ($uriPath === '/public' || str_starts_with($uriPath, '/public/')) {
+                $basePath = '/public';
+            }
+        }
+        if ($basePath === '') {
             return;
         }
 

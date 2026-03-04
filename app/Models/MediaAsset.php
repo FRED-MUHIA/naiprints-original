@@ -32,6 +32,11 @@ class MediaAsset extends Model
             ? $normalized
             : '/storage/'.ltrim($path, '/');
 
+        $assetRoot = rtrim((string) config('app.asset_url', ''), '/');
+        if ($assetRoot !== '') {
+            return $assetRoot.$storagePath;
+        }
+
         $basePath = '';
         if (app()->bound('request')) {
             try {
