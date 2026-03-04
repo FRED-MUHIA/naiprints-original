@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\StorageUrl;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -40,7 +41,7 @@ class Product extends Model
             return null;
         }
 
-        return \Illuminate\Support\Facades\Storage::url($this->image_path);
+        return StorageUrl::fromPath($this->image_path);
     }
 
     public function category(): BelongsTo

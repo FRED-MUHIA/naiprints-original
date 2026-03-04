@@ -32,7 +32,7 @@
                                     ?? $product->alternateImages->first()
                                     ?? $product->images->first();
                                 if ($fallback && $fallback->image_path) {
-                                    $imageUrl = \Illuminate\Support\Facades\Storage::url($fallback->image_path);
+                                    $imageUrl = \App\Support\StorageUrl::fromPath($fallback->image_path);
                                 }
                             }
                             $brand = $product->brand?->name;
@@ -401,7 +401,7 @@
                                         if ($isModel) {
                                             $alt = $product->alternateImages->first() ?: $product->galleryImages->first();
                                             if ($alt) {
-                                                $hoverImage = \Illuminate\Support\Facades\Storage::url($alt->image_path);
+                                                $hoverImage = \App\Support\StorageUrl::fromPath($alt->image_path);
                                             }
                                         }
                                         $colorOptions = $isModel ? ($product->color_options ?? []) : ($product['color_options'] ?? []);

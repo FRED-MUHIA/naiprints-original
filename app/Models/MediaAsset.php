@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\StorageUrl;
 use Illuminate\Database\Eloquent\Model;
 
 class MediaAsset extends Model
@@ -14,6 +15,6 @@ class MediaAsset extends Model
 
     public function getUrlAttribute(): string
     {
-        return \Illuminate\Support\Facades\Storage::url($this->file_path);
+        return StorageUrl::fromPath($this->file_path) ?? '';
     }
 }

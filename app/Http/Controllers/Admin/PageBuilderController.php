@@ -7,6 +7,7 @@ use App\Models\GlobalSection;
 use App\Models\Page;
 use App\Models\Product;
 use App\Support\PageDefaults;
+use App\Support\StorageUrl;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -185,19 +186,19 @@ class PageBuilderController extends Controller
                 $file = $tilePayload['background_image_file'] ?? null;
                 if ($file && isset($sections[$sectionIndex]['data']['tiles'][$tileIndex])) {
                     $path = $file->store('page-builder/tiles', 'public');
-                    $sections[$sectionIndex]['data']['tiles'][$tileIndex]['background_image'] = Storage::url($path);
+                    $sections[$sectionIndex]['data']['tiles'][$tileIndex]['background_image'] = $this->storageUrl($path);
                 }
 
                 $altFile = $tilePayload['background_image_alt_file'] ?? null;
                 if ($altFile && isset($sections[$sectionIndex]['data']['tiles'][$tileIndex])) {
                     $path = $altFile->store('page-builder/tiles', 'public');
-                    $sections[$sectionIndex]['data']['tiles'][$tileIndex]['background_image_alt'] = Storage::url($path);
+                    $sections[$sectionIndex]['data']['tiles'][$tileIndex]['background_image_alt'] = $this->storageUrl($path);
                 }
 
                 $videoFile = $tilePayload['video_file'] ?? null;
                 if ($videoFile && isset($sections[$sectionIndex]['data']['tiles'][$tileIndex])) {
                     $path = $videoFile->store('page-builder/tiles', 'public');
-                    $sections[$sectionIndex]['data']['tiles'][$tileIndex]['video_url'] = Storage::url($path);
+                    $sections[$sectionIndex]['data']['tiles'][$tileIndex]['video_url'] = $this->storageUrl($path);
                 }
             }
         }
@@ -241,7 +242,7 @@ class PageBuilderController extends Controller
             }
 
             $path = $file->store('page-builder/design-studio', 'public');
-            $sections[$sectionIndex]['data']['background_image'] = Storage::url($path);
+            $sections[$sectionIndex]['data']['background_image'] = $this->storageUrl($path);
         }
 
         return $sections;
@@ -272,7 +273,7 @@ class PageBuilderController extends Controller
             $logoFile = $sectionPayload['data']['brand_logo_file'] ?? null;
             if ($logoFile) {
                 $path = $logoFile->store('page-builder/mockup', 'public');
-                $sections[$sectionIndex]['data']['brand_logo'] = Storage::url($path);
+                $sections[$sectionIndex]['data']['brand_logo'] = $this->storageUrl($path);
             }
 
             $templateFiles = $sectionPayload['data']['templates']['all_results'] ?? [];
@@ -298,7 +299,7 @@ class PageBuilderController extends Controller
                 }
 
                 $path = $file->store('page-builder/mockup/templates', 'public');
-                $sections[$sectionIndex]['data']['templates']['all_results'][$templateIndex]['image'] = Storage::url($path);
+                $sections[$sectionIndex]['data']['templates']['all_results'][$templateIndex]['image'] = $this->storageUrl($path);
             }
         }
 
@@ -347,7 +348,7 @@ class PageBuilderController extends Controller
             }
 
             $path = $file->store('page-builder/corporate', 'public');
-            $sections[$sectionIndex]['data']['hero']['image'] = Storage::url($path);
+            $sections[$sectionIndex]['data']['hero']['image'] = $this->storageUrl($path);
         }
 
         return $sections;
@@ -425,7 +426,7 @@ class PageBuilderController extends Controller
                 : $rawKey;
 
             $path = $value->store('page-builder/mockups', 'public');
-            $existing[$baseKey] = Storage::url($path);
+            $existing[$baseKey] = $this->storageUrl($path);
         }
 
         return $existing;
@@ -445,6 +446,11 @@ class PageBuilderController extends Controller
         }
 
         return $payload;
+    }
+
+    private function storageUrl(string $path): string
+    {
+        return StorageUrl::fromPath($path) ?? '';
     }
 
     private function sanitizeTileVideos(array $sections): array

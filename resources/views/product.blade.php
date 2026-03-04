@@ -36,19 +36,19 @@
                 }
 
                 $imageUrl = $product->image_url
-                    ?? ($product->images->first() ? \Illuminate\Support\Facades\Storage::url($product->images->first()->image_path) : null);
+                    ?? ($product->images->first() ? \App\Support\StorageUrl::fromPath($product->images->first()->image_path) : null);
                 $galleryImages = collect();
                 if ($imageUrl) {
                     $galleryImages->push($imageUrl);
                 }
                 foreach ($product->alternateImages as $image) {
-                    $url = \Illuminate\Support\Facades\Storage::url($image->image_path);
+                    $url = \App\Support\StorageUrl::fromPath($image->image_path);
                     if ($url && !$galleryImages->contains($url)) {
                         $galleryImages->push($url);
                     }
                 }
                 foreach ($product->galleryImages as $image) {
-                    $url = \Illuminate\Support\Facades\Storage::url($image->image_path);
+                    $url = \App\Support\StorageUrl::fromPath($image->image_path);
                     if ($url && !$galleryImages->contains($url)) {
                         $galleryImages->push($url);
                     }
@@ -358,11 +358,11 @@
                                         $relatedBadgeClass = $relatedHasDiscount ? 'product-badge-sale' : ($relatedIsNew ? 'product-badge-new' : '');
                                         $relatedImage = $related->image_url
                                             ?? ($related->images->first()
-                                                ? \Illuminate\Support\Facades\Storage::url($related->images->first()->image_path)
+                                                ? \App\Support\StorageUrl::fromPath($related->images->first()->image_path)
                                                 : null);
                                         $relatedAlt = $related->alternateImages->first() ?: $related->galleryImages->first();
                                         $relatedHover = $relatedAlt
-                                            ? \Illuminate\Support\Facades\Storage::url($relatedAlt->image_path)
+                                            ? \App\Support\StorageUrl::fromPath($relatedAlt->image_path)
                                             : null;
                                         $safeRelated = e((string) $relatedName);
                                         $relatedFlame = preg_replace('/\\bT[-\\s]?shirt\\b/i', '<span class=\"flame-text\">$0</span><span class=\"flame-emoji\" aria-hidden=\"true\">🔥</span>', $safeRelated);
