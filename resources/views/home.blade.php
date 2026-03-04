@@ -6,10 +6,6 @@
         @php
             $faviconUrl = $globalHeader['favicon_url'] ?? '';
             $faviconUrl = $faviconUrl ?: '/images/logo.svg';
-            $basePath = rtrim((string) request()->getBasePath(), '/');
-            if (!preg_match('/^https?:\/\//i', $faviconUrl) && !str_starts_with($faviconUrl, '//') && str_starts_with($faviconUrl, '/')) {
-                $faviconUrl = ($basePath ?: '').$faviconUrl;
-            }
         @endphp
         <link rel="icon" href="{{ $faviconUrl }}">
         <title>Nai Prints | T-Shirt & Garment Printing</title>
@@ -36,8 +32,7 @@
                                     ?? $product->alternateImages->first()
                                     ?? $product->images->first();
                                 if ($fallback && $fallback->image_path) {
-                                    $basePath = rtrim((string) request()->getBasePath(), '/');
-                                    $imageUrl = ($basePath ?: '') . '/storage/' . ltrim($fallback->image_path, '/');
+                                    $imageUrl = \Illuminate\Support\Facades\Storage::url($fallback->image_path);
                                 }
                             }
                             $brand = $product->brand?->name;
@@ -406,8 +401,7 @@
                                         if ($isModel) {
                                             $alt = $product->alternateImages->first() ?: $product->galleryImages->first();
                                             if ($alt) {
-                                                $basePath = rtrim((string) request()->getBasePath(), '/');
-                                                $hoverImage = ($basePath ?: '') . '/storage/' . ltrim($alt->image_path, '/');
+                                                $hoverImage = \Illuminate\Support\Facades\Storage::url($alt->image_path);
                                             }
                                         }
                                         $colorOptions = $isModel ? ($product->color_options ?? []) : ($product['color_options'] ?? []);
@@ -796,7 +790,7 @@
                                         @endif
                                         <p class="newsletter-legal">
                                             By clicking Subscribe, you agree to our
-                                            <a href="{{ url('/privacy-policy') }}">Privacy Policy</a>
+                                            <a href="/privacy-policy">Privacy Policy</a>
                                             and to receive our promotional emails (opt out anytime).
                                         </p>
                                     </form>

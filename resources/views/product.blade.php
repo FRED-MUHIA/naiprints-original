@@ -6,10 +6,6 @@
         @php
             $faviconUrl = $globalHeader['favicon_url'] ?? '';
             $faviconUrl = $faviconUrl ?: '/images/logo.svg';
-            $basePath = rtrim((string) request()->getBasePath(), '/');
-            if (!preg_match('/^https?:\/\//i', $faviconUrl) && !str_starts_with($faviconUrl, '//') && str_starts_with($faviconUrl, '/')) {
-                $faviconUrl = ($basePath ?: '').$faviconUrl;
-            }
         @endphp
         <link rel="icon" href="{{ $faviconUrl }}">
         <title>{{ $product->name }} | Nai Prints</title>
@@ -39,31 +35,20 @@
                     }
                 }
 
-                $toStorageUrl = static function (?string $path): ?string {
-                    if (!$path) {
-                        return null;
-                    }
-                    if (preg_match('/^https?:\/\//i', $path) || str_starts_with($path, '//')) {
-                        return $path;
-                    }
-                    $basePath = rtrim((string) request()->getBasePath(), '/');
-                    return ($basePath ?: '') . '/storage/' . ltrim($path, '/');
-                };
-
                 $imageUrl = $product->image_url
-                    ?? ($product->images->first() ? $toStorageUrl($product->images->first()->image_path) : null);
+                    ?? ($product->images->first() ? \Illuminate\Support\Facades\Storage::url($product->images->first()->image_path) : null);
                 $galleryImages = collect();
                 if ($imageUrl) {
                     $galleryImages->push($imageUrl);
                 }
                 foreach ($product->alternateImages as $image) {
-                    $url = $toStorageUrl($image->image_path);
+                    $url = \Illuminate\Support\Facades\Storage::url($image->image_path);
                     if ($url && !$galleryImages->contains($url)) {
                         $galleryImages->push($url);
                     }
                 }
                 foreach ($product->galleryImages as $image) {
-                    $url = $toStorageUrl($image->image_path);
+                    $url = \Illuminate\Support\Facades\Storage::url($image->image_path);
                     if ($url && !$galleryImages->contains($url)) {
                         $galleryImages->push($url);
                     }
@@ -373,11 +358,11 @@
                                         $relatedBadgeClass = $relatedHasDiscount ? 'product-badge-sale' : ($relatedIsNew ? 'product-badge-new' : '');
                                         $relatedImage = $related->image_url
                                             ?? ($related->images->first()
-                                                ? $toStorageUrl($related->images->first()->image_path)
+                                                ? \Illuminate\Support\Facades\Storage::url($related->images->first()->image_path)
                                                 : null);
                                         $relatedAlt = $related->alternateImages->first() ?: $related->galleryImages->first();
                                         $relatedHover = $relatedAlt
-                                            ? $toStorageUrl($relatedAlt->image_path)
+                                            ? \Illuminate\Support\Facades\Storage::url($relatedAlt->image_path)
                                             : null;
                                         $safeRelated = e((string) $relatedName);
                                         $relatedFlame = preg_replace('/\\bT[-\\s]?shirt\\b/i', '<span class=\"flame-text\">$0</span><span class=\"flame-emoji\" aria-hidden=\"true\">🔥</span>', $safeRelated);

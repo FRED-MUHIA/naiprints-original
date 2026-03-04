@@ -8,20 +8,6 @@
     $columns = $footer['columns'] ?? [];
     $hours = $footer['hours'] ?? [];
     $logoUrl = !empty($footer['logo_url']) ? $footer['logo_url'] : '/images/logo.svg';
-    $normalizeUrl = static function (?string $value): ?string {
-        if (!$value) {
-            return $value;
-        }
-        if (preg_match('/^https?:\/\//i', $value) || str_starts_with($value, '//')) {
-            return $value;
-        }
-        if (!str_starts_with($value, '/')) {
-            return $value;
-        }
-        $basePath = rtrim((string) request()->getBasePath(), '/');
-        return ($basePath ?: '').$value;
-    };
-    $logoUrl = $normalizeUrl($logoUrl);
 @endphp
 
 <footer class="border-t border-black/5 bg-white">
@@ -43,7 +29,7 @@
                 <ul class="mt-3 space-y-2 text-sm text-slate-600">
                     @foreach (($column['links'] ?? []) as $link)
                         <li>
-                            <a class="hover:text-brand" href="{{ $normalizeUrl($link['url'] ?? '#') }}">{{ $link['label'] ?? '' }}</a>
+                            <a class="hover:text-brand" href="{{ $link['url'] ?? '#' }}">{{ $link['label'] ?? '' }}</a>
                         </li>
                     @endforeach
                 </ul>

@@ -6,10 +6,6 @@
         @php
             $faviconUrl = $globalHeader['favicon_url'] ?? '';
             $faviconUrl = $faviconUrl ?: '/images/logo.svg';
-            $basePath = rtrim((string) request()->getBasePath(), '/');
-            if (!preg_match('/^https?:\/\//i', $faviconUrl) && !str_starts_with($faviconUrl, '//') && str_starts_with($faviconUrl, '/')) {
-                $faviconUrl = ($basePath ?: '').$faviconUrl;
-            }
         @endphp
         <link rel="icon" href="{{ $faviconUrl }}">
         <title>Nai Prints | Mockup Studio</title>
@@ -74,7 +70,7 @@
                         <span></span>
                         <span></span>
                     </button>
-                    <a class="mockup-logo" href="{{ url('/') }}" aria-label="Home">
+                    <a class="mockup-logo" href="/" aria-label="Home">
                         <img class="mockup-logo-image"
                              data-brand-logo
                              data-default-logo="{{ $brandLogo }}"

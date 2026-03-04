@@ -6,10 +6,6 @@
         @php
             $faviconUrl = $globalHeader['favicon_url'] ?? '';
             $faviconUrl = $faviconUrl ?: '/images/logo.svg';
-            $basePath = rtrim((string) request()->getBasePath(), '/');
-            if (!preg_match('/^https?:\/\//i', $faviconUrl) && !str_starts_with($faviconUrl, '//') && str_starts_with($faviconUrl, '/')) {
-                $faviconUrl = ($basePath ?: '').$faviconUrl;
-            }
         @endphp
         <link rel="icon" href="{{ $faviconUrl }}">
         <title>Nai Prints | Design Studio</title>
@@ -59,7 +55,7 @@
         <div id="designer-app" class="min-h-screen editor-shell">
             <header class="canva-topbar">
                 <div class="canva-topbar-left">
-                    <a class="canva-brand" href="{{ url('/') }}" aria-label="Home">
+                    <a class="canva-brand" href="/" aria-label="Home">
                         @if ($logoUrl)
                             <img src="{{ $logoUrl }}" alt="Nai Prints" class="canva-logo-img">
                         @else

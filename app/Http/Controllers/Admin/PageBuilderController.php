@@ -185,19 +185,19 @@ class PageBuilderController extends Controller
                 $file = $tilePayload['background_image_file'] ?? null;
                 if ($file && isset($sections[$sectionIndex]['data']['tiles'][$tileIndex])) {
                     $path = $file->store('page-builder/tiles', 'public');
-                    $sections[$sectionIndex]['data']['tiles'][$tileIndex]['background_image'] = $this->storageUrl($path);
+                    $sections[$sectionIndex]['data']['tiles'][$tileIndex]['background_image'] = Storage::url($path);
                 }
 
                 $altFile = $tilePayload['background_image_alt_file'] ?? null;
                 if ($altFile && isset($sections[$sectionIndex]['data']['tiles'][$tileIndex])) {
                     $path = $altFile->store('page-builder/tiles', 'public');
-                    $sections[$sectionIndex]['data']['tiles'][$tileIndex]['background_image_alt'] = $this->storageUrl($path);
+                    $sections[$sectionIndex]['data']['tiles'][$tileIndex]['background_image_alt'] = Storage::url($path);
                 }
 
                 $videoFile = $tilePayload['video_file'] ?? null;
                 if ($videoFile && isset($sections[$sectionIndex]['data']['tiles'][$tileIndex])) {
                     $path = $videoFile->store('page-builder/tiles', 'public');
-                    $sections[$sectionIndex]['data']['tiles'][$tileIndex]['video_url'] = $this->storageUrl($path);
+                    $sections[$sectionIndex]['data']['tiles'][$tileIndex]['video_url'] = Storage::url($path);
                 }
             }
         }
@@ -241,7 +241,7 @@ class PageBuilderController extends Controller
             }
 
             $path = $file->store('page-builder/design-studio', 'public');
-            $sections[$sectionIndex]['data']['background_image'] = $this->storageUrl($path);
+            $sections[$sectionIndex]['data']['background_image'] = Storage::url($path);
         }
 
         return $sections;
@@ -272,7 +272,7 @@ class PageBuilderController extends Controller
             $logoFile = $sectionPayload['data']['brand_logo_file'] ?? null;
             if ($logoFile) {
                 $path = $logoFile->store('page-builder/mockup', 'public');
-                $sections[$sectionIndex]['data']['brand_logo'] = $this->storageUrl($path);
+                $sections[$sectionIndex]['data']['brand_logo'] = Storage::url($path);
             }
 
             $templateFiles = $sectionPayload['data']['templates']['all_results'] ?? [];
@@ -298,7 +298,7 @@ class PageBuilderController extends Controller
                 }
 
                 $path = $file->store('page-builder/mockup/templates', 'public');
-                $sections[$sectionIndex]['data']['templates']['all_results'][$templateIndex]['image'] = $this->storageUrl($path);
+                $sections[$sectionIndex]['data']['templates']['all_results'][$templateIndex]['image'] = Storage::url($path);
             }
         }
 
@@ -347,7 +347,7 @@ class PageBuilderController extends Controller
             }
 
             $path = $file->store('page-builder/corporate', 'public');
-            $sections[$sectionIndex]['data']['hero']['image'] = $this->storageUrl($path);
+            $sections[$sectionIndex]['data']['hero']['image'] = Storage::url($path);
         }
 
         return $sections;
@@ -425,7 +425,7 @@ class PageBuilderController extends Controller
                 : $rawKey;
 
             $path = $value->store('page-builder/mockups', 'public');
-            $existing[$baseKey] = $this->storageUrl($path);
+            $existing[$baseKey] = Storage::url($path);
         }
 
         return $existing;
@@ -445,34 +445,6 @@ class PageBuilderController extends Controller
         }
 
         return $payload;
-    }
-
-    private function storageUrl(string $path): string
-    {
-        if ($path === '') {
-            return '';
-        }
-
-        if (preg_match('/^https?:\/\//i', $path) || str_starts_with($path, '//')) {
-            return $path;
-        }
-
-        $normalized = '/'.ltrim($path, '/');
-        $storagePath = str_starts_with($normalized, '/storage/')
-            ? $normalized
-            : '/storage/'.ltrim($path, '/');
-
-        $assetRoot = rtrim((string) config('app.asset_url', ''), '/');
-        if ($assetRoot !== '') {
-            return $assetRoot.$storagePath;
-        }
-
-        $basePath = rtrim((string) request()->getBasePath(), '/');
-        if ($basePath === '') {
-            $basePath = rtrim((string) parse_url((string) config('app.url', ''), PHP_URL_PATH), '/');
-        }
-
-        return ($basePath ?: '').$storagePath;
     }
 
     private function sanitizeTileVideos(array $sections): array
