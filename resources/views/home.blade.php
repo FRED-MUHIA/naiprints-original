@@ -6,6 +6,10 @@
         @php
             $faviconUrl = $globalHeader['favicon_url'] ?? '';
             $faviconUrl = $faviconUrl ?: '/images/logo.svg';
+            $basePath = rtrim((string) request()->getBasePath(), '/');
+            if (!preg_match('/^https?:\/\//i', $faviconUrl) && !str_starts_with($faviconUrl, '//') && str_starts_with($faviconUrl, '/')) {
+                $faviconUrl = ($basePath ?: '').$faviconUrl;
+            }
         @endphp
         <link rel="icon" href="{{ $faviconUrl }}">
         <title>Nai Prints | T-Shirt & Garment Printing</title>
@@ -792,7 +796,7 @@
                                         @endif
                                         <p class="newsletter-legal">
                                             By clicking Subscribe, you agree to our
-                                            <a href="/privacy-policy">Privacy Policy</a>
+                                            <a href="{{ url('/privacy-policy') }}">Privacy Policy</a>
                                             and to receive our promotional emails (opt out anytime).
                                         </p>
                                     </form>

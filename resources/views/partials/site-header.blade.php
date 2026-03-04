@@ -1,6 +1,20 @@
 @php
     $header = $globalHeader ?? [];
     $logoUrl = $header['logo_url'] ?? null;
+    $normalizeUrl = static function (?string $value): ?string {
+        if (!$value) {
+            return $value;
+        }
+        if (preg_match('/^https?:\/\//i', $value) || str_starts_with($value, '//')) {
+            return $value;
+        }
+        if (!str_starts_with($value, '/')) {
+            return $value;
+        }
+        $basePath = rtrim((string) request()->getBasePath(), '/');
+        return ($basePath ?: '').$value;
+    };
+    $logoUrl = $normalizeUrl($logoUrl);
     $menu = $header['menu'] ?? [];
     $menuStrip = $header['menu_strip'] ?? [];
     $menuStripCta = $header['menu_strip_cta'] ?? null;
@@ -47,7 +61,7 @@
 
 <header class="sticky top-0 z-40 border-b border-black/5 bg-white/90 backdrop-blur">
     <div class="mx-auto flex max-w-6xl items-center justify-between gap-6 px-4 py-4">
-        <a class="flex items-center gap-3" href="/" aria-label="Home">
+        <a class="flex items-center gap-3" href="{{ url('/') }}" aria-label="Home">
             @if ($logoUrl)
                 <img src="{{ $logoUrl }}" alt="Nai Prints" class="h-12 w-12 rounded-full object-cover">
             @else
@@ -59,7 +73,7 @@
 
         <nav class="hidden items-center gap-5 text-sm font-semibold text-slate-700 lg:flex">
             @foreach ($menu as $item)
-                <a class="nav-link" href="{{ $item['url'] ?? '#' }}">{{ $item['label'] ?? 'Menu' }}</a>
+                <a class="nav-link" href="{{ $normalizeUrl($item['url'] ?? '#') }}">{{ $item['label'] ?? 'Menu' }}</a>
             @endforeach
         </nav>
 
@@ -96,7 +110,7 @@
             @foreach ($menuStrip as $index => $item)
                 @if ($menuStripCta && $index === (int) $ctaPosition)
                     <span class="menu-divider"></span>
-                    <a href="{{ $menuStripCta['url'] ?? '#' }}" class="menu-pill">
+                    <a href="{{ $normalizeUrl($menuStripCta['url'] ?? '#') }}" class="menu-pill">
                         {{ $menuStripCta['label'] ?? 'See All Products' }}
                     </a>
                 @endif
@@ -104,7 +118,7 @@
                     $badgeText = trim($item['badge'] ?? '');
                     $showBadge = $badgeText !== '' && strtolower($badgeText) !== 'free';
                 @endphp
-                <a href="{{ $item['url'] ?? '#' }}" class="menu-item {{ $showBadge ? 'menu-badge-wrap' : '' }}">
+                <a href="{{ $normalizeUrl($item['url'] ?? '#') }}" class="menu-item {{ $showBadge ? 'menu-badge-wrap' : '' }}">
                     <span class="menu-icon">{{ $item['icon'] ?? '' }}</span>
                     <span class="menu-label">{{ $item['label'] ?? '' }}</span>
                     @if ($showBadge)
@@ -114,7 +128,7 @@
             @endforeach
             @if ($menuStripCta && count($menuStrip) <= (int) $ctaPosition)
                 <span class="menu-divider"></span>
-                <a href="{{ $menuStripCta['url'] ?? '#' }}" class="menu-pill">
+                <a href="{{ $normalizeUrl($menuStripCta['url'] ?? '#') }}" class="menu-pill">
                     {{ $menuStripCta['label'] ?? 'See All Products' }}
                 </a>
             @endif

@@ -5,6 +5,10 @@
         @php
             $faviconUrl = $globalHeader['favicon_url'] ?? '';
             $faviconUrl = $faviconUrl ?: '/images/logo.svg';
+            $basePath = rtrim((string) request()->getBasePath(), '/');
+            if (!preg_match('/^https?:\/\//i', $faviconUrl) && !str_starts_with($faviconUrl, '//') && str_starts_with($faviconUrl, '/')) {
+                $faviconUrl = ($basePath ?: '').$faviconUrl;
+            }
         @endphp
         <link rel="icon" href="{{ $faviconUrl }}">
         <title>Checkout | Nai Prints</title>
