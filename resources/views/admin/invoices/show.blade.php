@@ -92,6 +92,18 @@
         </table>
     </div>
 
+    @if ($invoice->notes || $invoice->terms)
+        <div class="admin-panel p-6 space-y-3">
+            <h2 class="text-lg font-semibold">Order Details</h2>
+            @if ($invoice->notes)
+                <div class="text-sm text-slate-600 whitespace-pre-line">{{ $invoice->notes }}</div>
+            @endif
+            @if ($invoice->terms)
+                <div class="text-sm text-slate-600 whitespace-pre-line">{{ $invoice->terms }}</div>
+            @endif
+        </div>
+    @endif
+
     @php
         $mpesa = $settings->mpesa_config ?? [];
         $mpesaEnabled = !empty($mpesa['consumer_key']) && !empty($mpesa['consumer_secret']) && !empty($mpesa['shortcode']);

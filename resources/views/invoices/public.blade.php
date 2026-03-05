@@ -174,6 +174,12 @@
                         @if ($settings->footer_text)
                             <p>{{ $settings->footer_text }}</p>
                         @endif
+                        @if ($invoice->notes)
+                            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 whitespace-pre-line">
+                                <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Order Details</p>
+                                <div class="mt-2">{{ $invoice->notes }}</div>
+                            </div>
+                        @endif
                     </div>
                     <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm text-slate-600">
                         <div class="flex justify-between">

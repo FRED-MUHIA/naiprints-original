@@ -172,6 +172,12 @@
             <div style="white-space: pre-line;">{{ $settings->bank_details }}</div>
         </div>
     @endif
+    @if (!empty($invoice->notes))
+        <div class="footer">
+            <div class="section-title">Order Details</div>
+            <div style="white-space: pre-line;">{{ $invoice->notes }}</div>
+        </div>
+    @endif
         @if ($settings->footer_text)
             <div class="footer">{{ $settings->footer_text }}</div>
         @endif
