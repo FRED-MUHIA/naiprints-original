@@ -166,7 +166,11 @@
                         </div>
                         @if (($settings->mpesa_config['shortcode'] ?? null))
                             <div class="mt-3">
-                                <button type="button" id="mpesa-open" class="btn-brand w-full justify-center">Pay via M-Pesa</button>
+                                <button type="button"
+                                        id="mpesa-open"
+                                        class="inline-flex w-full items-center justify-center rounded-full bg-emerald-500 px-5 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600">
+                                    Pay
+                                </button>
                             </div>
                         @endif
                     </div>

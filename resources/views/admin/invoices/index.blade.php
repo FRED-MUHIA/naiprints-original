@@ -44,7 +44,7 @@
         </div>
     </div>
 
-    <div class="admin-panel overflow-hidden">
+    <div class="admin-panel overflow-hidden p-2">
         <table class="admin-table">
             <thead>
                 <tr>
