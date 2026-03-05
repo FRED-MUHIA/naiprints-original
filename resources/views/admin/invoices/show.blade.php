@@ -4,27 +4,29 @@
 
 @section('content')
     <div class="admin-card space-y-5">
-        <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
                 <p class="text-xs font-semibold uppercase tracking-[0.35em] text-slate-400">Status</p>
                 <span class="admin-status {{ $invoice->status === 'paid' ? 'admin-status-active' : ($invoice->status === 'partially_paid' ? 'admin-status-draft' : '') }}">
                     {{ str_replace('_', ' ', $invoice->status) }}
                 </span>
             </div>
-            <div class="flex flex-wrap gap-3">
-                <a href="{{ route('invoice.public', $invoice->public_id) }}" class="admin-btn-outline" target="_blank">Public Link</a>
-                <a href="{{ route('admin.invoices.download', $invoice) }}" class="admin-btn-outline">Download PDF</a>
-                <form method="POST" action="{{ route('admin.invoices.send', $invoice) }}">
+            <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+                <div class="flex flex-wrap gap-3">
+                    <a href="{{ route('invoice.public', $invoice->public_id) }}" class="admin-btn-outline whitespace-nowrap" target="_blank">Public Link</a>
+                    <a href="{{ route('admin.invoices.download', $invoice) }}" class="admin-btn-outline whitespace-nowrap">Download PDF</a>
+                </div>
+                <form method="POST" action="{{ route('admin.invoices.send', $invoice) }}" class="w-full sm:w-auto">
                     @csrf
-                    <div class="flex flex-wrap items-center gap-2">
+                    <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
                         <input type="email"
                                name="email"
                                placeholder="{{ $invoice->client?->email ?? 'Enter email address' }}"
-                               class="admin-input border border-slate-200 rounded-xl px-3 py-2 text-sm">
-                        <button type="submit" class="admin-btn-outline">Send Email</button>
+                               class="admin-input border border-slate-200 rounded-xl px-3 py-2 text-sm sm:w-64 md:w-72">
+                        <button type="submit" class="admin-btn-outline whitespace-nowrap">Send Email</button>
                     </div>
                 </form>
-                <a href="{{ route('admin.invoices.edit', $invoice) }}" class="admin-btn-primary">Edit Invoice</a>
+                <a href="{{ route('admin.invoices.edit', $invoice) }}" class="admin-btn-primary whitespace-nowrap">Edit Invoice</a>
             </div>
         </div>
     </div>
