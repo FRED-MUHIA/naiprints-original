@@ -3,7 +3,7 @@
 @section('title', 'Payments')
 
 @section('content')
-    <div class="admin-panel overflow-hidden">
+    <div class="admin-panel overflow-hidden p-2">
         <table class="admin-table">
             <thead>
                 <tr>

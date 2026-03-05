@@ -31,6 +31,13 @@
                         <button type="submit" class="admin-btn-outline whitespace-nowrap">Send Email</button>
                     </div>
                 </form>
+                <form method="POST" action="{{ route('admin.invoices.destroy', $invoice) }}" onsubmit="return confirm('Delete this invoice? This cannot be undone.');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="admin-btn-outline whitespace-nowrap border-rose-200 text-rose-600 hover:border-rose-400 hover:text-rose-700">
+                        Delete
+                    </button>
+                </form>
                 <a href="{{ route('admin.invoices.edit', $invoice) }}" class="admin-btn-primary whitespace-nowrap">Edit Invoice</a>
             </div>
         </div>

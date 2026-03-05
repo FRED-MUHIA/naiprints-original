@@ -465,6 +465,9 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
 
     Route::resource('clients', ClientController::class)->except(['show']);
     Route::get('invoices/export', [InvoiceController::class, 'export'])->name('invoices.export');
+    Route::get('invoices/trash', [InvoiceController::class, 'trash'])->name('invoices.trash');
+    Route::post('invoices/{invoice}/restore', [InvoiceController::class, 'restore'])->name('invoices.restore');
+    Route::delete('invoices/{invoice}/force', [InvoiceController::class, 'forceDelete'])->name('invoices.force');
     Route::get('invoices/settings', [InvoiceSettingController::class, 'edit'])->name('invoices.settings');
     Route::post('invoices/settings', [InvoiceSettingController::class, 'update'])->name('invoices.settings.update');
     Route::post('invoices/settings/mpesa/register', [MpesaController::class, 'registerC2b'])->name('invoices.mpesa.register');

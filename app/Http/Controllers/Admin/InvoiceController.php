@@ -176,7 +176,35 @@ class InvoiceController extends Controller
         $invoice->delete();
 
         return redirect()->route('admin.invoices.index')
-            ->with('success', 'Invoice deleted successfully.');
+            ->with('success', 'Invoice moved to trash.');
+    }
+
+    public function trash()
+    {
+        $invoices = Invoice::onlyTrashed()
+            ->with('client')
+            ->orderByDesc('deleted_at')
+            ->paginate(12);
+
+        return view('admin.invoices.trash', compact('invoices'));
+    }
+
+    public function restore(int $invoiceId)
+    {
+        $invoice = Invoice::onlyTrashed()->findOrFail($invoiceId);
+        $invoice->restore();
+
+        return redirect()->route('admin.invoices.trash')
+            ->with('success', 'Invoice restored.');
+    }
+
+    public function forceDelete(int $invoiceId)
+    {
+        $invoice = Invoice::onlyTrashed()->findOrFail($invoiceId);
+        $invoice->forceDelete();
+
+        return redirect()->route('admin.invoices.trash')
+            ->with('success', 'Invoice permanently deleted.');
     }
 
     public function addPayment(Request $request, Invoice $invoice, InvoicePaymentService $payments)

@@ -39,6 +39,7 @@
             </form>
             <div class="flex flex-wrap gap-3">
                 <a href="{{ route('admin.invoices.settings') }}" class="admin-btn-outline">Settings</a>
+                <a href="{{ route('admin.invoices.trash') }}" class="admin-btn-outline">Trash</a>
                 <a href="{{ route('admin.invoices.create') }}" class="admin-btn-primary">New Invoice</a>
             </div>
         </div>
@@ -76,7 +77,16 @@
                         </td>
                         <td>KES {{ number_format($invoice->total, 2) }}</td>
                         <td class="text-right">
-                            <a href="{{ route('admin.invoices.show', $invoice) }}" class="admin-btn-outline">View</a>
+                            <div class="flex justify-end gap-2">
+                                <a href="{{ route('admin.invoices.show', $invoice) }}" class="admin-btn-outline">View</a>
+                                <form method="POST" action="{{ route('admin.invoices.destroy', $invoice) }}" onsubmit="return confirm('Delete this invoice? This cannot be undone.');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="admin-btn-outline border-rose-200 text-rose-600 hover:border-rose-400 hover:text-rose-700">
+                                        Delete
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 @empty
