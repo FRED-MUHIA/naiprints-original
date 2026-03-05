@@ -18,6 +18,22 @@
                 {{ session('success') }}
             </div>
         @endif
+        @php
+            $latestMpesa = $invoice->mpesaTransactions->first();
+        @endphp
+        @if ($latestMpesa && $latestMpesa->status === 'failed')
+            <div class="mb-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                Payment failed. Please try again.
+            </div>
+        @elseif ($latestMpesa && $latestMpesa->status === 'pending')
+            <div class="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                Payment pending. Complete the M-Pesa prompt on your phone.
+            </div>
+        @elseif ($latestMpesa && $latestMpesa->status === 'success')
+            <div class="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                Payment received. Receipt will be emailed to you.
+            </div>
+        @endif
 
         @if ($errors->any())
             <div class="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

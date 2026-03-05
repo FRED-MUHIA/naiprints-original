@@ -11,7 +11,7 @@ class PublicInvoiceController extends Controller
 {
     public function show(Invoice $invoice)
     {
-        $invoice->load(['client', 'items', 'payments']);
+        $invoice->load(['client', 'items', 'payments', 'mpesaTransactions']);
         $settings = InvoiceSetting::first() ?? new InvoiceSetting(InvoiceSetting::defaults());
         $verificationUrl = URL::signedRoute('invoice.verify', $invoice->public_id);
         $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' . urlencode($verificationUrl);
