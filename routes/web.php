@@ -3,11 +3,18 @@
 use App\Http\Controllers\Admin\AttributeController;
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\ClientController;
+use App\Http\Controllers\Admin\InvoiceController;
+use App\Http\Controllers\Admin\InvoiceSettingController;
 use App\Http\Controllers\Admin\MediaAssetController;
 use App\Http\Controllers\Admin\PageBuilderController;
+use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\ReceiptController;
 use App\Http\Controllers\Admin\SizeController;
 use App\Http\Controllers\Admin\TagController;
+use App\Http\Controllers\PublicInvoiceController;
+use App\Http\Controllers\PublicReceiptController;
 use App\Models\Attribute;
 use App\Models\Brand;
 use App\Models\Category;
@@ -368,6 +375,15 @@ Route::get('/products/{product}', function (Product $product) {
     ]);
 })->name('products.show');
 
+Route::get('/invoice/view/{invoice:public_id}', [PublicInvoiceController::class, 'show'])
+    ->name('invoice.public');
+Route::get('/invoice/view/{invoice:public_id}/pdf', [PublicInvoiceController::class, 'pdf'])
+    ->name('invoice.public.pdf');
+Route::get('/receipt/view/{receipt:public_id}', [PublicReceiptController::class, 'show'])
+    ->name('receipt.public');
+Route::get('/receipt/view/{receipt:public_id}/pdf', [PublicReceiptController::class, 'pdf'])
+    ->name('receipt.public.pdf');
+
 Route::get('/admin/login', function () {
     return view('admin.auth.login');
 })->name('admin.login');
@@ -426,6 +442,17 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
     Route::resource('attributes', AttributeController::class)->except(['show']);
     Route::resource('sizes', SizeController::class)->except(['show']);
     Route::resource('media', MediaAssetController::class)->only(['index', 'store', 'update', 'destroy']);
+
+    Route::resource('clients', ClientController::class)->except(['show']);
+    Route::get('invoices/export', [InvoiceController::class, 'export'])->name('invoices.export');
+    Route::get('invoices/settings', [InvoiceSettingController::class, 'edit'])->name('invoices.settings');
+    Route::post('invoices/settings', [InvoiceSettingController::class, 'update'])->name('invoices.settings.update');
+    Route::post('invoices/{invoice}/payments', [InvoiceController::class, 'addPayment'])->name('invoices.payments.store');
+    Route::get('invoices/{invoice}/download', [InvoiceController::class, 'download'])->name('invoices.download');
+    Route::post('invoices/{invoice}/send', [InvoiceController::class, 'sendEmail'])->name('invoices.send');
+    Route::resource('invoices', InvoiceController::class);
+    Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
+    Route::get('receipts', [ReceiptController::class, 'index'])->name('receipts.index');
 
     Route::get('builder', [PageBuilderController::class, 'index'])->name('builder.index');
     Route::post('builder/globals', [PageBuilderController::class, 'updateGlobals'])->name('builder.globals');

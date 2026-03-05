@@ -21,10 +21,29 @@
         --brand-sun: #f59e0b;
     }
 
+    html {
+        font-size: clamp(16px, 0.9vw + 12px, 18px);
+        -webkit-text-size-adjust: 100%;
+        text-rendering: optimizeLegibility;
+        font-kerning: normal;
+    }
+
     body {
         font-family: var(--font-sans);
         background-color: var(--brand-sand);
         color: var(--brand-ink);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    img,
+    picture,
+    video,
+    canvas {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        image-rendering: auto;
     }
 
     body.cart-popup-open {
@@ -99,6 +118,10 @@
         @apply flex h-10 w-10 items-center justify-center rounded-full border border-black/10 bg-white text-slate-700 transition hover:border-black/20 hover:text-slate-900;
     }
 
+    .mobile-menu-toggle {
+        @apply shrink-0;
+    }
+
     .badge {
         @apply absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-semibold text-white;
         background-color: var(--brand-red);
@@ -114,6 +137,34 @@
 
     .nav-link:hover {
         color: var(--brand-red);
+    }
+
+    .mobile-menu {
+        @apply border-t border-black/5 bg-white/95 backdrop-blur;
+        max-height: 0;
+        opacity: 0;
+        overflow: hidden;
+        pointer-events: none;
+        transition: max-height 0.28s ease, opacity 0.2s ease;
+    }
+
+    .mobile-menu.is-open {
+        max-height: 60vh;
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .mobile-menu-inner {
+        @apply mx-auto flex max-w-6xl flex-col gap-1 px-4 py-4;
+    }
+
+    .mobile-menu-link {
+        @apply rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 transition;
+    }
+
+    .mobile-menu-link:hover {
+        color: var(--brand-red);
+        background-color: rgba(226, 232, 240, 0.7);
     }
 
     .cart-popup {
