@@ -13,6 +13,7 @@ class InvoiceSetting extends Model
         'website',
         'logo_path',
         'signature_path',
+        'bank_details',
         'theme_color',
         'footer_text',
         'payment_methods',
@@ -34,6 +35,7 @@ class InvoiceSetting extends Model
             'theme_color' => '#e11d2e',
             'footer_text' => 'Thank you for choosing Nai Prints.',
             'payment_methods' => ['M-Pesa', 'Bank Transfer', 'Cash'],
+            'bank_details' => '',
         ];
     }
 }

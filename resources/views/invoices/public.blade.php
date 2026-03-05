@@ -33,8 +33,10 @@
         <div class="rounded-3xl bg-white shadow-xl overflow-hidden">
             <div class="h-2 bg-brand"></div>
             @php
-                $paymentMethods = collect($settings->payment_methods ?? [])->map(fn ($m) => strtolower((string) $m));
-                $showMpesaPay = $paymentMethods->contains('m-pesa') || $paymentMethods->contains('mpesa') || ($settings->mpesa_config['shortcode'] ?? null);
+                $paymentMethods = collect($settings->payment_methods ?? [])->map(fn ($m) => trim((string) $m));
+                $paymentMethodsLower = $paymentMethods->map(fn ($m) => strtolower($m));
+                $showMpesaPay = $paymentMethodsLower->contains('m-pesa') || $paymentMethodsLower->contains('mpesa') || ($settings->mpesa_config['shortcode'] ?? null);
+                $showBankDetails = (bool) trim((string) ($settings->bank_details ?? ''));
             @endphp
             <div class="p-8">
                 <div class="flex flex-wrap items-start justify-between gap-6">
@@ -129,21 +131,46 @@
 
                 <div class="mt-8 grid gap-6 md:grid-cols-[1.2fr_0.8fr]">
                     <div class="space-y-3 text-sm text-slate-500">
-                        @if (($settings->mpesa_config['shortcode'] ?? null))
+                        @if ($settings->payment_methods)
+                            <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Payment Methods</p>
+                            <ul class="space-y-2">
+                                @foreach ($settings->payment_methods as $method)
+                                    @php $methodLower = strtolower((string) $method); @endphp
+                                    <li class="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2">
+                                        <span class="text-slate-700">{{ $method }}</span>
+                                        @if (in_array($methodLower, ['m-pesa', 'mpesa']) && $showMpesaPay)
+                                            <button type="button"
+                                                    id="mpesa-inline-open"
+                                                    class="text-xs font-semibold text-emerald-600 hover:text-emerald-700">
+                                                Pay now
+                                            </button>
+                                        @elseif ($methodLower === 'bank transfer' && $showBankDetails)
+                                            <button type="button"
+                                                    id="bank-details-toggle"
+                                                    class="text-xs font-semibold text-slate-600 hover:text-brand">
+                                                Bank details
+                                            </button>
+                                        @endif
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @endif
+
+                        @if ($showBankDetails)
+                            <div id="bank-details-panel" class="hidden rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                                <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Bank Transfer</p>
+                                <div class="mt-2 whitespace-pre-line">{{ $settings->bank_details }}</div>
+                            </div>
+                        @endif
+
+                        @if ($showMpesaPay && ($settings->mpesa_config['shortcode'] ?? null))
                             <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                                 <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">M-Pesa PayBill</p>
                                 <p class="mt-2 text-sm text-slate-700"><strong>PayBill:</strong> {{ $settings->mpesa_config['shortcode'] }}</p>
                                 <p class="text-sm text-slate-700"><strong>Account:</strong> {{ $invoice->number }}</p>
                             </div>
                         @endif
-                        @if ($settings->payment_methods)
-                            <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Payment Methods</p>
-                            <ul class="list-disc pl-5">
-                                @foreach ($settings->payment_methods as $method)
-                                    <li>{{ $method }}</li>
-                                @endforeach
-                            </ul>
-                        @endif
+
                         @if ($settings->footer_text)
                             <p>{{ $settings->footer_text }}</p>
                         @endif
@@ -207,8 +234,11 @@
 
         <script>
             const mpesaOpen = document.getElementById('mpesa-open');
+            const mpesaInlineOpen = document.getElementById('mpesa-inline-open');
             const mpesaClose = document.getElementById('mpesa-close');
             const mpesaModal = document.getElementById('mpesa-modal');
+            const bankToggle = document.getElementById('bank-details-toggle');
+            const bankPanel = document.getElementById('bank-details-panel');
 
             if (mpesaOpen && mpesaClose && mpesaModal) {
                 const toggle = (show) => {
@@ -217,11 +247,20 @@
                 };
 
                 mpesaOpen.addEventListener('click', () => toggle(true));
+                if (mpesaInlineOpen) {
+                    mpesaInlineOpen.addEventListener('click', () => toggle(true));
+                }
                 mpesaClose.addEventListener('click', () => toggle(false));
                 mpesaModal.addEventListener('click', (event) => {
                     if (event.target === mpesaModal) {
                         toggle(false);
                     }
+                });
+            }
+
+            if (bankToggle && bankPanel) {
+                bankToggle.addEventListener('click', () => {
+                    bankPanel.classList.toggle('hidden');
                 });
             }
         </script>

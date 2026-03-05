@@ -1131,6 +1131,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const checkoutItemsField = checkoutPage.querySelector('[data-checkout-items-field]');
         const checkoutSubtotalField = checkoutPage.querySelector('[data-checkout-subtotal-field]');
         const checkoutTotalField = checkoutPage.querySelector('[data-checkout-total-field]');
+        const paymentInputs = checkoutPage.querySelectorAll('input[name="payment"]');
 
         renderCheckout = () => {
             const items = readCart();
@@ -1170,8 +1171,25 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
+        const updatePaymentButton = () => {
+            if (!checkoutSubmit) return;
+            const selected = checkoutPage.querySelector('input[name="payment"]:checked')?.value;
+            if (selected === 'mobile_money') {
+                checkoutSubmit.textContent = 'Pay with M-Pesa';
+                checkoutSubmit.classList.add('btn-mpesa');
+            } else {
+                checkoutSubmit.textContent = 'Place order';
+                checkoutSubmit.classList.remove('btn-mpesa');
+            }
+        };
+
         bindCartItemControls(checkoutItems);
         renderCheckout();
+        updatePaymentButton();
+
+        paymentInputs.forEach((input) => {
+            input.addEventListener('change', updatePaymentButton);
+        });
 
         checkoutForm?.addEventListener('submit', () => {
             renderCheckout();

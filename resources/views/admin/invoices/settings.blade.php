@@ -145,6 +145,15 @@
             <textarea name="footer_text" rows="3" class="admin-input border border-slate-200 rounded-xl px-4 py-2">{{ old('footer_text', $settings->footer_text) }}</textarea>
         </div>
 
+        <div class="admin-card space-y-4">
+            <h2 class="text-lg font-semibold">Bank Transfer Details</h2>
+            <textarea name="bank_details"
+                      rows="5"
+                      class="admin-input border border-slate-200 rounded-xl px-4 py-2"
+                      placeholder="Bank name, account name, account number, branch, etc.">{{ old('bank_details', $settings->bank_details) }}</textarea>
+            <p class="text-xs text-slate-500">Leave blank to hide bank details.</p>
+        </div>
+
         <div class="flex flex-wrap gap-3">
             <button type="submit" class="admin-btn-primary">Save Settings</button>
             <a href="{{ route('admin.invoices.index') }}" class="admin-btn-outline">Back</a>

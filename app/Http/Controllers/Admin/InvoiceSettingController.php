@@ -39,6 +39,7 @@ class InvoiceSettingController extends Controller
             'website' => ['nullable', 'string', 'max:255'],
             'theme_color' => ['nullable', 'string', 'max:20'],
             'footer_text' => ['nullable', 'string'],
+            'bank_details' => ['nullable', 'string'],
             'payment_methods' => ['nullable', 'array'],
             'payment_methods.*' => ['nullable', 'string', 'max:255'],
             'logo' => ['nullable', 'image', 'max:4096'],

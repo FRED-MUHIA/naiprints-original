@@ -160,12 +160,18 @@
             <div class="sig-line">Authorized Signature</div>
         </div>
 
-        @if ($settings->payment_methods)
-            <div class="footer">
-                <div class="section-title">Payment Methods</div>
-                {{ implode(', ', $settings->payment_methods) }}
-            </div>
-        @endif
+    @if ($settings->payment_methods)
+        <div class="footer">
+            <div class="section-title">Payment Methods</div>
+            {{ implode(', ', $settings->payment_methods) }}
+        </div>
+    @endif
+    @if (!empty($settings->bank_details))
+        <div class="footer">
+            <div class="section-title">Bank Transfer Details</div>
+            <div style="white-space: pre-line;">{{ $settings->bank_details }}</div>
+        </div>
+    @endif
         @if ($settings->footer_text)
             <div class="footer">{{ $settings->footer_text }}</div>
         @endif

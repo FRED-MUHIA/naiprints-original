@@ -105,6 +105,14 @@
         background-color: #c21424;
     }
 
+    .btn-brand.btn-mpesa {
+        background-color: #16a34a;
+    }
+
+    .btn-brand.btn-mpesa:hover {
+        background-color: #15803d;
+    }
+
     .btn-outline {
         @apply inline-flex items-center justify-center rounded-full border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-700 transition;
     }
