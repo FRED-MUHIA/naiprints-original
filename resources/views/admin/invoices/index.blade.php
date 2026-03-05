@@ -65,7 +65,12 @@
                         <td>{{ optional($invoice->issue_date)->format('M d, Y') }}</td>
                         <td>{{ optional($invoice->due_date)->format('M d, Y') ?? '-' }}</td>
                         <td>
-                            <span class="admin-status {{ $invoice->status === 'paid' ? 'admin-status-active' : ($invoice->status === 'partially_paid' ? 'admin-status-draft' : '') }}">
+                            @php
+                                $statusClass = $invoice->status === 'paid'
+                                    ? 'admin-status-paid'
+                                    : ($invoice->status === 'partially_paid' ? 'admin-status-partial' : 'admin-status-unpaid');
+                            @endphp
+                            <span class="admin-status admin-status-dot {{ $statusClass }}">
                                 {{ str_replace('_', ' ', $invoice->status) }}
                             </span>
                         </td>

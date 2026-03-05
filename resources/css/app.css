@@ -3386,6 +3386,30 @@
         @apply rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em];
     }
 
+    .admin-status-dot {
+        @apply inline-flex items-center gap-2;
+    }
+
+    .admin-status-dot::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: #cbd5e1;
+    }
+
+    .admin-status-paid::before {
+        background: #16a34a;
+    }
+
+    .admin-status-partial::before {
+        background: #f59e0b;
+    }
+
+    .admin-status-unpaid::before {
+        background: #ef4444;
+    }
+
     .admin-status-active {
         @apply bg-emerald-100 text-emerald-700;
     }

@@ -7,7 +7,12 @@
         <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
                 <p class="text-xs font-semibold uppercase tracking-[0.35em] text-slate-400">Status</p>
-                <span class="admin-status {{ $invoice->status === 'paid' ? 'admin-status-active' : ($invoice->status === 'partially_paid' ? 'admin-status-draft' : '') }}">
+                @php
+                    $statusClass = $invoice->status === 'paid'
+                        ? 'admin-status-paid'
+                        : ($invoice->status === 'partially_paid' ? 'admin-status-partial' : 'admin-status-unpaid');
+                @endphp
+                <span class="admin-status admin-status-dot {{ $statusClass }}">
                     {{ str_replace('_', ' ', $invoice->status) }}
                 </span>
             </div>
