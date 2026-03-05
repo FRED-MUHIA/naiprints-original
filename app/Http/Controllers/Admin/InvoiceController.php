@@ -8,13 +8,13 @@ use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\InvoiceSetting;
-use App\Models\Payment;
-use App\Models\Receipt;
+use App\Services\InvoicePaymentService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\URL;
 
 class InvoiceController extends Controller
 {
@@ -110,7 +110,7 @@ class InvoiceController extends Controller
 
     public function show(Invoice $invoice)
     {
-        $invoice->load(['client', 'items', 'payments.receipt', 'receipts']);
+        $invoice->load(['client', 'items', 'payments.receipt', 'receipts', 'mpesaTransactions']);
         $settings = InvoiceSetting::first() ?? new InvoiceSetting(InvoiceSetting::defaults());
 
         return view('admin.invoices.show', compact('invoice', 'settings'));
@@ -179,7 +179,7 @@ class InvoiceController extends Controller
             ->with('success', 'Invoice deleted successfully.');
     }
 
-    public function addPayment(Request $request, Invoice $invoice)
+    public function addPayment(Request $request, Invoice $invoice, InvoicePaymentService $payments)
     {
         $data = $request->validate([
             'amount' => ['required', 'numeric', 'min:0.01'],
@@ -189,29 +189,7 @@ class InvoiceController extends Controller
             'note' => ['nullable', 'string'],
         ]);
 
-        $payment = DB::transaction(function () use ($invoice, $data) {
-            $payment = $invoice->payments()->create($data);
-
-            $invoice->load('items', 'payments');
-            $invoice->recalculateTotals();
-            $invoice->refreshStatus();
-            $invoice->save();
-
-            $receiptSequence = (int) Receipt::max('sequence') + 1;
-            Receipt::create([
-                'invoice_id' => $invoice->id,
-                'payment_id' => $payment->id,
-                'sequence' => $receiptSequence,
-                'number' => $this->formatReceiptNumber($receiptSequence),
-                'public_id' => (string) Str::uuid(),
-                'amount' => $payment->amount,
-                'balance_after' => $invoice->balance,
-                'method' => $payment->method,
-                'payment_date' => $payment->payment_date,
-            ]);
-
-            return $payment;
-        });
+        $payments->record($invoice, $data);
 
         return redirect()->route('admin.invoices.show', $invoice)
             ->with('success', 'Payment recorded and receipt generated.');
@@ -221,21 +199,29 @@ class InvoiceController extends Controller
     {
         $invoice->load(['client', 'items', 'payments', 'receipts']);
         $settings = InvoiceSetting::first() ?? new InvoiceSetting(InvoiceSetting::defaults());
-
-        $pdf = Pdf::loadView('invoices.pdf', compact('invoice', 'settings'));
+        $verificationUrl = URL::signedRoute('invoice.verify', $invoice->public_id);
+        $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' . urlencode($verificationUrl);
+        $pdf = Pdf::loadView('invoices.pdf', compact('invoice', 'settings', 'verificationUrl', 'qrUrl'))
+            ->setOption('isRemoteEnabled', true);
 
         return $pdf->download("{$invoice->number}.pdf");
     }
 
-    public function sendEmail(Invoice $invoice)
+    public function sendEmail(Request $request, Invoice $invoice)
     {
         $invoice->load('client');
 
-        if (!$invoice->client?->email) {
+        $data = $request->validate([
+            'email' => ['nullable', 'email'],
+        ]);
+
+        $recipient = $data['email'] ?? $invoice->client?->email;
+
+        if (!$recipient) {
             return back()->withErrors(['email' => 'This client does not have an email address.']);
         }
 
-        Mail::to($invoice->client->email)->send(new InvoiceMail($invoice));
+        Mail::to($recipient)->send(new InvoiceMail($invoice));
 
         return back()->with('success', 'Invoice emailed successfully.');
     }

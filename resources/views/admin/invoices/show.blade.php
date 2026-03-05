@@ -16,7 +16,13 @@
                 <a href="{{ route('admin.invoices.download', $invoice) }}" class="admin-btn-outline">Download PDF</a>
                 <form method="POST" action="{{ route('admin.invoices.send', $invoice) }}">
                     @csrf
-                    <button type="submit" class="admin-btn-outline">Send Email</button>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <input type="email"
+                               name="email"
+                               placeholder="{{ $invoice->client?->email ?? 'Enter email address' }}"
+                               class="admin-input border border-slate-200 rounded-xl px-3 py-2 text-sm">
+                        <button type="submit" class="admin-btn-outline">Send Email</button>
+                    </div>
                 </form>
                 <a href="{{ route('admin.invoices.edit', $invoice) }}" class="admin-btn-primary">Edit Invoice</a>
             </div>
@@ -84,6 +90,11 @@
         </table>
     </div>
 
+    @php
+        $mpesa = $settings->mpesa_config ?? [];
+        $mpesaEnabled = !empty($mpesa['consumer_key']) && !empty($mpesa['consumer_secret']) && !empty($mpesa['shortcode']);
+    @endphp
+
     <div class="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <div class="admin-panel p-6 space-y-4">
             <h2 class="text-lg font-semibold">Record Payment</h2>
@@ -120,24 +131,66 @@
             </form>
         </div>
 
-        <div class="admin-panel p-6 space-y-4">
-            <h2 class="text-lg font-semibold">Payments & Receipts</h2>
-            <div class="space-y-3 text-sm text-slate-600">
-                @forelse ($invoice->payments as $payment)
-                    <div class="rounded-2xl border border-slate-200 bg-white p-4">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="font-semibold text-slate-800">KES {{ number_format($payment->amount, 2) }}</p>
-                                <p class="text-xs text-slate-500">{{ optional($payment->payment_date)->format('M d, Y') }} · {{ $payment->method ?? 'Payment' }}</p>
-                            </div>
-                            @if ($payment->receipt)
-                                <a href="{{ route('receipt.public', $payment->receipt->public_id) }}" class="admin-btn-outline" target="_blank">Receipt</a>
-                            @endif
+        <div class="space-y-6">
+            <div class="admin-panel p-6 space-y-4">
+                <h2 class="text-lg font-semibold">M-Pesa</h2>
+                @if ($mpesaEnabled)
+                    <form method="POST" action="{{ route('admin.invoices.mpesa.stk', $invoice) }}" class="grid gap-4 md:grid-cols-2">
+                        @csrf
+                        <label class="space-y-2 text-sm font-semibold text-slate-600">
+                            Phone
+                            <input type="text" name="phone" value="{{ old('phone', $invoice->client?->phone) }}" class="admin-input border border-slate-200 rounded-xl px-4 py-2" required>
+                        </label>
+                        <label class="space-y-2 text-sm font-semibold text-slate-600">
+                            Amount
+                            <input type="number" step="0.01" min="1" name="amount" value="{{ number_format($invoice->balance, 2, '.', '') }}" class="admin-input border border-slate-200 rounded-xl px-4 py-2" required>
+                        </label>
+                        <div class="md:col-span-2">
+                            <button type="submit" class="admin-btn-outline">Send STK Push</button>
                         </div>
+                    </form>
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                        <p><strong class="text-slate-800">PayBill:</strong> {{ $mpesa['shortcode'] }}</p>
+                        <p><strong class="text-slate-800">Account Reference:</strong> {{ $invoice->number }}</p>
                     </div>
-                @empty
-                    <div class="admin-empty">No payments recorded yet.</div>
-                @endforelse
+                    @if ($invoice->mpesaTransactions->isNotEmpty())
+                        <div class="space-y-2 text-sm text-slate-600">
+                            <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Recent M-Pesa</p>
+                            @foreach ($invoice->mpesaTransactions->take(3) as $transaction)
+                                <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-3">
+                                    <div>
+                                        <p class="font-semibold text-slate-800">KES {{ number_format($transaction->amount ?? 0, 2) }}</p>
+                                        <p class="text-xs text-slate-500">{{ strtoupper($transaction->type) }} · {{ $transaction->status }}</p>
+                                    </div>
+                                    <div class="text-xs text-slate-500">{{ $transaction->receipt_number ?? $transaction->checkout_request_id }}</div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                @else
+                    <div class="admin-empty">M-Pesa is not configured yet. Add your API keys in Settings.</div>
+                @endif
+            </div>
+
+            <div class="admin-panel p-6 space-y-4">
+                <h2 class="text-lg font-semibold">Payments & Receipts</h2>
+                <div class="space-y-3 text-sm text-slate-600">
+                    @forelse ($invoice->payments as $payment)
+                        <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="font-semibold text-slate-800">KES {{ number_format($payment->amount, 2) }}</p>
+                                    <p class="text-xs text-slate-500">{{ optional($payment->payment_date)->format('M d, Y') }} · {{ $payment->method ?? 'Payment' }}</p>
+                                </div>
+                                @if ($payment->receipt)
+                                    <a href="{{ route('receipt.public', $payment->receipt->public_id) }}" class="admin-btn-outline" target="_blank">Receipt</a>
+                                @endif
+                            </div>
+                        </div>
+                    @empty
+                        <div class="admin-empty">No payments recorded yet.</div>
+                    @endforelse
+                </div>
             </div>
         </div>
     </div>

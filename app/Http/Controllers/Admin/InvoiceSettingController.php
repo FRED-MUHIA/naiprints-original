@@ -16,7 +16,13 @@ class InvoiceSettingController extends Controller
             $settings = InvoiceSetting::create(InvoiceSetting::defaults());
         }
 
-        return view('admin.invoices.settings', compact('settings'));
+        $callbackUrls = [
+            'stk' => route('mpesa.stk.callback'),
+            'c2b_confirmation' => route('mpesa.c2b.confirmation'),
+            'c2b_validation' => route('mpesa.c2b.validation'),
+        ];
+
+        return view('admin.invoices.settings', compact('settings', 'callbackUrls'));
     }
 
     public function update(Request $request)
@@ -36,6 +42,19 @@ class InvoiceSettingController extends Controller
             'payment_methods' => ['nullable', 'array'],
             'payment_methods.*' => ['nullable', 'string', 'max:255'],
             'logo' => ['nullable', 'image', 'max:4096'],
+            'signature' => ['nullable', 'image', 'max:4096'],
+            'mpesa.environment' => ['nullable', 'in:sandbox,live'],
+            'mpesa.consumer_key' => ['nullable', 'string', 'max:255'],
+            'mpesa.consumer_secret' => ['nullable', 'string', 'max:255'],
+            'mpesa.shortcode' => ['nullable', 'string', 'max:255'],
+            'mpesa.passkey' => ['nullable', 'string', 'max:255'],
+            'mpesa.initiator_name' => ['nullable', 'string', 'max:255'],
+            'mpesa.security_credential' => ['nullable', 'string', 'max:255'],
+            'mpesa.callback_url' => ['nullable', 'string', 'max:255'],
+            'mpesa.confirmation_url' => ['nullable', 'string', 'max:255'],
+            'mpesa.validation_url' => ['nullable', 'string', 'max:255'],
+            'mpesa.response_type' => ['nullable', 'in:Completed,Canceled'],
+            'mpesa.transaction_type' => ['nullable', 'in:CustomerPayBillOnline,CustomerBuyGoodsOnline'],
         ]);
 
         if ($request->hasFile('logo')) {
@@ -45,8 +64,17 @@ class InvoiceSettingController extends Controller
             }
             $data['logo_path'] = $path;
         }
+        if ($request->hasFile('signature')) {
+            $path = $request->file('signature')->store('invoices/signatures', 'public');
+            if ($settings->signature_path) {
+                Storage::disk('public')->delete($settings->signature_path);
+            }
+            $data['signature_path'] = $path;
+        }
 
         $data['payment_methods'] = array_values(array_filter($data['payment_methods'] ?? []));
+        $data['mpesa_config'] = array_filter($data['mpesa'] ?? [], fn ($value) => $value !== null && $value !== '');
+        unset($data['mpesa']);
 
         $settings->update($data);
 

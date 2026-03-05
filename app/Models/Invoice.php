@@ -54,6 +54,11 @@ class Invoice extends Model
         return $this->hasMany(Receipt::class)->latest('payment_date');
     }
 
+    public function mpesaTransactions()
+    {
+        return $this->hasMany(MpesaTransaction::class)->latest();
+    }
+
     public function getAmountPaidAttribute(): float
     {
         if ($this->relationLoaded('payments')) {

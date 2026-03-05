@@ -208,8 +208,12 @@ document.addEventListener('DOMContentLoaded', () => {
         window.addEventListener('touchend', stopDrag);
 
         let timer = null;
+        const hasOverflow = () => track.scrollWidth > track.clientWidth + 2;
         const startAuto = () => {
             if (timer) {
+                return;
+            }
+            if (!hasOverflow()) {
                 return;
             }
             timer = setInterval(() => scrollBy(1), 4000);
@@ -228,6 +232,14 @@ document.addEventListener('DOMContentLoaded', () => {
         carousel.addEventListener('focusout', startAuto);
 
         startAuto();
+
+        window.addEventListener('resize', () => {
+            if (!hasOverflow()) {
+                stopAuto();
+            } else {
+                startAuto();
+            }
+        });
     });
 
     document.querySelectorAll('[data-related-carousel]').forEach((carousel) => {

@@ -988,6 +988,7 @@
 
     .category-carousel {
         @apply relative mt-8 flex items-center gap-4;
+        --category-size: 144px;
     }
 
     .category-slider {
@@ -1109,7 +1110,9 @@
     }
 
     .category-avatar {
-        @apply flex h-36 w-36 items-center justify-center rounded-full text-xl font-semibold text-slate-700;
+        @apply flex items-center justify-center rounded-full text-xl font-semibold text-slate-700;
+        width: var(--category-size);
+        height: var(--category-size);
         box-shadow: 0 24px 60px -40px rgba(15, 23, 42, 0.5);
     }
 
@@ -1127,6 +1130,59 @@
     .carousel-btn {
         @apply hidden h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-slate-300 hover:text-slate-900 md:flex;
         box-shadow: 0 24px 60px -40px rgba(15, 23, 42, 0.5);
+    }
+
+    @keyframes category-float {
+        0% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(-6px);
+        }
+        100% {
+            transform: translateY(0);
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .category-carousel {
+            --category-size: 120px;
+        }
+
+        .category-slider {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 28px;
+            overflow: visible;
+            scroll-snap-type: none;
+        }
+
+        .category-slide {
+            min-width: 0;
+        }
+
+        .category-avatar {
+            animation: category-float 7s ease-in-out infinite;
+            will-change: transform;
+        }
+
+        .category-slide:nth-child(2n) .category-avatar {
+            animation-delay: 0.6s;
+        }
+
+        .category-slide:nth-child(3n) .category-avatar {
+            animation-delay: 1.2s;
+        }
+
+        .category-carousel .carousel-btn {
+            display: none;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .category-avatar {
+            animation: none;
+        }
     }
 
     .shop-topbar {

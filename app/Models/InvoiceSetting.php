@@ -12,13 +12,16 @@ class InvoiceSetting extends Model
         'email',
         'website',
         'logo_path',
+        'signature_path',
         'theme_color',
         'footer_text',
         'payment_methods',
+        'mpesa_config',
     ];
 
     protected $casts = [
         'payment_methods' => 'array',
+        'mpesa_config' => 'array',
     ];
 
     public static function defaults(): array

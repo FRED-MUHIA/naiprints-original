@@ -35,6 +35,13 @@
                         <span class="text-xs text-slate-500">Current: {{ $settings->logo_path }}</span>
                     @endif
                 </label>
+                <label class="space-y-2 text-sm font-semibold text-slate-600">
+                    Signature Image
+                    <input type="file" name="signature" class="admin-input border border-slate-200 rounded-xl px-4 py-2">
+                    @if ($settings->signature_path)
+                        <span class="text-xs text-slate-500">Current: {{ $settings->signature_path }}</span>
+                    @endif
+                </label>
             </div>
         </div>
 
@@ -51,6 +58,86 @@
                 @endforeach
             </div>
             <p class="text-xs text-slate-500">Add up to 4 methods (M-Pesa, Bank Transfer, Cash, etc.).</p>
+        </div>
+
+        <div class="admin-card space-y-4">
+            <h2 class="text-lg font-semibold">M-Pesa API</h2>
+            @php
+                $mpesa = $settings->mpesa_config ?? [];
+            @endphp
+            <div class="grid gap-4 md:grid-cols-2">
+                <label class="space-y-2 text-sm font-semibold text-slate-600">
+                    Environment
+                    <select name="mpesa[environment]" class="admin-input border border-slate-200 rounded-xl px-4 py-2">
+                        <option value="">Select</option>
+                        <option value="sandbox" @selected(old('mpesa.environment', $mpesa['environment'] ?? '') === 'sandbox')>Sandbox</option>
+                        <option value="live" @selected(old('mpesa.environment', $mpesa['environment'] ?? '') === 'live')>Live</option>
+                    </select>
+                </label>
+                <label class="space-y-2 text-sm font-semibold text-slate-600">
+                    Shortcode
+                    <input type="text" name="mpesa[shortcode]" value="{{ old('mpesa.shortcode', $mpesa['shortcode'] ?? '') }}" class="admin-input border border-slate-200 rounded-xl px-4 py-2">
+                </label>
+                <label class="space-y-2 text-sm font-semibold text-slate-600">
+                    Consumer Key
+                    <input type="text" name="mpesa[consumer_key]" value="{{ old('mpesa.consumer_key', $mpesa['consumer_key'] ?? '') }}" class="admin-input border border-slate-200 rounded-xl px-4 py-2">
+                </label>
+                <label class="space-y-2 text-sm font-semibold text-slate-600">
+                    Consumer Secret
+                    <input type="password" name="mpesa[consumer_secret]" value="{{ old('mpesa.consumer_secret', $mpesa['consumer_secret'] ?? '') }}" class="admin-input border border-slate-200 rounded-xl px-4 py-2">
+                </label>
+                <label class="space-y-2 text-sm font-semibold text-slate-600">
+                    Passkey
+                    <input type="password" name="mpesa[passkey]" value="{{ old('mpesa.passkey', $mpesa['passkey'] ?? '') }}" class="admin-input border border-slate-200 rounded-xl px-4 py-2">
+                </label>
+                <label class="space-y-2 text-sm font-semibold text-slate-600">
+                    STK Transaction Type
+                    <select name="mpesa[transaction_type]" class="admin-input border border-slate-200 rounded-xl px-4 py-2">
+                        <option value="">Select</option>
+                        <option value="CustomerPayBillOnline" @selected(old('mpesa.transaction_type', $mpesa['transaction_type'] ?? '') === 'CustomerPayBillOnline')>Customer PayBill</option>
+                        <option value="CustomerBuyGoodsOnline" @selected(old('mpesa.transaction_type', $mpesa['transaction_type'] ?? '') === 'CustomerBuyGoodsOnline')>Customer BuyGoods</option>
+                    </select>
+                </label>
+                <label class="space-y-2 text-sm font-semibold text-slate-600">
+                    Initiator Name
+                    <input type="text" name="mpesa[initiator_name]" value="{{ old('mpesa.initiator_name', $mpesa['initiator_name'] ?? '') }}" class="admin-input border border-slate-200 rounded-xl px-4 py-2">
+                </label>
+                <label class="space-y-2 text-sm font-semibold text-slate-600">
+                    Security Credential
+                    <input type="password" name="mpesa[security_credential]" value="{{ old('mpesa.security_credential', $mpesa['security_credential'] ?? '') }}" class="admin-input border border-slate-200 rounded-xl px-4 py-2">
+                </label>
+                <label class="space-y-2 text-sm font-semibold text-slate-600 md:col-span-2">
+                    STK Callback URL
+                    <input type="text" name="mpesa[callback_url]" value="{{ old('mpesa.callback_url', $mpesa['callback_url'] ?? '') }}" class="admin-input border border-slate-200 rounded-xl px-4 py-2" placeholder="{{ $callbackUrls['stk'] ?? '' }}">
+                </label>
+                <label class="space-y-2 text-sm font-semibold text-slate-600 md:col-span-2">
+                    C2B Confirmation URL
+                    <input type="text" name="mpesa[confirmation_url]" value="{{ old('mpesa.confirmation_url', $mpesa['confirmation_url'] ?? '') }}" class="admin-input border border-slate-200 rounded-xl px-4 py-2" placeholder="{{ $callbackUrls['c2b_confirmation'] ?? '' }}">
+                </label>
+                <label class="space-y-2 text-sm font-semibold text-slate-600 md:col-span-2">
+                    C2B Validation URL
+                    <input type="text" name="mpesa[validation_url]" value="{{ old('mpesa.validation_url', $mpesa['validation_url'] ?? '') }}" class="admin-input border border-slate-200 rounded-xl px-4 py-2" placeholder="{{ $callbackUrls['c2b_validation'] ?? '' }}">
+                </label>
+                <label class="space-y-2 text-sm font-semibold text-slate-600">
+                    C2B Response Type
+                    <select name="mpesa[response_type]" class="admin-input border border-slate-200 rounded-xl px-4 py-2">
+                        <option value="">Select</option>
+                        <option value="Completed" @selected(old('mpesa.response_type', $mpesa['response_type'] ?? '') === 'Completed')>Completed</option>
+                        <option value="Canceled" @selected(old('mpesa.response_type', $mpesa['response_type'] ?? '') === 'Canceled')>Canceled</option>
+                    </select>
+                </label>
+            </div>
+            <div class="flex flex-wrap gap-3">
+                <button type="submit"
+                        class="admin-btn-outline"
+                        formaction="{{ route('admin.invoices.mpesa.register') }}"
+                        formmethod="POST">
+                    Register C2B URLs
+                </button>
+                <div class="text-xs text-slate-500">
+                    Save settings first, then register C2B URLs. Use the invoice number as the account reference.
+                </div>
+            </div>
         </div>
 
         <div class="admin-card space-y-4">
