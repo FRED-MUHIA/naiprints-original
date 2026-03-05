@@ -5652,6 +5652,107 @@
         }
     }
 
+    @media (max-width: 640px) {
+        .mockup-topbar {
+            padding: 10px 12px;
+            gap: 10px;
+        }
+
+        .mockup-topbar-left {
+            gap: 8px;
+            flex-wrap: nowrap;
+        }
+
+        .mockup-logo-text {
+            font-size: 0.95rem;
+        }
+
+        .mockup-stage-toolbar {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+            padding: 12px;
+        }
+
+        .mockup-stage-tabs {
+            width: 100%;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .mockup-stage-tab {
+            padding: 6px 12px;
+        }
+
+        .mockup-stage-actions {
+            width: 100%;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .mockup-tools-menu {
+            left: 0;
+            transform: none;
+            width: 100%;
+        }
+
+        .mockup-text-toolbar {
+            justify-content: flex-start;
+            padding: 8px;
+        }
+
+        .mockup-canvas-panel {
+            padding: 0 12px 12px;
+            --artboard-size: min(360px, 86vw);
+        }
+
+        .mockup-canvas-wrap {
+            border-radius: 16px;
+        }
+
+        .mockup-flip-arrows {
+            position: static;
+            transform: none;
+            flex-direction: row;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .mockup-flip-label {
+            letter-spacing: 0.12em;
+        }
+
+        .mockup-add-page {
+            width: 100%;
+            max-width: 360px;
+        }
+
+        .mockup-bottombar {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .mockup-zoom,
+        .mockup-page-meta {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .mockup-topbar-center {
+            font-size: 0.8rem;
+        }
+
+        .mockup-stage-tabs {
+            gap: 6px;
+        }
+
+        .mockup-canvas-panel {
+            --artboard-size: min(320px, 88vw);
+        }
+    }
+
     .gift-finder {
         background: radial-gradient(1200px 500px at 50% -120px, rgba(99, 102, 241, 0.3), transparent 65%), #111223;
         color: #f8fafc;
