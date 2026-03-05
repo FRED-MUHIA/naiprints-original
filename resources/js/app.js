@@ -1183,6 +1183,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
+
         bindCartItemControls(checkoutItems);
         renderCheckout();
         updatePaymentButton();

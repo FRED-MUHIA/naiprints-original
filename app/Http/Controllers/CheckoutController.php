@@ -2,10 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\OrderPlaced;
+use App\Mail\InvoiceMail;
+use App\Models\Client;
 use App\Models\GlobalSection;
+use App\Models\Invoice;
+use App\Models\InvoiceItem;
+use App\Models\InvoiceSetting;
+use App\Models\MpesaTransaction;
+use App\Services\MpesaService;
 use App\Support\PageDefaults;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
@@ -59,25 +66,60 @@ class CheckoutController extends Controller
             0.0
         );
 
-        $orderNumber = 'NP-' . now()->format('Ymd') . '-' . Str::upper(Str::random(6));
-        $order = [
-            'number' => $orderNumber,
-            'placed_at' => now(),
-            'customer' => [
+        $invoice = DB::transaction(function () use ($validated, $cleanItems, $subtotal) {
+            $client = Client::firstOrNew(['email' => $validated['email']]);
+            $client->fill([
                 'name' => $validated['name'],
-                'email' => $validated['email'],
                 'phone' => $validated['phone'],
-            ],
-            'shipping' => [
-                'address' => $validated['address'],
-                'city' => $validated['city'],
-                'notes' => $validated['notes'] ?? '',
-            ],
-            'payment' => $validated['payment'],
-            'items' => $cleanItems->all(),
-            'subtotal' => $subtotal,
-            'total' => $subtotal,
-        ];
+                'address' => trim($validated['address'] . ', ' . $validated['city']),
+            ]);
+            $client->save();
+
+            $sequence = (int) Invoice::max('sequence') + 1;
+            $invoice = Invoice::create([
+                'client_id' => $client->id,
+                'sequence' => $sequence,
+                'number' => 'INV-' . str_pad((string) $sequence, 4, '0', STR_PAD_LEFT),
+                'public_id' => (string) Str::uuid(),
+                'issue_date' => now(),
+                'due_date' => now()->addDays(7),
+                'tax_rate' => null,
+                'discount_amount' => 0,
+                'notes' => trim("Checkout order\nAddress: {$validated['address']}\nCity: {$validated['city']}\nNotes: " . ($validated['notes'] ?? '')),
+                'terms' => null,
+            ]);
+
+            $items = $cleanItems->values()->map(function ($item, $index) {
+                $descriptionParts = [];
+                if (!empty($item['color'])) {
+                    $descriptionParts[] = 'Color: ' . $item['color'];
+                }
+                if (!empty($item['size'])) {
+                    $descriptionParts[] = 'Size: ' . $item['size'];
+                }
+                $description = $descriptionParts ? implode(', ', $descriptionParts) : null;
+                $qty = (float) $item['qty'];
+                $unitPrice = (float) $item['price'];
+
+                return [
+                    'name' => $item['name'],
+                    'description' => $description,
+                    'quantity' => $qty,
+                    'unit_price' => $unitPrice,
+                    'total' => round($qty * $unitPrice, 2),
+                    'position' => $index,
+                ];
+            });
+
+            $invoice->items()->createMany($items->all());
+
+            $invoice->load('items', 'payments');
+            $invoice->recalculateTotals();
+            $invoice->refreshStatus();
+            $invoice->save();
+
+            return $invoice;
+        });
 
         $header = GlobalSection::ensure('header', PageDefaults::header());
         $footer = GlobalSection::ensure('footer', PageDefaults::footer());
@@ -107,11 +149,62 @@ class CheckoutController extends Controller
             'logo_url' => $logoUrl,
         ];
 
-        Mail::to($validated['email'])
-            ->send(new OrderPlaced($order, $support));
+        Mail::to($validated['email'])->send(new InvoiceMail($invoice));
+        if ($support['email']) {
+            Mail::to($support['email'])->send(new InvoiceMail($invoice));
+        }
+
+        if ($validated['payment'] === 'mobile_money') {
+            $settings = InvoiceSetting::first() ?? new InvoiceSetting(InvoiceSetting::defaults());
+            $mpesa = new MpesaService($settings);
+
+            if (!$mpesa->isConfigured()) {
+                return redirect()
+                    ->route('invoice.public', $invoice->public_id)
+                    ->withErrors(['payment' => 'M-Pesa is not configured yet.']);
+            }
+
+            $phone = $mpesa->normalizePhone($validated['phone']);
+            $callbackUrl = ($settings->mpesa_config['callback_url'] ?? null) ?: route('mpesa.stk.callback');
+
+            try {
+                $response = $mpesa->stkPush([
+                    'Amount' => (float) $invoice->total,
+                    'PartyA' => $phone,
+                    'PhoneNumber' => $phone,
+                    'CallBackURL' => $callbackUrl,
+                    'AccountReference' => $invoice->number,
+                    'TransactionDesc' => 'Invoice ' . $invoice->number,
+                ]);
+            } catch (\Throwable $exception) {
+                return redirect()
+                    ->route('invoice.public', $invoice->public_id)
+                    ->withErrors(['payment' => 'M-Pesa request failed: ' . $exception->getMessage()]);
+            }
+
+            MpesaTransaction::create([
+                'invoice_id' => $invoice->id,
+                'type' => 'stk',
+                'phone' => $phone,
+                'amount' => $invoice->total,
+                'reference' => $invoice->number,
+                'checkout_request_id' => $response['CheckoutRequestID'] ?? null,
+                'merchant_request_id' => $response['MerchantRequestID'] ?? null,
+                'status' => 'pending',
+                'result_desc' => $response['ResponseDescription'] ?? null,
+                'raw_request' => [
+                    'source' => 'checkout',
+                    'invoice_id' => $invoice->id,
+                ],
+            ]);
+
+            return redirect()
+                ->route('invoice.public', $invoice->public_id)
+                ->with('success', 'Invoice created. STK prompt sent to your phone. Enter your M-Pesa PIN to complete payment.');
+        }
 
         return redirect()
-            ->route('checkout')
-            ->with('order_success', 'Order placed! A confirmation email has been sent to ' . $validated['email'] . '.');
+            ->route('invoice.public', $invoice->public_id)
+            ->with('success', 'Invoice created and emailed. Please complete payment to confirm your order.');
     }
 }

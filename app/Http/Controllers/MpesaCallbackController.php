@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Invoice;
 use App\Models\MpesaTransaction;
+use App\Mail\OrderPlaced;
 use App\Services\InvoicePaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Mail;
 
 class MpesaCallbackController extends Controller
 {
@@ -28,7 +30,7 @@ class MpesaCallbackController extends Controller
             : new MpesaTransaction();
 
         $transaction->fill([
-            'type' => 'stk',
+            'type' => $transaction->type ?: 'stk',
             'status' => $resultCode === '0' ? 'success' : 'failed',
             'result_code' => $resultCode,
             'result_desc' => $resultDesc,
@@ -59,6 +61,29 @@ class MpesaCallbackController extends Controller
         $transaction->save();
 
         if ($resultCode === '0' && !$transaction->payment_id) {
+            if ($transaction->type === 'checkout') {
+                $raw = $transaction->raw_request ?? [];
+                $order = $raw['order'] ?? null;
+                $support = $raw['support'] ?? [];
+                $alreadySent = (bool) ($raw['order_email_sent'] ?? false);
+
+                if ($order && !$alreadySent) {
+                    $customerEmail = data_get($order, 'customer.email');
+                    if ($customerEmail) {
+                        Mail::to($customerEmail)->send(new OrderPlaced($order, $support));
+                    }
+                    $supportEmail = $support['email'] ?? config('mail.from.address');
+                    if ($supportEmail) {
+                        Mail::to($supportEmail)->send(new OrderPlaced($order, $support));
+                    }
+                    $raw['order_email_sent'] = true;
+                    $transaction->raw_request = $raw;
+                    $transaction->save();
+                }
+
+                return response()->json(['ResultCode' => 0, 'ResultDesc' => 'Success']);
+            }
+
             $invoice = $transaction->invoice ?: $this->resolveInvoice($transaction->reference);
             if ($invoice && $amount > 0) {
                 $payment = $payments->record($invoice, [
