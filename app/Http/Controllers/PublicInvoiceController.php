@@ -31,6 +31,21 @@ class PublicInvoiceController extends Controller
         return $pdf->download("{$invoice->number}.pdf");
     }
 
+    public function status(Invoice $invoice)
+    {
+        $invoice->load('mpesaTransactions');
+        $latest = $invoice->mpesaTransactions->first();
+
+        if (!$latest) {
+            return response()->json(['status' => 'idle']);
+        }
+
+        return response()->json([
+            'status' => $latest->status,
+            'message' => $latest->result_desc,
+        ]);
+    }
+
     public function verify(Invoice $invoice)
     {
         $invoice->load(['client']);

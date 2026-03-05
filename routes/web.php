@@ -382,6 +382,8 @@ Route::get('/invoice/view/{invoice:public_id}', [PublicInvoiceController::class,
     ->name('invoice.public');
 Route::get('/invoice/view/{invoice:public_id}/pdf', [PublicInvoiceController::class, 'pdf'])
     ->name('invoice.public.pdf');
+Route::get('/invoice/view/{invoice:public_id}/status', [PublicInvoiceController::class, 'status'])
+    ->name('invoice.payment.status');
 Route::get('/invoice/verify/{invoice:public_id}', [PublicInvoiceController::class, 'verify'])
     ->name('invoice.verify')
     ->middleware('signed');

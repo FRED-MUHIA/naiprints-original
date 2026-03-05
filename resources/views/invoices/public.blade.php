@@ -21,6 +21,10 @@
         @php
             $latestMpesa = $invoice->mpesaTransactions->first();
         @endphp
+        <div id="payment-status"
+             class="mb-6 rounded-2xl border px-4 py-3 text-sm hidden"
+             data-status-url="{{ route('invoice.payment.status', $invoice->public_id) }}">
+        </div>
         @if ($latestMpesa && $latestMpesa->status === 'failed')
             <div class="mb-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
                 Payment failed. Please try again.
@@ -261,6 +265,8 @@
             const mpesaModal = document.getElementById('mpesa-modal');
             const bankToggle = document.getElementById('bank-details-toggle');
             const bankPanel = document.getElementById('bank-details-panel');
+            const paymentStatus = document.getElementById('payment-status');
+            const statusUrl = paymentStatus?.dataset.statusUrl;
 
             if (mpesaOpen && mpesaClose && mpesaModal) {
                 const toggle = (show) => {
@@ -284,6 +290,55 @@
                 bankToggle.addEventListener('click', () => {
                     bankPanel.classList.toggle('hidden');
                 });
+            }
+
+            if (paymentStatus && statusUrl) {
+                const showStatus = (variant, message) => {
+                    paymentStatus.className = 'mb-6 rounded-2xl border px-4 py-3 text-sm';
+                    if (variant === 'success') {
+                        paymentStatus.classList.add('border-emerald-200', 'bg-emerald-50', 'text-emerald-700');
+                    } else if (variant === 'failed') {
+                        paymentStatus.classList.add('border-rose-200', 'bg-rose-50', 'text-rose-700');
+                    } else {
+                        paymentStatus.classList.add('border-amber-200', 'bg-amber-50', 'text-amber-700');
+                    }
+                    paymentStatus.textContent = message;
+                    paymentStatus.classList.remove('hidden');
+                };
+
+                let attempts = 0;
+                const maxAttempts = 18;
+                const poll = async () => {
+                    attempts += 1;
+                    try {
+                        const response = await fetch(statusUrl, { headers: { 'Accept': 'application/json' } });
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.status === 'success') {
+                                showStatus('success', 'Payment received. Receipt will be emailed to you.');
+                                return;
+                            }
+                            if (data.status === 'failed') {
+                                showStatus('failed', 'Payment failed. Please try again.');
+                                return;
+                            }
+                            if (data.status === 'pending') {
+                                showStatus('pending', 'Payment pending. Complete the M-Pesa prompt on your phone.');
+                            }
+                        }
+                    } catch (error) {
+                        // keep polling
+                    }
+
+                    if (attempts >= maxAttempts) {
+                        showStatus('failed', 'Payment not completed. Please try again.');
+                        return;
+                    }
+
+                    setTimeout(poll, 5000);
+                };
+
+                setTimeout(poll, 4000);
             }
         </script>
     @endif
