@@ -32,6 +32,10 @@
 
         <div class="rounded-3xl bg-white shadow-xl overflow-hidden">
             <div class="h-2 bg-brand"></div>
+            @php
+                $paymentMethods = collect($settings->payment_methods ?? [])->map(fn ($m) => strtolower((string) $m));
+                $showMpesaPay = $paymentMethods->contains('m-pesa') || $paymentMethods->contains('mpesa') || ($settings->mpesa_config['shortcode'] ?? null);
+            @endphp
             <div class="p-8">
                 <div class="flex flex-wrap items-start justify-between gap-6">
                     <div class="flex items-center gap-4">
@@ -164,7 +168,7 @@
                         <div class="mt-4">
                             <a href="{{ route('invoice.public.pdf', $invoice->public_id) }}" class="btn-brand w-full justify-center">Download PDF</a>
                         </div>
-                        @if (($settings->mpesa_config['shortcode'] ?? null))
+                        @if ($showMpesaPay)
                             <div class="mt-3">
                                 <button type="button"
                                         id="mpesa-open"
@@ -179,7 +183,7 @@
         </div>
     </div>
 
-    @if (($settings->mpesa_config['shortcode'] ?? null))
+    @if ($showMpesaPay)
         <div id="mpesa-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 px-4">
             <div class="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl">
                 <div class="flex items-center justify-between">
