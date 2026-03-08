@@ -470,6 +470,7 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
     Route::delete('invoices/{invoice}/force', [InvoiceController::class, 'forceDelete'])->name('invoices.force');
     Route::get('invoices/settings', [InvoiceSettingController::class, 'edit'])->name('invoices.settings');
     Route::post('invoices/settings', [InvoiceSettingController::class, 'update'])->name('invoices.settings.update');
+    Route::post('invoices/settings/test-email', [InvoiceSettingController::class, 'testEmail'])->name('invoices.settings.test');
     Route::post('invoices/settings/mpesa/register', [MpesaController::class, 'registerC2b'])->name('invoices.mpesa.register');
     Route::post('invoices/{invoice}/payments', [InvoiceController::class, 'addPayment'])->name('invoices.payments.store');
     Route::post('invoices/{invoice}/mpesa/stk', [MpesaController::class, 'stkPush'])->name('invoices.mpesa.stk');

@@ -2933,7 +2933,7 @@
         position: relative;
         width: 100%;
         max-width: 860px;
-        aspect-ratio: 6 / 7;
+        aspect-ratio: 1 / 1;
         border-radius: 12px;
         background: #fff;
         box-shadow: 0 12px 30px -24px rgba(15, 23, 42, 0.4);

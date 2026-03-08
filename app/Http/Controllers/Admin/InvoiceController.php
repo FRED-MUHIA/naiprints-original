@@ -256,9 +256,18 @@ class InvoiceController extends Controller
             return back()->withErrors(['email' => 'This client does not have an email address.']);
         }
 
-        Mail::to($recipient)->send(new InvoiceMail($invoice));
+        try {
+            Mail::to($recipient)->queue(new InvoiceMail($invoice));
+        } catch (\Throwable $exception) {
+            logger()->error('Invoice email failed', [
+                'invoice_id' => $invoice->id,
+                'recipient' => $recipient,
+                'error' => $exception->getMessage(),
+            ]);
+            return back()->withErrors(['email' => 'We could not queue the invoice email. Please try again.']);
+        }
 
-        return back()->with('success', 'Invoice emailed successfully.');
+        return back()->with('success', 'Invoice email queued successfully.');
     }
 
     public function export(Request $request)

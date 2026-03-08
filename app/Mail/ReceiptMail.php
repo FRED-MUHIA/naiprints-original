@@ -4,16 +4,18 @@ namespace App\Mail;
 
 use App\Models\Receipt;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class ReceiptMail extends Mailable
+class ReceiptMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
     public Receipt $receipt;
+    public bool $afterCommit = true;
 
     /**
      * Create a new message instance.

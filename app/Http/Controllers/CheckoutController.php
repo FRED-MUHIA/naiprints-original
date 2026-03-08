@@ -149,9 +149,16 @@ class CheckoutController extends Controller
             'logo_url' => $logoUrl,
         ];
 
-        Mail::to($validated['email'])->send(new InvoiceMail($invoice));
-        if ($support['email']) {
-            Mail::to($support['email'])->send(new InvoiceMail($invoice));
+        try {
+            Mail::to($validated['email'])->queue(new InvoiceMail($invoice));
+            if ($support['email']) {
+                Mail::to($support['email'])->queue(new InvoiceMail($invoice));
+            }
+        } catch (\Throwable $exception) {
+            logger()->error('Invoice email failed', [
+                'invoice_id' => $invoice->id,
+                'error' => $exception->getMessage(),
+            ]);
         }
 
         if ($validated['payment'] === 'mobile_money') {

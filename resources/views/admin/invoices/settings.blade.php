@@ -141,6 +141,26 @@
         </div>
 
         <div class="admin-card space-y-4">
+            <h2 class="text-lg font-semibold">Email Test</h2>
+            <p class="text-sm text-slate-500">Send a test email using the current SMTP configuration.</p>
+            <div class="flex flex-wrap items-end gap-3">
+                <label class="space-y-2 text-sm font-semibold text-slate-600">
+                    Test Email Address
+                    <input type="email"
+                           name="test_email"
+                           value="{{ old('test_email', $settings->email ?: config('mail.from.address')) }}"
+                           class="admin-input border border-slate-200 rounded-xl px-4 py-2">
+                </label>
+                <button type="submit"
+                        class="admin-btn-outline"
+                        formaction="{{ route('admin.invoices.settings.test') }}"
+                        formmethod="POST">
+                    Send Test Email
+                </button>
+            </div>
+        </div>
+
+        <div class="admin-card space-y-4">
             <h2 class="text-lg font-semibold">Footer</h2>
             <textarea name="footer_text" rows="3" class="admin-input border border-slate-200 rounded-xl px-4 py-2">{{ old('footer_text', $settings->footer_text) }}</textarea>
         </div>
