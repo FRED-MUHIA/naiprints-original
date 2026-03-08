@@ -62,34 +62,6 @@
                                 Sizes
                             </a>
                         </nav>
-
-                        <p class="mt-8 px-3 text-xs font-semibold uppercase tracking-[0.35em] text-slate-400">Invoicing</p>
-                        <nav class="mt-3 space-y-2 text-sm font-semibold">
-                            <a href="{{ route('admin.invoices.index') }}"
-                               class="block rounded-2xl px-4 py-3 transition {{ request()->routeIs('admin.invoices.index') ? 'bg-brand text-white shadow-md' : 'text-slate-600 hover:bg-slate-100' }}">
-                                Dashboard Overview
-                            </a>
-                            <a href="{{ route('admin.clients.index') }}"
-                               class="block rounded-2xl px-4 py-3 transition {{ request()->routeIs('admin.clients.*') ? 'bg-brand text-white shadow-md' : 'text-slate-600 hover:bg-slate-100' }}">
-                                Clients
-                            </a>
-                            <a href="{{ route('admin.invoices.index') }}"
-                               class="block rounded-2xl px-4 py-3 transition {{ request()->routeIs('admin.invoices.*') && !request()->routeIs('admin.invoices.index') && !request()->routeIs('admin.invoices.settings') ? 'bg-brand text-white shadow-md' : 'text-slate-600 hover:bg-slate-100' }}">
-                                Invoices
-                            </a>
-                            <a href="{{ route('admin.payments.index') }}"
-                               class="block rounded-2xl px-4 py-3 transition {{ request()->routeIs('admin.payments.index') ? 'bg-brand text-white shadow-md' : 'text-slate-600 hover:bg-slate-100' }}">
-                                Payments
-                            </a>
-                            <a href="{{ route('admin.receipts.index') }}"
-                               class="block rounded-2xl px-4 py-3 transition {{ request()->routeIs('admin.receipts.index') ? 'bg-brand text-white shadow-md' : 'text-slate-600 hover:bg-slate-100' }}">
-                                Receipts
-                            </a>
-                            <a href="{{ route('admin.invoices.settings') }}"
-                               class="block rounded-2xl px-4 py-3 transition {{ request()->routeIs('admin.invoices.settings') ? 'bg-brand text-white shadow-md' : 'text-slate-600 hover:bg-slate-100' }}">
-                                Settings
-                            </a>
-                        </nav>
                     </div>
 
                     <div class="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-xs text-slate-500">
@@ -144,6 +116,5 @@
                 </main>
             </div>
         </div>
-        @stack('scripts')
     </body>
 </html>

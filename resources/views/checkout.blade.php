@@ -12,9 +12,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="bg-sand text-ink">
-        <div class="min-h-screen"
-             data-checkout-page
-             @if (session('order_success')) data-order-success="1" @endif>
+        <div class="min-h-screen" data-checkout-page @if (session('order_success')) data-order-success="1" @endif>
             @include('partials.site-header', ['globalHeader' => $globalHeader ?? []])
 
             <main class="mx-auto max-w-6xl px-4 py-10">

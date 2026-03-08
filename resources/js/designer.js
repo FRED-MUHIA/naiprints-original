@@ -45,27 +45,6 @@ const coerceNumber = (value, fallback = null) => {
     return Number.isFinite(num) ? num : fallback;
 };
 
-const squarePrintArea = (area) => {
-    if (!area || typeof area !== 'object') {
-        return area;
-    }
-    const x = coerceNumber(area.x);
-    const y = coerceNumber(area.y);
-    const w = coerceNumber(area.w);
-    const h = coerceNumber(area.h);
-    if (x === null || y === null || w === null || h === null || w <= 0 || h <= 0) {
-        return area;
-    }
-    const side = Math.min(w, h);
-    return {
-        ...area,
-        x: x + (w - side) / 2,
-        y: y + (h - side) / 2,
-        w: side,
-        h: side,
-    };
-};
-
 const normalizePrintAreas = (input) => {
     if (!input || typeof input !== 'object') {
         return {};
@@ -89,7 +68,7 @@ const normalizePrintAreas = (input) => {
             if (!normalized[productId]) {
                 normalized[productId] = {};
             }
-            normalized[productId][viewId] = squarePrintArea({ x, y, w, h });
+            normalized[productId][viewId] = { x, y, w, h };
         });
     });
     return normalized;
@@ -384,18 +363,31 @@ const normalizeProductOverrides = (input) => {
 };
 
 const applyPrintAreaOverrides = (products, overrides) => {
-    const safeOverrides = overrides && typeof overrides === 'object' ? overrides : {};
+    if (!overrides || typeof overrides !== 'object') {
+        return products;
+    }
     return products.map((product) => {
-        const productOverrides = safeOverrides[product.id] || {};
+        const productOverrides = overrides[product.id];
+        if (!productOverrides) {
+            return product;
+        }
         const views = product.views.map((view) => {
             const override = productOverrides[view.id];
-            const merged = override ? { ...view.printArea, ...override } : view.printArea;
+            if (!override) {
+                return view;
+            }
             return {
                 ...view,
-                printArea: squarePrintArea(merged),
+                printArea: {
+                    ...view.printArea,
+                    ...override,
+                },
             };
         });
-        return { ...product, views };
+        return {
+            ...product,
+            views,
+        };
     });
 };
 

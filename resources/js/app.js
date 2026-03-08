@@ -2,153 +2,6 @@ import './bootstrap';
 import './designer';
 
 document.addEventListener('DOMContentLoaded', () => {
-    const mobileMenu = document.querySelector('[data-mobile-menu]');
-    const mobileToggle = document.querySelector('[data-mobile-menu-toggle]');
-
-    if (mobileMenu && mobileToggle) {
-        const closeMenu = () => {
-            mobileMenu.classList.remove('is-open');
-            mobileToggle.setAttribute('aria-expanded', 'false');
-        };
-
-        const openMenu = () => {
-            mobileMenu.classList.add('is-open');
-            mobileToggle.setAttribute('aria-expanded', 'true');
-        };
-
-        const toggleMenu = () => {
-            if (mobileMenu.classList.contains('is-open')) {
-                closeMenu();
-            } else {
-                openMenu();
-            }
-        };
-
-        mobileToggle.addEventListener('click', (event) => {
-            event.preventDefault();
-            toggleMenu();
-        });
-
-        document.addEventListener('click', (event) => {
-            if (
-                mobileMenu.classList.contains('is-open') &&
-                !mobileMenu.contains(event.target) &&
-                !mobileToggle.contains(event.target)
-            ) {
-                closeMenu();
-            }
-        });
-
-        mobileMenu.querySelectorAll('a').forEach((link) => {
-            link.addEventListener('click', () => closeMenu());
-        });
-
-        window.addEventListener('resize', () => {
-            if (window.innerWidth >= 1024) {
-                closeMenu();
-            }
-        });
-    }
-
-    const invoiceBuilder = document.querySelector('[data-invoice-builder]');
-    if (invoiceBuilder) {
-        const itemsBody = invoiceBuilder.querySelector('[data-invoice-items]');
-        const template = invoiceBuilder.querySelector('[data-invoice-template]');
-        const addButton = invoiceBuilder.querySelector('[data-invoice-add]');
-        const subtotalEl = invoiceBuilder.querySelector('[data-invoice-subtotal]');
-        const taxAmountEl = invoiceBuilder.querySelector('[data-invoice-tax-amount]');
-        const grandTotalEl = invoiceBuilder.querySelector('[data-invoice-grand-total]');
-        const taxRateInput = invoiceBuilder.querySelector('[data-invoice-tax-rate]');
-        const taxToggle = invoiceBuilder.querySelector('[data-invoice-tax-toggle]');
-        const discountInput = invoiceBuilder.querySelector('[data-invoice-discount]');
-
-        const formatMoney = (value) => `KES ${value.toFixed(2)}`;
-
-        const readNumber = (input) => {
-            const value = Number.parseFloat(input?.value || '0');
-            return Number.isNaN(value) ? 0 : value;
-        };
-
-        const updateRow = (row) => {
-            const qtyInput = row.querySelector('[data-invoice-qty]');
-            const priceInput = row.querySelector('[data-invoice-price]');
-            const totalInput = row.querySelector('[data-invoice-total]');
-            const qty = readNumber(qtyInput);
-            const price = readNumber(priceInput);
-            const total = Math.max(0, qty * price);
-            if (totalInput) {
-                totalInput.value = formatMoney(total);
-            }
-            row.dataset.rowTotal = String(total);
-        };
-
-        const updateTotals = () => {
-            const rows = itemsBody?.querySelectorAll('[data-invoice-row]') ?? [];
-            let subtotal = 0;
-            rows.forEach((row) => {
-                updateRow(row);
-                subtotal += Number.parseFloat(row.dataset.rowTotal || '0');
-            });
-
-            const discount = Math.max(0, readNumber(discountInput));
-            const taxable = Math.max(0, subtotal - discount);
-            const taxRate = taxToggle?.checked ? Math.max(0, readNumber(taxRateInput)) : 0;
-            const taxAmount = taxable * (taxRate / 100);
-            const grandTotal = taxable + taxAmount;
-
-            if (subtotalEl) subtotalEl.textContent = formatMoney(subtotal);
-            if (taxAmountEl) taxAmountEl.textContent = formatMoney(taxAmount);
-            if (grandTotalEl) grandTotalEl.textContent = formatMoney(grandTotal);
-        };
-
-        const bindRow = (row) => {
-            row.querySelectorAll('[data-invoice-qty], [data-invoice-price]').forEach((input) => {
-                input.addEventListener('input', updateTotals);
-            });
-            row.querySelector('[data-invoice-remove]')?.addEventListener('click', () => {
-                row.remove();
-                updateTotals();
-            });
-        };
-
-        itemsBody?.querySelectorAll('[data-invoice-row]').forEach(bindRow);
-
-        addButton?.addEventListener('click', () => {
-            if (!template || !itemsBody) {
-                return;
-            }
-            const nextIndex = itemsBody.querySelectorAll('[data-invoice-row]').length;
-            const markup = template.innerHTML.replaceAll('__INDEX__', String(nextIndex)).trim();
-            if (!markup) {
-                return;
-            }
-            const wrapper = document.createElement('template');
-            wrapper.innerHTML = markup;
-            const row = wrapper.content.firstElementChild;
-            if (!row) {
-                return;
-            }
-            itemsBody.appendChild(row);
-            bindRow(row);
-            updateTotals();
-        });
-
-        if (taxToggle && taxRateInput) {
-            taxRateInput.toggleAttribute('disabled', !taxToggle.checked);
-        }
-
-        taxToggle?.addEventListener('change', () => {
-            if (taxRateInput) {
-                taxRateInput.toggleAttribute('disabled', !taxToggle.checked);
-            }
-            updateTotals();
-        });
-        taxRateInput?.addEventListener('input', updateTotals);
-        discountInput?.addEventListener('input', updateTotals);
-
-        updateTotals();
-    }
-
     document.querySelectorAll('[data-category-carousel]').forEach((carousel) => {
         const track = carousel.querySelector('[data-carousel-track]');
         const prev = carousel.querySelector('[data-carousel-prev]');
@@ -208,12 +61,8 @@ document.addEventListener('DOMContentLoaded', () => {
         window.addEventListener('touchend', stopDrag);
 
         let timer = null;
-        const hasOverflow = () => track.scrollWidth > track.clientWidth + 2;
         const startAuto = () => {
             if (timer) {
-                return;
-            }
-            if (!hasOverflow()) {
                 return;
             }
             timer = setInterval(() => scrollBy(1), 4000);
@@ -232,14 +81,6 @@ document.addEventListener('DOMContentLoaded', () => {
         carousel.addEventListener('focusout', startAuto);
 
         startAuto();
-
-        window.addEventListener('resize', () => {
-            if (!hasOverflow()) {
-                stopAuto();
-            } else {
-                startAuto();
-            }
-        });
     });
 
     document.querySelectorAll('[data-related-carousel]').forEach((carousel) => {
@@ -1131,7 +972,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const checkoutItemsField = checkoutPage.querySelector('[data-checkout-items-field]');
         const checkoutSubtotalField = checkoutPage.querySelector('[data-checkout-subtotal-field]');
         const checkoutTotalField = checkoutPage.querySelector('[data-checkout-total-field]');
-        const paymentInputs = checkoutPage.querySelectorAll('input[name="payment"]');
 
         renderCheckout = () => {
             const items = readCart();
@@ -1171,26 +1011,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        const updatePaymentButton = () => {
-            if (!checkoutSubmit) return;
-            const selected = checkoutPage.querySelector('input[name="payment"]:checked')?.value;
-            if (selected === 'mobile_money') {
-                checkoutSubmit.textContent = 'Pay with M-Pesa';
-                checkoutSubmit.classList.add('btn-mpesa');
-            } else {
-                checkoutSubmit.textContent = 'Place order';
-                checkoutSubmit.classList.remove('btn-mpesa');
-            }
-        };
-
-
         bindCartItemControls(checkoutItems);
         renderCheckout();
-        updatePaymentButton();
-
-        paymentInputs.forEach((input) => {
-            input.addEventListener('change', updatePaymentButton);
-        });
 
         checkoutForm?.addEventListener('submit', () => {
             renderCheckout();
