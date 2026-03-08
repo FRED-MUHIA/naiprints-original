@@ -3,10 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Mail\TestEmailMail;
 use App\Models\InvoiceSetting;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 
 class InvoiceSettingController extends Controller
@@ -85,25 +83,4 @@ class InvoiceSettingController extends Controller
             ->with('success', 'Invoice settings updated.');
     }
 
-    public function testEmail(Request $request)
-    {
-        $data = $request->validate([
-            'test_email' => ['required', 'email', 'max:255'],
-        ]);
-
-        try {
-            Mail::to($data['test_email'])->send(new TestEmailMail());
-        } catch (\Throwable $exception) {
-            logger()->error('Test email failed', [
-                'email' => $data['test_email'],
-                'error' => $exception->getMessage(),
-            ]);
-
-            return back()->withErrors([
-                'test_email' => 'We could not send the test email. Please confirm SMTP settings and try again.',
-            ]);
-        }
-
-        return back()->with('success', 'Test email sent successfully.');
-    }
 }
