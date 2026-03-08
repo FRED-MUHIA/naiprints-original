@@ -47,15 +47,22 @@
 
 <header class="sticky top-0 z-40 border-b border-black/5 bg-white/90 backdrop-blur">
     <div class="mx-auto flex max-w-6xl items-center justify-between gap-6 px-4 py-4">
-        <a class="flex items-center gap-3" href="/" aria-label="Home">
-            @if ($logoUrl)
-                <img src="{{ $logoUrl }}" alt="Nai Prints" class="h-12 w-12 rounded-full object-cover">
-            @else
-                <div class="flex h-12 w-12 items-center justify-center rounded-full bg-brand text-white text-lg font-bold">
-                    NA
-                </div>
-            @endif
-        </a>
+        <div class="flex items-center gap-3">
+            <button class="icon-button mobile-menu-toggle lg:hidden" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobile-menu" data-mobile-menu-toggle>
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M3 12h18M3 18h18" />
+                </svg>
+            </button>
+            <a class="flex items-center gap-3" href="/" aria-label="Home">
+                @if ($logoUrl)
+                    <img src="{{ $logoUrl }}" alt="Nai Prints" class="h-12 w-12 rounded-full object-cover">
+                @else
+                    <div class="flex h-12 w-12 items-center justify-center rounded-full bg-brand text-white text-lg font-bold">
+                        NA
+                    </div>
+                @endif
+            </a>
+        </div>
 
         <nav class="hidden items-center gap-5 text-sm font-semibold text-slate-700 lg:flex">
             @foreach ($menu as $item)
@@ -86,6 +93,13 @@
                     <path d="M1.5 3.5a.75.75 0 0 1 .75-.75H4a.75.75 0 0 1 .72.54l.5 1.71h10.82a.75.75 0 0 1 .72.96l-1.6 5.6a.75.75 0 0 1-.72.54H7.05l.3 1.05h7.9a.75.75 0 0 1 0 1.5H6.7a.75.75 0 0 1-.72-.54L4.14 5.25H2.25a.75.75 0 0 1-.75-.75Z" />
                 </svg>
             </button>
+        </div>
+    </div>
+    <div id="mobile-menu" class="mobile-menu lg:hidden" data-mobile-menu>
+        <div class="mobile-menu-inner">
+            @foreach ($menu as $item)
+                <a class="mobile-menu-link" href="{{ $item['url'] ?? '#' }}">{{ $item['label'] ?? 'Menu' }}</a>
+            @endforeach
         </div>
     </div>
 </header>
