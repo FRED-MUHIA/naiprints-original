@@ -3,9 +3,9 @@
 
     # Redirect /public/* to root URL
     RewriteCond %{THE_REQUEST} \s/+public/(\S*) [NC]
-    RewriteRule ^public/(.*)$ /$1 [R=301,L]
+    RewriteRule ^public/(.*)$ $1 [R=301,L]
 
     # Internally rewrite all requests to /public
-    RewriteCond %{REQUEST_URI} !^/public/
-    RewriteRule ^(.*)$ /public/$1 [L,QSA]
+    RewriteCond %{REQUEST_URI} !/public/
+    RewriteRule ^(.*)$ public/$1 [L,QSA]
 </IfModule>
