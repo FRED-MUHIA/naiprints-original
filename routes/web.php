@@ -195,6 +195,11 @@ Route::get('/', function () {
     ];
 
     $featuredProducts = Product::with(['category', 'brand', 'sizes', 'tags', 'alternateImages', 'galleryImages'])
+        ->whereHas('category', function ($query) {
+            $query
+                ->whereRaw('LOWER(slug) = ?', ['design'])
+                ->orWhereRaw('LOWER(name) = ?', ['design']);
+        })
         ->orderByDesc('created_at')
         ->take(8)
         ->get();

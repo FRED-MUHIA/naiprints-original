@@ -2047,16 +2047,22 @@
                         let scaleY = 1;
                         let left = 0;
                         let top = 0;
-                        if (imageUrl) {
-                            const scale = Math.max(CANVAS_WIDTH / img.width, CANVAS_HEIGHT / img.height);
+                        let originX = 'left';
+                        let originY = 'top';
+                        if (img.width > 0 && img.height > 0) {
+                            const scale = Math.min(CANVAS_WIDTH / img.width, CANVAS_HEIGHT / img.height);
                             scaleX = scale;
                             scaleY = scale;
-                            left = (CANVAS_WIDTH - img.width * scale) / 2;
-                            top = (CANVAS_HEIGHT - img.height * scale) / 2;
+                            left = CANVAS_WIDTH / 2;
+                            top = CANVAS_HEIGHT / 2;
+                            originX = 'center';
+                            originY = 'center';
                         }
                         img.set({
                             left,
                             top,
+                            originX,
+                            originY,
                             scaleX,
                             scaleY,
                             selectable: false,

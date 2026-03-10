@@ -81,7 +81,7 @@
                         <section class="mx-auto grid max-w-6xl gap-4 px-4 pb-10 pt-10 lg:grid-cols-4 lg:gap-6">
                             <div class="hero-card lg:col-span-2">
                                 <span class="pill">{{ $data['kicker'] ?? '' }}</span>
-                                <h1 class="mt-6 text-4xl font-semibold leading-tight text-white md:text-5xl">
+                                <h1 class="mt-6 text-4xl font-bold leading-tight text-white md:text-5xl">
                                     {{ $data['title'] ?? '' }} <span class="text-brand">{{ $data['highlight'] ?? '' }}</span>
                                 </h1>
                                 <p class="mt-4 text-sm text-white/80 md:text-base">
