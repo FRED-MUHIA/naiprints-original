@@ -216,6 +216,8 @@
                                     $giftFinderCtaLabel = $data['cta_label'] ?? 'View more designs';
                                     $giftFinderCtaUrl = $data['cta_url'] ?? '/shop';
                                     $giftFinderInterval = $data['carousel_interval'] ?? 5;
+                                    $giftFinderCategoryId = $data['product_category_id'] ?? '';
+                                    $giftFinderCategoryId = is_numeric($giftFinderCategoryId) ? (int) $giftFinderCategoryId : '';
                                 @endphp
                                 <div class="grid gap-3 sm:grid-cols-2">
                                     <input type="text" name="sections[{{ $index }}][data][title]" value="{{ $giftFinderTitle }}" placeholder="Title" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
@@ -228,6 +230,15 @@
                                 <div class="grid gap-3 sm:grid-cols-2">
                                     <input type="text" name="sections[{{ $index }}][data][cta_label]" value="{{ $giftFinderCtaLabel }}" placeholder="CTA label" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
                                     <input type="text" name="sections[{{ $index }}][data][cta_url]" value="{{ $giftFinderCtaUrl }}" placeholder="CTA URL" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Product category</label>
+                                    <select name="sections[{{ $index }}][data][product_category_id]" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                        <option value="">Default (Design)</option>
+                                        @foreach ($categories as $category)
+                                            <option value="{{ $category->id }}" @selected((string) $giftFinderCategoryId === (string) $category->id)>{{ $category->name }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
                                 <div class="grid gap-3">
                                     @foreach ($giftFinderOptions as $optionIndex => $option)
@@ -255,6 +266,8 @@
                                     $giftFinderCtaLabel = $giftFinder['cta_label'] ?? 'View more designs';
                                     $giftFinderCtaUrl = $giftFinder['cta_url'] ?? '/shop';
                                     $giftFinderInterval = $giftFinder['carousel_interval'] ?? 5;
+                                    $giftFinderCategoryId = $giftFinder['product_category_id'] ?? '';
+                                    $giftFinderCategoryId = is_numeric($giftFinderCategoryId) ? (int) $giftFinderCategoryId : '';
                                 @endphp
                                 <div class="grid gap-3">
                                     @foreach ($steps as $stepIndex => $step)
@@ -277,6 +290,15 @@
                                         <div class="mt-3 grid gap-3 sm:grid-cols-2">
                                             <input type="text" name="sections[{{ $index }}][data][gift_finder][cta_label]" value="{{ $giftFinderCtaLabel }}" placeholder="CTA label" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
                                             <input type="text" name="sections[{{ $index }}][data][gift_finder][cta_url]" value="{{ $giftFinderCtaUrl }}" placeholder="CTA URL" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                        </div>
+                                        <div class="mt-3">
+                                            <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Product category</label>
+                                            <select name="sections[{{ $index }}][data][gift_finder][product_category_id]" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                <option value="">Default (Design)</option>
+                                                @foreach ($categories as $category)
+                                                    <option value="{{ $category->id }}" @selected((string) $giftFinderCategoryId === (string) $category->id)>{{ $category->name }}</option>
+                                                @endforeach
+                                            </select>
                                         </div>
                                     <div class="mt-3 grid gap-3">
                                         @foreach ($giftFinderOptions as $optionIndex => $option)

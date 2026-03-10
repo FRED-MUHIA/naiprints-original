@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\GlobalSection;
 use App\Models\Page;
 use App\Models\Product;
@@ -32,9 +33,11 @@ class PageBuilderController extends Controller
     public function edit(Page $page)
     {
         $this->ensureDefaults();
+        $categories = Category::orderBy('name')->get(['id', 'name']);
 
         return view('admin.builder.edit', [
             'page' => $page,
+            'categories' => $categories,
         ]);
     }
 
@@ -59,6 +62,8 @@ class PageBuilderController extends Controller
             'sections.*.data.mockups.*.*_file' => ['nullable', 'image', 'max:4096'],
             'sections.*.data.mockups.*.*.*_file' => ['nullable', 'image', 'max:4096'],
             'sections.*.data.mockups.*.*.*.*_file' => ['nullable', 'image', 'max:4096'],
+            'sections.*.data.product_category_id' => ['nullable', 'integer', 'exists:categories,id'],
+            'sections.*.data.gift_finder.product_category_id' => ['nullable', 'integer', 'exists:categories,id'],
             'add_section_type' => ['nullable', 'string', 'max:50'],
         ]);
         $validator->excludeUnvalidatedArrayKeys = false;

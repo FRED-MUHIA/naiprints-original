@@ -194,6 +194,19 @@ Route::get('/', function () {
         ],
     ];
 
+    $homeSections = $page->content['sections'] ?? [];
+    $giftFinderSection = collect($homeSections)->first(function ($section) {
+        return ($section['type'] ?? '') === 'gift_finder';
+    });
+    $giftFinderCategoryId = data_get($giftFinderSection, 'data.product_category_id');
+    if (!is_numeric($giftFinderCategoryId)) {
+        $howItWorksSection = collect($homeSections)->first(function ($section) {
+            return ($section['type'] ?? '') === 'how_it_works';
+        });
+        $giftFinderCategoryId = data_get($howItWorksSection, 'data.gift_finder.product_category_id');
+    }
+    $giftFinderCategoryId = is_numeric($giftFinderCategoryId) ? (int) $giftFinderCategoryId : null;
+
     $featuredProducts = Product::with(['category', 'brand', 'sizes', 'tags', 'alternateImages', 'galleryImages'])
         ->whereHas('category', function ($query) {
             $query
@@ -204,10 +217,29 @@ Route::get('/', function () {
         ->take(8)
         ->get();
 
+    $giftFinderProductsQuery = Product::with(['category', 'brand', 'sizes', 'tags', 'alternateImages', 'galleryImages'])
+        ->orderByDesc('created_at');
+    if ($giftFinderCategoryId) {
+        $giftFinderProductsQuery->where('category_id', $giftFinderCategoryId);
+    } else {
+        $giftFinderProductsQuery->whereHas('category', function ($query) {
+            $query
+                ->whereRaw('LOWER(slug) = ?', ['design'])
+                ->orWhereRaw('LOWER(name) = ?', ['design']);
+        });
+    }
+    $giftFinderProducts = $giftFinderProductsQuery
+        ->take(8)
+        ->get();
+    if ($giftFinderProducts->isEmpty() && $giftFinderCategoryId) {
+        $giftFinderProducts = $featuredProducts;
+    }
+
     return view('home', [
         'categories' => $categories,
         'products' => $products,
         'featuredProducts' => $featuredProducts,
+        'giftFinderProducts' => $giftFinderProducts,
         'pageContent' => $page->content,
         'globalHeader' => $header->content,
         'globalFooter' => $footer->content,

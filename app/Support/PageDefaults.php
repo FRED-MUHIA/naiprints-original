@@ -95,6 +95,7 @@ class PageDefaults
                         'lead_before' => 'Find the perfect',
                         'lead_after' => 'for your favorite:',
                         'select_options' => ['T-Shirt', 'Hoodie', 'Polo', 'Cap'],
+                        'product_category_id' => null,
                         'cta_label' => 'View more designs',
                         'cta_url' => '/shop',
                         'carousel_interval' => 5,

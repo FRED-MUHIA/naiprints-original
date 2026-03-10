@@ -24,8 +24,11 @@
                         return ($section['type'] ?? '') === 'gift_finder';
                     });
                     $giftProducts = [];
-                    if (!empty($featuredProducts) && $featuredProducts->count()) {
-                        $giftProducts = $featuredProducts->map(function ($product) {
+                    $giftFinderSource = !empty($giftFinderProducts) && $giftFinderProducts->count()
+                        ? $giftFinderProducts
+                        : $featuredProducts;
+                    if (!empty($giftFinderSource) && $giftFinderSource->count()) {
+                        $giftProducts = $giftFinderSource->map(function ($product) {
                             $imageUrl = $product->image_url;
                             if (!$imageUrl) {
                                 $fallback = $product->galleryImages->first()
