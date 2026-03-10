@@ -3,7 +3,6 @@
 namespace App\Mail;
 
 use App\Models\Invoice;
-use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -11,7 +10,7 @@ use Illuminate\Queue\SerializesModels;
 
 class InvoiceMail extends Mailable
 {
-    use Queueable, SerializesModels;
+    use SerializesModels;
 
     public Invoice $invoice;
 
@@ -21,7 +20,6 @@ class InvoiceMail extends Mailable
     public function __construct(Invoice $invoice)
     {
         $this->invoice = $invoice;
-        $this->afterCommit();
     }
 
     /**

@@ -3,7 +3,6 @@
 namespace App\Mail;
 
 use App\Models\Receipt;
-use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -11,7 +10,7 @@ use Illuminate\Queue\SerializesModels;
 
 class ReceiptMail extends Mailable
 {
-    use Queueable, SerializesModels;
+    use SerializesModels;
 
     public Receipt $receipt;
 
@@ -21,7 +20,6 @@ class ReceiptMail extends Mailable
     public function __construct(Receipt $receipt)
     {
         $this->receipt = $receipt;
-        $this->afterCommit();
     }
 
     /**
