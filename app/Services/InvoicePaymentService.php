@@ -45,7 +45,7 @@ class InvoicePaymentService
 
         if ($receipt && $invoice->client?->email) {
             try {
-                Mail::to($invoice->client->email)->queue(new ReceiptMail($receipt));
+                Mail::to($invoice->client->email)->send(new ReceiptMail($receipt));
             } catch (\Throwable $exception) {
                 logger()->error('Receipt email failed', [
                     'invoice_id' => $invoice->id,

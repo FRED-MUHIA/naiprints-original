@@ -150,9 +150,9 @@ class CheckoutController extends Controller
         ];
 
         try {
-            Mail::to($validated['email'])->queue(new InvoiceMail($invoice));
+            Mail::to($validated['email'])->send(new InvoiceMail($invoice));
             if ($support['email']) {
-                Mail::to($support['email'])->queue(new InvoiceMail($invoice));
+                Mail::to($support['email'])->send(new InvoiceMail($invoice));
             }
         } catch (\Throwable $exception) {
             logger()->error('Invoice email failed', [

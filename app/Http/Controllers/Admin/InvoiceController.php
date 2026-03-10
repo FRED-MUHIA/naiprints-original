@@ -257,17 +257,17 @@ class InvoiceController extends Controller
         }
 
         try {
-            Mail::to($recipient)->queue(new InvoiceMail($invoice));
+            Mail::to($recipient)->send(new InvoiceMail($invoice));
         } catch (\Throwable $exception) {
             logger()->error('Invoice email failed', [
                 'invoice_id' => $invoice->id,
                 'recipient' => $recipient,
                 'error' => $exception->getMessage(),
             ]);
-            return back()->withErrors(['email' => 'We could not queue the invoice email. Please try again.']);
+            return back()->withErrors(['email' => 'We could not send the invoice email. Please try again.']);
         }
 
-        return back()->with('success', 'Invoice email queued successfully.');
+        return back()->with('success', 'Invoice email sent successfully.');
     }
 
     public function export(Request $request)
