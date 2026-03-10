@@ -5424,7 +5424,7 @@
         gap: 6px;
         position: relative;
         --artboard-gap: 20px;
-        --artboard-size: min(600px, calc(92vw - (var(--artboard-gap) * 2) - 50px));
+        --artboard-size: 600px;
     }
 
     .mockup-canvas-wrap {
@@ -5791,7 +5791,7 @@
 
         .mockup-canvas-panel {
             padding: 0 12px 12px;
-            --artboard-size: min(360px, 86vw);
+            --artboard-size: 600px;
         }
 
         .mockup-canvas-wrap {
@@ -5837,7 +5837,7 @@
         }
 
         .mockup-canvas-panel {
-            --artboard-size: min(320px, 88vw);
+            --artboard-size: 600px;
         }
     }
 
