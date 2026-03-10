@@ -11,12 +11,12 @@ class CorporateQuoteMail extends Mailable
     use Queueable, SerializesModels;
 
     public array $data;
-    public array $attachments;
+    public array $uploadedAttachments;
 
     public function __construct(array $data, array $attachments = [])
     {
         $this->data = $data;
-        $this->attachments = $attachments;
+        $this->uploadedAttachments = $attachments;
     }
 
     public function build()
@@ -33,7 +33,7 @@ class CorporateQuoteMail extends Mailable
             $mail->replyTo($this->data['email'], $this->data['full_name'] ?? null);
         }
 
-        foreach ($this->attachments as $attachment) {
+        foreach ($this->uploadedAttachments as $attachment) {
             if (!empty($attachment['path'])) {
                 $mail->attach($attachment['path'], [
                     'as' => $attachment['name'] ?? 'artwork',
