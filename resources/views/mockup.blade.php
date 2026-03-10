@@ -657,7 +657,7 @@
                         <div class="mockup-canvas-wrap" data-canvas-wrap>
                             <div class="mockup-artboard-shell">
                                 <div class="mockup-artboard">
-                                <canvas id="mockup-canvas" width="550" height="550"></canvas>
+                                <canvas id="mockup-canvas" width="600" height="600"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -759,8 +759,8 @@
                     return;
                 }
 
-                const CANVAS_WIDTH = 550;
-                const CANVAS_HEIGHT = 550;
+                const CANVAS_WIDTH = 600;
+                const CANVAS_HEIGHT = 600;
                 const SCALE_X = CANVAS_WIDTH / 820;
                 const SCALE_Y = CANVAS_HEIGHT / 980;
                 const MAX_HISTORY = 50;
