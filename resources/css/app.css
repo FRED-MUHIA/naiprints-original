@@ -17,7 +17,7 @@
         --brand-red: #e11d2e;
         --brand-deep: #0b1026;
         --brand-sand: #ffffff;
-        --brand-ink: #111827;
+        --brand-ink: #000000;
         --brand-sun: #f59e0b;
     }
 
@@ -34,6 +34,23 @@
         color: var(--brand-ink);
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Force gray text utilities to render black across the site. */
+    [class*='text-slate-'],
+    [class*='text-gray-'],
+    [class*='text-zinc-'],
+    [class*='text-stone-'],
+    [class*='text-neutral-'] {
+        color: #000000 !important;
+    }
+
+    [class*='hover:text-slate-']:hover,
+    [class*='hover:text-gray-']:hover,
+    [class*='hover:text-zinc-']:hover,
+    [class*='hover:text-stone-']:hover,
+    [class*='hover:text-neutral-']:hover {
+        color: #000000 !important;
     }
 
     img,
@@ -3724,9 +3741,9 @@
 
 @layer components {
     .mockup-app {
-        --mockup-text: #0f172a;
-        --mockup-muted: #64748b;
-        --mockup-muted-2: #94a3b8;
+        --mockup-text: #000000;
+        --mockup-muted: #000000;
+        --mockup-muted-2: #000000;
         --mockup-on-dark: #ffffff;
         --mockup-on-dark-muted: #e2e8f0;
         --mockup-accent: var(--brand-red);
