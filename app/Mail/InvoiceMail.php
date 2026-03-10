@@ -15,7 +15,6 @@ class InvoiceMail extends Mailable implements ShouldQueue
     use Queueable, SerializesModels;
 
     public Invoice $invoice;
-    public bool $afterCommit = true;
 
     /**
      * Create a new message instance.
@@ -23,6 +22,7 @@ class InvoiceMail extends Mailable implements ShouldQueue
     public function __construct(Invoice $invoice)
     {
         $this->invoice = $invoice;
+        $this->afterCommit();
     }
 
     /**

@@ -15,7 +15,6 @@ class ReceiptMail extends Mailable implements ShouldQueue
     use Queueable, SerializesModels;
 
     public Receipt $receipt;
-    public bool $afterCommit = true;
 
     /**
      * Create a new message instance.
@@ -23,6 +22,7 @@ class ReceiptMail extends Mailable implements ShouldQueue
     public function __construct(Receipt $receipt)
     {
         $this->receipt = $receipt;
+        $this->afterCommit();
     }
 
     /**
