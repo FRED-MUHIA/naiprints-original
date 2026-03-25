@@ -8,6 +8,9 @@
     RewriteCond %{HTTP_HOST} !^127\.0\.0\.1(:[0-9]+)?$ [NC]
     RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 
+    # Canonicalize legacy /public/nai and /nai URLs to site root.
+    RewriteRule ^(?:public/)?nai(?:/(.*))?$ /$1 [R=301,L,NC]
+
     # Redirect /public/* to root URL
     RewriteCond %{THE_REQUEST} \s/+public/(\S*) [NC]
     RewriteRule ^public/(.*)$ $1 [R=301,L]
