@@ -63,9 +63,21 @@
                                         <span>▾</span>
                                     </div>
                                     <ul class="mt-3 space-y-2">
+                                        <li class="flex items-center gap-2">
+                                            <input type="radio"
+                                                   name="category"
+                                                   value=""
+                                                   class="h-4 w-4 rounded border-slate-300"
+                                                   @checked(empty($selectedCategory))>
+                                            <span>All categories</span>
+                                        </li>
                                         @forelse ($categories as $category)
                                             <li class="flex items-center gap-2">
-                                                <input type="checkbox" class="h-4 w-4 rounded border-slate-300">
+                                                <input type="radio"
+                                                       name="category"
+                                                       value="{{ $category->id }}"
+                                                       class="h-4 w-4 rounded border-slate-300"
+                                                       @checked((string) ($selectedCategory->id ?? '') === (string) $category->id)>
                                                 <span>{{ $category->name }}</span>
                                             </li>
                                         @empty
@@ -140,6 +152,9 @@
                                 @endif
                                 @if (!empty($maxPrice))
                                     <span class="shop-chip">Max: KSh {{ number_format($maxPrice, 0) }}</span>
+                                @endif
+                                @if (!empty($selectedCategory))
+                                    <span class="shop-chip">Category: {{ $selectedCategory->name }}</span>
                                 @endif
                             </div>
                             <div class="flex items-center gap-3 text-sm text-slate-500">

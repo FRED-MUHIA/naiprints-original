@@ -130,6 +130,12 @@
             <div class="flex flex-wrap gap-3">
                 <button type="submit"
                         class="admin-btn-outline"
+                        formaction="{{ route('admin.invoices.mpesa.test') }}"
+                        formmethod="POST">
+                    Test M-Pesa Credentials
+                </button>
+                <button type="submit"
+                        class="admin-btn-outline"
                         formaction="{{ route('admin.invoices.mpesa.register') }}"
                         formmethod="POST">
                     Register C2B URLs

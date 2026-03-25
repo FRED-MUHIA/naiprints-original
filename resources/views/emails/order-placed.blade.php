@@ -4,6 +4,7 @@
     $supportEmail = $support['email'] ?? '';
     $supportPhone = $support['phone'] ?? '';
     $items = $order['items'] ?? [];
+    $invoiceUrl = $order['invoice_url'] ?? '';
 @endphp
 <!doctype html>
 <html lang="en">
@@ -38,6 +39,13 @@
                             <td style="padding:24px 28px;">
                                 <p style="margin:0 0 8px;font-size:14px;color:#64748b;">Order number</p>
                                 <p style="margin:0 0 18px;font-size:18px;font-weight:700;">{{ $order['number'] ?? '' }}</p>
+                                @if ($invoiceUrl)
+                                    <p style="margin:0 0 18px;">
+                                        <a href="{{ $invoiceUrl }}" style="display:inline-block;padding:10px 14px;border-radius:999px;background:#e11d2e;color:#ffffff;text-decoration:none;font-size:13px;">
+                                            View invoice
+                                        </a>
+                                    </p>
+                                @endif
 
                                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
                                     <tr>

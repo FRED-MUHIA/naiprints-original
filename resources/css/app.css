@@ -1697,6 +1697,20 @@
         @apply space-y-4;
     }
 
+    .product-media-panel,
+    .product-details {
+        position: relative;
+        z-index: 1;
+    }
+
+    .product-media-gallery button,
+    .product-options button,
+    .purchase button {
+        position: relative;
+        z-index: 2;
+        pointer-events: auto;
+    }
+
     .category-line {
         @apply text-xs font-semibold uppercase tracking-[0.2em] text-slate-400;
     }
@@ -1784,6 +1798,10 @@
 
     .add-to-cart:hover {
         background-color: #2a2a2a;
+    }
+
+    .add-to-cart.is-added {
+        background-color: #16a34a;
     }
 
     .icon-actions {
@@ -3796,7 +3814,7 @@
 
     .mockup-topbar {
         display: grid;
-        grid-template-columns: minmax(320px, 1fr) auto minmax(320px, 1fr);
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
         align-items: center;
         gap: 16px;
         padding: 12px 18px;
@@ -4216,6 +4234,12 @@
         grid-template-columns: 84px 320px minmax(0, 1fr);
         flex: 1;
         min-height: 0;
+    }
+
+    .mockup-panel,
+    .mockup-stage,
+    .mockup-canvas-panel {
+        min-width: 0;
     }
 
     .mockup-rail {
@@ -5261,6 +5285,12 @@
         justify-content: space-between;
         padding: 14px 20px;
         position: relative;
+        overflow: visible;
+    }
+
+    .mockup-stage-toolbar.is-tools-open .mockup-stage-tab[data-tools-toggle] {
+        background: #fff1f2;
+        color: var(--mockup-accent);
     }
 
     .mockup-stage-tabs {
@@ -5293,42 +5323,51 @@
 
     .mockup-tools-menu {
         position: absolute;
-        top: calc(100% + 8px);
-        left: 50%;
-        transform: translateX(-50%);
-        width: min(980px, calc(100vw - 32px));
+        top: calc(100% + 10px);
+        left: 16px;
+        right: 16px;
+        transform: translateY(-4px);
+        width: auto;
+        max-width: 840px;
+        margin: 0 auto;
         background: transparent;
         border: none;
         box-shadow: none;
         padding: 0;
         display: none;
         flex-direction: column;
-        gap: 10px;
+        gap: 8px;
         z-index: 40;
-        align-items: center;
+        align-items: stretch;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.18s ease, transform 0.18s ease;
     }
 
     .mockup-tools-menu.is-open {
         display: flex;
-        animation: mockup-fade 0.2s ease both;
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
+        animation: mockup-fade 0.18s ease both;
     }
 
     .mockup-text-toolbar {
         width: 100%;
-        max-width: 980px;
+        max-width: 840px;
         margin: 0 auto;
         display: flex;
         align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 8px 10px;
+        justify-content: flex-start;
+        gap: 6px;
+        padding: 10px;
         background: #ffffff;
         border: 1px solid rgba(148, 163, 184, 0.35);
         border-radius: 14px;
         box-shadow: 0 14px 26px -20px rgba(15, 23, 42, 0.35);
         font-family: var(--font-sans);
-        overflow-x: auto;
-        flex-wrap: nowrap;
+        flex-wrap: wrap;
+        row-gap: 6px;
     }
 
     .mockup-text-toolbar.is-disabled {
@@ -5339,11 +5378,12 @@
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        padding-right: 8px;
-        margin-right: 8px;
+        min-height: 36px;
+        padding-right: 6px;
+        margin-right: 6px;
         border-right: 1px solid rgba(148, 163, 184, 0.25);
         position: relative;
-        flex: 0 0 auto;
+        flex: 0 1 auto;
     }
 
     .mockup-toolbar-group:last-of-type {
@@ -5355,6 +5395,8 @@
     .mockup-toolbar-select {
         border: 1px solid rgba(148, 163, 184, 0.35);
         border-radius: 10px;
+        min-height: 36px;
+        min-width: 155px;
         padding: 6px 10px;
         font-size: var(--mockup-font-sm);
         font-weight: 600;
@@ -5367,9 +5409,10 @@
     }
 
     .mockup-toolbar-input {
-        width: 60px;
+        width: 62px;
         border: 1px solid rgba(148, 163, 184, 0.35);
         border-radius: 10px;
+        min-height: 36px;
         text-align: center;
         padding: 6px 8px;
         font-weight: 600;
@@ -5377,8 +5420,8 @@
     }
 
     .mockup-toolbar-btn {
-        width: 30px;
-        height: 30px;
+        width: 34px;
+        height: 34px;
         border-radius: 10px;
         border: 1px solid rgba(148, 163, 184, 0.35);
         background: #ffffff;
@@ -5401,6 +5444,7 @@
         display: inline-flex;
         align-items: center;
         gap: 4px;
+        min-height: 34px;
         border: 1px solid rgba(148, 163, 184, 0.35);
         border-radius: 10px;
         padding: 4px 6px;
@@ -5418,12 +5462,30 @@
     }
 
     .mockup-toolbar-link {
-        border: none;
-        background: transparent;
+        min-height: 34px;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        border-radius: 10px;
+        background: #ffffff;
         font-weight: 600;
         font-size: 0.85rem;
         color: #0f172a;
-        padding: 6px 4px;
+        padding: 6px 10px;
+    }
+
+    .mockup-toolbar-btn:hover,
+    .mockup-toolbar-link:hover {
+        border-color: rgba(225, 29, 46, 0.4);
+        background: #fff1f2;
+        color: #be123c;
+    }
+
+    .mockup-toolbar-select:focus-visible,
+    .mockup-toolbar-input:focus-visible,
+    .mockup-toolbar-btn:focus-visible,
+    .mockup-toolbar-link:focus-visible,
+    .mockup-toolbar-color:focus-within {
+        outline: 2px solid rgba(225, 29, 46, 0.45);
+        outline-offset: 1px;
     }
 
     .mockup-toolbar-popover {
@@ -5784,6 +5846,28 @@
         }
     }
 
+    @media (max-width: 900px) {
+        .mockup-tools-menu {
+            left: 12px;
+            right: 12px;
+            max-width: none;
+        }
+
+        .mockup-text-toolbar {
+            padding: 8px;
+        }
+
+        .mockup-toolbar-group {
+            border-right: none;
+            margin-right: 0;
+            padding-right: 0;
+        }
+
+        .mockup-toolbar-link {
+            display: none;
+        }
+    }
+
     @media (max-width: 640px) {
         .mockup-topbar {
             padding: 10px 12px;
@@ -5823,14 +5907,32 @@
         }
 
         .mockup-tools-menu {
-            left: 0;
-            transform: none;
-            width: 100%;
+            left: 8px;
+            right: 8px;
+            width: auto;
         }
 
         .mockup-text-toolbar {
-            justify-content: flex-start;
             padding: 8px;
+            gap: 5px;
+            max-height: 54vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .mockup-toolbar-select {
+            min-width: 130px;
+            max-width: 150px;
+        }
+
+        .mockup-toolbar-btn {
+            width: 32px;
+            height: 32px;
+        }
+
+        .mockup-toolbar-input {
+            width: 56px;
+            min-height: 32px;
         }
 
         .mockup-canvas-panel {

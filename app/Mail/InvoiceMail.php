@@ -19,7 +19,8 @@ class InvoiceMail extends Mailable
      */
     public function __construct(Invoice $invoice)
     {
-        $this->invoice = $invoice;
+        // Keep this mailable free of Queueable/$afterCommit property conflicts.
+        $this->invoice = $invoice->loadMissing(['client', 'items']);
     }
 
     /**

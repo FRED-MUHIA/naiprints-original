@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\InvoiceSetting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 class InvoiceSettingController extends Controller
@@ -17,9 +18,9 @@ class InvoiceSettingController extends Controller
         }
 
         $callbackUrls = [
-            'stk' => route('mpesa.stk.callback'),
-            'c2b_confirmation' => route('mpesa.c2b.confirmation'),
-            'c2b_validation' => route('mpesa.c2b.validation'),
+            'stk' => secure_url('/mpesa/stk/callback'),
+            'c2b_confirmation' => secure_url('/mpesa/c2b/confirmation'),
+            'c2b_validation' => secure_url('/mpesa/c2b/validation'),
         ];
 
         return view('admin.invoices.settings', compact('settings', 'callbackUrls'));
@@ -74,10 +75,25 @@ class InvoiceSettingController extends Controller
         }
 
         $data['payment_methods'] = array_values(array_filter($data['payment_methods'] ?? []));
-        $data['mpesa_config'] = array_filter($data['mpesa'] ?? [], fn ($value) => $value !== null && $value !== '');
+        $mpesaConfig = [];
+        foreach (($data['mpesa'] ?? []) as $key => $value) {
+            if (is_string($value)) {
+                $value = trim($value);
+            }
+            if ($value === null || $value === '') {
+                continue;
+            }
+            if (in_array($key, ['shortcode', 'party_b', 'till_number'], true) && is_string($value)) {
+                $value = preg_replace('/\D+/', '', $value);
+            }
+            $mpesaConfig[$key] = $value;
+        }
+        $data['mpesa_config'] = $mpesaConfig;
         unset($data['mpesa']);
 
         $settings->update($data);
+        Cache::forget('mpesa_token_sandbox');
+        Cache::forget('mpesa_token_live');
 
         return redirect()->route('admin.invoices.settings')
             ->with('success', 'Invoice settings updated.');

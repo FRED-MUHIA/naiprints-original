@@ -77,6 +77,10 @@
                                class="block rounded-2xl px-4 py-3 transition {{ request()->routeIs('admin.invoices.*') && !request()->routeIs('admin.invoices.index') && !request()->routeIs('admin.invoices.settings') ? 'bg-brand text-white shadow-md' : 'text-slate-600 hover:bg-slate-100' }}">
                                 Invoices
                             </a>
+                            <a href="{{ route('admin.quotations.index') }}"
+                               class="block rounded-2xl px-4 py-3 transition {{ request()->routeIs('admin.quotations.*') ? 'bg-brand text-white shadow-md' : 'text-slate-600 hover:bg-slate-100' }}">
+                                Quotations
+                            </a>
                             <a href="{{ route('admin.payments.index') }}"
                                class="block rounded-2xl px-4 py-3 transition {{ request()->routeIs('admin.payments.index') ? 'bg-brand text-white shadow-md' : 'text-slate-600 hover:bg-slate-100' }}">
                                 Payments
@@ -144,6 +148,71 @@
                 </main>
             </div>
         </div>
+        <script>
+            (function () {
+                const initClientAutofill = () => {
+                    document.querySelectorAll('[data-client-autofill]').forEach((scope) => {
+                        const select = scope.querySelector('[data-client-select]');
+                        if (!select) {
+                            return;
+                        }
+
+                        const fields = {
+                            name: scope.querySelector('[data-client-field="name"]'),
+                            company_name: scope.querySelector('[data-client-field="company_name"]'),
+                            phone: scope.querySelector('[data-client-field="phone"]'),
+                            email: scope.querySelector('[data-client-field="email"]'),
+                            address: scope.querySelector('[data-client-field="address"]'),
+                        };
+
+                        const getValue = (option, key) => {
+                            if (!option) {
+                                return '';
+                            }
+                            const map = {
+                                name: 'clientName',
+                                company_name: 'clientCompanyName',
+                                phone: 'clientPhone',
+                                email: 'clientEmail',
+                                address: 'clientAddress',
+                            };
+                            return option.dataset?.[map[key]] ?? '';
+                        };
+
+                        const applyClient = (clearWhenEmpty) => {
+                            const selected = select.options[select.selectedIndex];
+                            const hasClient = Boolean(select.value);
+
+                            Object.entries(fields).forEach(([key, input]) => {
+                                if (!input) {
+                                    return;
+                                }
+                                if (!hasClient) {
+                                    if (clearWhenEmpty) {
+                                        input.value = '';
+                                    }
+                                    return;
+                                }
+                                input.value = getValue(selected, key);
+                            });
+                        };
+
+                        select.addEventListener('change', () => applyClient(true));
+
+                        const hasTypedValues = Object.values(fields).some((input) => (input?.value || '').trim() !== '');
+                        if (select.value && !hasTypedValues) {
+                            applyClient(false);
+                        }
+                    });
+                };
+
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', initClientAutofill);
+                } else {
+                    initClientAutofill();
+                }
+            })();
+        </script>
         @stack('scripts')
     </body>
 </html>

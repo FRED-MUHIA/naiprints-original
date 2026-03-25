@@ -9,10 +9,10 @@ use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\InvoiceSetting;
 use App\Services\InvoicePaymentService;
+use App\Services\MailDispatchService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\URL;
 
@@ -242,7 +242,7 @@ class InvoiceController extends Controller
         return $pdf->download("{$invoice->number}.pdf");
     }
 
-    public function sendEmail(Request $request, Invoice $invoice)
+    public function sendEmail(Request $request, Invoice $invoice, MailDispatchService $mailDispatch)
     {
         $invoice->load('client');
 
@@ -250,20 +250,22 @@ class InvoiceController extends Controller
             'email' => ['nullable', 'email'],
         ]);
 
-        $recipient = $data['email'] ?? $invoice->client?->email;
+        $recipient = $mailDispatch->normalizeEmail((string) ($data['email'] ?? $invoice->client?->email));
 
         if (!$recipient) {
             return back()->withErrors(['email' => 'This client does not have an email address.']);
         }
 
-        try {
-            Mail::to($recipient)->send(new InvoiceMail($invoice));
-        } catch (\Throwable $exception) {
-            logger()->error('Invoice email failed', [
+        $delivery = $mailDispatch->sendToRecipients(
+            [$recipient],
+            fn () => new InvoiceMail($invoice),
+            [
+                'event' => 'admin.invoice_mail',
                 'invoice_id' => $invoice->id,
-                'recipient' => $recipient,
-                'error' => $exception->getMessage(),
-            ]);
+            ]
+        );
+
+        if (!empty($delivery['failed'])) {
             return back()->withErrors(['email' => 'We could not send the invoice email. Please try again.']);
         }
 

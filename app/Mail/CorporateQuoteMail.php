@@ -4,6 +4,10 @@ namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
+use Illuminate\Mail\Mailables\Attachment;
+use Illuminate\Mail\Mailables\Content;
+use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
 class CorporateQuoteMail extends Mailable
@@ -11,38 +15,65 @@ class CorporateQuoteMail extends Mailable
     use Queueable, SerializesModels;
 
     public array $data;
-    public array $uploadedAttachments;
+    protected array $uploadedFiles;
 
-    public function __construct(array $data, array $attachments = [])
+    public function __construct(array $data, array $uploadedFiles = [])
     {
         $this->data = $data;
-        $this->uploadedAttachments = $attachments;
+        $this->uploadedFiles = $uploadedFiles;
     }
 
-    public function build()
+    public function envelope(): Envelope
     {
         $subjectName = $this->data['company'] ?? $this->data['full_name'] ?? 'Corporate Quote';
+        $replyTo = [];
 
-        $mail = $this->subject('Corporate Quote Request - ' . $subjectName)
-            ->view('emails.corporate-quote')
-            ->with([
+        if (!empty($this->data['email']) && is_string($this->data['email'])) {
+            $replyTo[] = new Address($this->data['email'], $this->data['full_name'] ?? '');
+        }
+
+        return new Envelope(
+            subject: 'Corporate Quote Request - ' . $subjectName,
+            replyTo: $replyTo,
+        );
+    }
+
+    public function content(): Content
+    {
+        return new Content(
+            view: 'emails.corporate-quote',
+            with: [
                 'fields' => $this->buildFields(),
-            ]);
+            ],
+        );
+    }
 
-        if (!empty($this->data['email'])) {
-            $mail->replyTo($this->data['email'], $this->data['full_name'] ?? null);
-        }
+    /**
+     * @return array<int, Attachment>
+     */
+    public function attachments(): array
+    {
+        $attachments = [];
 
-        foreach ($this->uploadedAttachments as $attachment) {
-            if (!empty($attachment['path'])) {
-                $mail->attach($attachment['path'], [
-                    'as' => $attachment['name'] ?? 'artwork',
-                    'mime' => $attachment['mime'] ?? null,
-                ]);
+        foreach ($this->uploadedFiles as $file) {
+            if (empty($file['path']) || !is_string($file['path'])) {
+                continue;
             }
+
+            $attachment = Attachment::fromPath($file['path']);
+
+            if (!empty($file['name']) && is_string($file['name'])) {
+                $attachment = $attachment->as($file['name']);
+            }
+
+            if (!empty($file['mime']) && is_string($file['mime'])) {
+                $attachment = $attachment->withMime($file['mime']);
+            }
+
+            $attachments[] = $attachment;
         }
 
-        return $mail;
+        return $attachments;
     }
 
     private function buildFields(): array

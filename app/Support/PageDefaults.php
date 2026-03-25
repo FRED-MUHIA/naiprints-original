@@ -86,6 +86,7 @@ class PageDefaults
                         'title' => 'Best sellers right now',
                         'meta_left' => 'Weekly drops',
                         'meta_right' => 'Limited runs',
+                        'product_category_id' => null,
                     ],
                 ],
                 [

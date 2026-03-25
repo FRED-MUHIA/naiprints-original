@@ -14,7 +14,7 @@
     }
 @endphp
 
-<div class="space-y-6" data-invoice-builder>
+<div class="space-y-6" data-invoice-builder data-client-autofill>
     <div class="admin-card space-y-5">
         <div class="flex flex-wrap items-start justify-between gap-4">
             <div>
@@ -25,10 +25,15 @@
         <div class="grid gap-5 md:grid-cols-2">
             <label class="space-y-2 text-sm font-semibold text-slate-600">
                 Select Existing Client
-                <select name="client_id" class="admin-input border border-slate-200 rounded-xl px-4 py-2">
+                <select name="client_id" class="admin-input border border-slate-200 rounded-xl px-4 py-2" data-client-select>
                     <option value="">-- Add New Client --</option>
                     @foreach ($clients as $clientOption)
                         <option value="{{ $clientOption->id }}"
+                            data-client-name="{{ $clientOption->name }}"
+                            data-client-company-name="{{ $clientOption->company_name }}"
+                            data-client-phone="{{ $clientOption->phone }}"
+                            data-client-email="{{ $clientOption->email }}"
+                            data-client-address="{{ $clientOption->address }}"
                             @selected(old('client_id', $invoice->client_id ?? '') == $clientOption->id)>
                             {{ $clientOption->display_name }}
                         </option>
@@ -42,23 +47,23 @@
         <div class="grid gap-5 md:grid-cols-2">
             <label class="space-y-2 text-sm font-semibold text-slate-600">
                 Client Name
-                <input type="text" name="client_new[name]" value="{{ old('client_new.name') }}" class="admin-input border border-slate-200 rounded-xl px-4 py-2">
+                <input type="text" name="client_new[name]" value="{{ old('client_new.name') }}" class="admin-input border border-slate-200 rounded-xl px-4 py-2" data-client-field="name">
             </label>
             <label class="space-y-2 text-sm font-semibold text-slate-600">
                 Company Name
-                <input type="text" name="client_new[company_name]" value="{{ old('client_new.company_name') }}" class="admin-input border border-slate-200 rounded-xl px-4 py-2">
+                <input type="text" name="client_new[company_name]" value="{{ old('client_new.company_name') }}" class="admin-input border border-slate-200 rounded-xl px-4 py-2" data-client-field="company_name">
             </label>
             <label class="space-y-2 text-sm font-semibold text-slate-600">
                 Phone
-                <input type="text" name="client_new[phone]" value="{{ old('client_new.phone') }}" class="admin-input border border-slate-200 rounded-xl px-4 py-2">
+                <input type="text" name="client_new[phone]" value="{{ old('client_new.phone') }}" class="admin-input border border-slate-200 rounded-xl px-4 py-2" data-client-field="phone">
             </label>
             <label class="space-y-2 text-sm font-semibold text-slate-600">
                 Email
-                <input type="email" name="client_new[email]" value="{{ old('client_new.email') }}" class="admin-input border border-slate-200 rounded-xl px-4 py-2">
+                <input type="email" name="client_new[email]" value="{{ old('client_new.email') }}" class="admin-input border border-slate-200 rounded-xl px-4 py-2" data-client-field="email">
             </label>
             <label class="space-y-2 text-sm font-semibold text-slate-600 md:col-span-2">
                 Address
-                <input type="text" name="client_new[address]" value="{{ old('client_new.address') }}" class="admin-input border border-slate-200 rounded-xl px-4 py-2">
+                <input type="text" name="client_new[address]" value="{{ old('client_new.address') }}" class="admin-input border border-slate-200 rounded-xl px-4 py-2" data-client-field="address">
             </label>
         </div>
     </div>

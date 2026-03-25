@@ -5,6 +5,7 @@
 @section('content')
     @php
         $sections = $page->content['sections'] ?? [];
+        $categories = collect($categories ?? []);
     @endphp
 
     <div class="grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">
@@ -193,6 +194,10 @@
                                     @endforeach
                                 </div>
                             @elseif ($type === 'best_sellers')
+                                @php
+                                    $featuredCategoryId = $data['product_category_id'] ?? '';
+                                    $featuredCategoryId = is_numeric($featuredCategoryId) ? (int) $featuredCategoryId : '';
+                                @endphp
                                 <div class="grid gap-3 sm:grid-cols-2">
                                     <input type="text" name="sections[{{ $index }}][data][kicker]" value="{{ $data['kicker'] ?? '' }}" placeholder="Kicker" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
                                     <input type="text" name="sections[{{ $index }}][data][title]" value="{{ $data['title'] ?? '' }}" placeholder="Title" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
@@ -200,6 +205,15 @@
                                 <div class="grid gap-3 sm:grid-cols-2">
                                     <input type="text" name="sections[{{ $index }}][data][meta_left]" value="{{ $data['meta_left'] ?? '' }}" placeholder="Meta left" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
                                     <input type="text" name="sections[{{ $index }}][data][meta_right]" value="{{ $data['meta_right'] ?? '' }}" placeholder="Meta right" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Product category</label>
+                                    <select name="sections[{{ $index }}][data][product_category_id]" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                        <option value="">Default (Design)</option>
+                                        @foreach ($categories as $category)
+                                            <option value="{{ $category->id }}" @selected((string) $featuredCategoryId === (string) $category->id)>{{ $category->name }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
                             @elseif ($type === 'gift_finder')
                                 @php

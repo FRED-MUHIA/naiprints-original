@@ -8,9 +8,44 @@ use App\Models\InvoiceSetting;
 use App\Models\MpesaTransaction;
 use App\Services\MpesaService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class MpesaController extends Controller
 {
+    public function testCredentials(Request $request)
+    {
+        $settings = InvoiceSetting::first() ?? InvoiceSetting::create(InvoiceSetting::defaults());
+        $service = new MpesaService($settings);
+        $config = $service->config();
+
+        if (!$service->isConfigured()) {
+            return back()->withErrors(['mpesa' => 'Please save your M-Pesa environment, consumer key, consumer secret, and shortcode first.']);
+        }
+
+        if (empty($config['passkey'])) {
+            return back()->withErrors(['mpesa' => 'Please add your M-Pesa passkey.']);
+        }
+
+        $environment = $config['environment'] ?? 'sandbox';
+        Cache::forget('mpesa_token_sandbox');
+        Cache::forget('mpesa_token_live');
+
+        try {
+            $token = $service->accessToken();
+            $tokenPreview = substr((string) $token, 0, 10);
+
+            return back()->with('success', "M-Pesa credentials test passed for {$environment}. Access token received ({$tokenPreview}...).");
+        } catch (\Throwable $exception) {
+            logger()->error('M-Pesa credentials test failed', [
+                'environment' => $environment,
+                'shortcode' => $config['shortcode'] ?? null,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return back()->withErrors(['mpesa' => 'Credentials test failed: ' . $exception->getMessage()]);
+        }
+    }
+
     public function registerC2b(Request $request)
     {
         $settings = InvoiceSetting::first() ?? InvoiceSetting::create(InvoiceSetting::defaults());
@@ -49,11 +84,55 @@ class MpesaController extends Controller
         }
 
         $config = $settings->mpesa_config ?? [];
-        $phone = $service->normalizePhone($data['phone']);
-        $amount = (float) $data['amount'];
-        $callbackUrl = $config['callback_url'] ?? route('mpesa.stk.callback');
+        try {
+            $phone = method_exists($service, 'validatePhone')
+                ? $service->validatePhone($data['phone'])
+                : (method_exists($service, 'normalizePhone')
+                    ? $service->normalizePhone($data['phone'])
+                    : (function (string $raw): string {
+                        $digits = preg_replace('/\D+/', '', $raw) ?? '';
+                        if ($digits === '') {
+                            return '';
+                        }
+                        if (str_starts_with($digits, '0') && strlen($digits) === 10) {
+                            return '254' . substr($digits, 1);
+                        }
+                        if (str_starts_with($digits, '7') && strlen($digits) === 9) {
+                            return '254' . $digits;
+                        }
+
+                        return $digits;
+                    })((string) $data['phone']));
+        } catch (\Throwable $exception) {
+            return back()->withErrors(['mpesa' => $exception->getMessage()]);
+        }
+        if (!preg_match('/^254[17]\d{8}$/', $phone)) {
+            return back()->withErrors(['mpesa' => 'Invalid M-Pesa phone format. Use 07XXXXXXXX/01XXXXXXXX.']);
+        }
+
+        $amount = method_exists($service, 'normalizeAmount')
+            ? $service->normalizeAmount((float) $data['amount'])
+            : max(1, (int) round((float) $data['amount']));
+
+        $rawCallbackUrl = (string) ($config['callback_url'] ?? secure_url('/mpesa/stk/callback'));
+        $callbackUrl = method_exists($service, 'sanitizeCallbackUrl')
+            ? $service->sanitizeCallbackUrl($rawCallbackUrl)
+            : trim($rawCallbackUrl);
         $accountReference = $invoice->number;
-        $description = 'Invoice ' . $invoice->number . ' payment';
+        $description = 'Invoice payment';
+        $hasRecentPending = MpesaTransaction::query()
+            ->where('invoice_id', $invoice->id)
+            ->where('phone', $phone)
+            ->where('type', 'stk')
+            ->where('status', 'pending')
+            ->where('created_at', '>=', now()->subMinutes(2))
+            ->exists();
+
+        if ($hasRecentPending) {
+            return back()->withErrors([
+                'mpesa' => 'An STK prompt was already sent in the last 2 minutes. Complete it on the phone, then retry if needed.',
+            ]);
+        }
 
         try {
             $response = $service->stkPush([
@@ -65,6 +144,13 @@ class MpesaController extends Controller
                 'TransactionDesc' => $description,
             ]);
         } catch (\Throwable $exception) {
+            logger()->error('Admin STK push failed', [
+                'invoice_id' => $invoice->id,
+                'phone' => $phone,
+                'amount' => $amount,
+                'callback_url' => $callbackUrl,
+                'error' => $exception->getMessage(),
+            ]);
             return back()->withErrors(['mpesa' => 'STK push failed: ' . $exception->getMessage()]);
         }
 

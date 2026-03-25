@@ -9,6 +9,14 @@
         $oldSizes = old('sizes', []);
         $oldColors = old('color_options', '');
         $colorValue = is_array($oldColors) ? implode(', ', $oldColors) : $oldColors;
+        $oldPrimaryCategory = old('category_id');
+        $oldCategoryIds = collect(old('category_ids', []))
+            ->when($oldPrimaryCategory, fn ($ids) => $ids->push($oldPrimaryCategory))
+            ->filter(fn ($id) => is_numeric($id))
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
     @endphp
 
     <form method="POST" action="{{ route('admin.products.store') }}" class="space-y-8" enctype="multipart/form-data">
@@ -23,13 +31,23 @@
                             <input type="text" name="name" value="{{ old('name') }}" class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-brand focus:outline-none" required>
                         </div>
                         <div>
-                            <label class="text-sm font-semibold text-slate-700">Category</label>
+                            <label class="text-sm font-semibold text-slate-700">Primary category</label>
                             <select name="category_id" class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-brand focus:outline-none">
                                 <option value="">Uncategorized</option>
                                 @foreach ($categories as $category)
-                                    <option value="{{ $category->id }}" @selected(old('category_id') == $category->id)>{{ $category->name }}</option>
+                                    <option value="{{ $category->id }}" @selected((string) $oldPrimaryCategory === (string) $category->id)>{{ $category->name }}</option>
                                 @endforeach
                             </select>
+                            <p class="mt-2 text-xs text-slate-500">Used for legacy display and breadcrumb fallbacks.</p>
+                        </div>
+                        <div>
+                            <label class="text-sm font-semibold text-slate-700">Categories (multiple)</label>
+                            <select name="category_ids[]" multiple size="6" class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-brand focus:outline-none">
+                                @foreach ($categories as $category)
+                                    <option value="{{ $category->id }}" @selected(in_array((int) $category->id, $oldCategoryIds, true))>{{ $category->name }}</option>
+                                @endforeach
+                            </select>
+                            <p class="mt-2 text-xs text-slate-500">Hold Ctrl (Windows) or Cmd (Mac) to select more than one.</p>
                         </div>
                         <div>
                             <label class="text-sm font-semibold text-slate-700">Brand</label>

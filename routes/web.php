@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\MpesaController;
 use App\Http\Controllers\Admin\PageBuilderController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\QuotationController;
 use App\Http\Controllers\Admin\ReceiptController;
 use App\Http\Controllers\Admin\SizeController;
 use App\Http\Controllers\Admin\TagController;
@@ -195,6 +196,12 @@ Route::get('/', function () {
     ];
 
     $homeSections = $page->content['sections'] ?? [];
+    $bestSellersSection = collect($homeSections)->first(function ($section) {
+        return ($section['type'] ?? '') === 'best_sellers';
+    });
+    $featuredCategoryId = data_get($bestSellersSection, 'data.product_category_id');
+    $featuredCategoryId = is_numeric($featuredCategoryId) ? (int) $featuredCategoryId : null;
+
     $giftFinderSection = collect($homeSections)->first(function ($section) {
         return ($section['type'] ?? '') === 'gift_finder';
     });
@@ -206,37 +213,51 @@ Route::get('/', function () {
         $giftFinderCategoryId = data_get($howItWorksSection, 'data.gift_finder.product_category_id');
     }
     $giftFinderCategoryId = is_numeric($giftFinderCategoryId) ? (int) $giftFinderCategoryId : null;
+    $giftFinderCategories = Category::orderBy('name')->get(['id', 'name', 'slug']);
 
-    $featuredProducts = Product::with(['category', 'brand', 'sizes', 'tags', 'alternateImages', 'galleryImages'])
-        ->whereHas('category', function ($query) {
-            $query
-                ->whereRaw('LOWER(slug) = ?', ['design'])
-                ->orWhereRaw('LOWER(name) = ?', ['design']);
-        })
-        ->orderByDesc('created_at')
-        ->take(8)
-        ->get();
+    $homeProductRelations = ['category', 'categories', 'brand', 'sizes', 'tags', 'alternateImages', 'galleryImages'];
+    $applyHomeCategoryFilter = static function ($query, ?int $categoryId): void {
+        if ($categoryId) {
+            $query->where(function ($categoryQuery) use ($categoryId) {
+                $categoryQuery
+                    ->where('category_id', $categoryId)
+                    ->orWhereHas('categories', fn ($relatedCategoryQuery) => $relatedCategoryQuery->where('categories.id', $categoryId));
+            });
+            return;
+        }
 
-    $giftFinderProductsQuery = Product::with(['category', 'brand', 'sizes', 'tags', 'alternateImages', 'galleryImages'])
-        ->orderByDesc('created_at');
-    if ($giftFinderCategoryId) {
-        $giftFinderProductsQuery->where('category_id', $giftFinderCategoryId);
-    } else {
-        $giftFinderProductsQuery->whereHas('category', function ($query) {
-            $query
-                ->whereRaw('LOWER(slug) = ?', ['design'])
-                ->orWhereRaw('LOWER(name) = ?', ['design']);
+        $query->where(function ($categoryQuery) {
+            $categoryQuery
+                ->whereHas('category', function ($primaryCategoryQuery) {
+                    $primaryCategoryQuery
+                        ->whereRaw('LOWER(slug) = ?', ['design'])
+                        ->orWhereRaw('LOWER(name) = ?', ['design']);
+                })
+                ->orWhereHas('categories', function ($relatedCategoryQuery) {
+                    $relatedCategoryQuery
+                        ->whereRaw('LOWER(slug) = ?', ['design'])
+                        ->orWhereRaw('LOWER(name) = ?', ['design']);
+                });
         });
-    }
-    $giftFinderProducts = $giftFinderProductsQuery
-        ->take(8)
-        ->get();
+    };
+
+    $featuredProductsQuery = Product::with($homeProductRelations)->orderByDesc('created_at');
+    $applyHomeCategoryFilter($featuredProductsQuery, $featuredCategoryId);
+    $featuredProducts = $featuredProductsQuery->take(8)->get();
+
+    $giftFinderProductsQuery = Product::with($homeProductRelations)->orderByDesc('created_at');
+    $applyHomeCategoryFilter($giftFinderProductsQuery, $giftFinderCategoryId);
+    $giftFinderProducts = $giftFinderProductsQuery->take(8)->get();
     if ($giftFinderProducts->isEmpty() && $giftFinderCategoryId) {
-        $giftFinderProducts = $featuredProducts;
+        $giftFinderProducts = Product::with($homeProductRelations)
+            ->orderByDesc('created_at')
+            ->take(8)
+            ->get();
     }
 
     return view('home', [
         'categories' => $categories,
+        'giftFinderCategories' => $giftFinderCategories,
         'products' => $products,
         'featuredProducts' => $featuredProducts,
         'giftFinderProducts' => $giftFinderProducts,
@@ -271,12 +292,34 @@ Route::get('/shop', function () {
     $purchasePopups = GlobalSection::ensure('purchase_popups', PageDefaults::purchasePopups());
     $purchasePopupProducts = resolvePurchasePopupProducts($purchasePopups->content ?? []);
     $categories = Category::orderBy('name')->get();
+    $selectedCategoryParam = trim((string) request('category', ''));
+    $selectedCategory = null;
+    if ($selectedCategoryParam !== '') {
+        if (is_numeric($selectedCategoryParam)) {
+            $selectedCategory = $categories->firstWhere('id', (int) $selectedCategoryParam);
+        } else {
+            $selectedCategory = $categories->first(function ($category) use ($selectedCategoryParam) {
+                $needle = Str::of($selectedCategoryParam)->lower()->trim()->toString();
+                $slug = Str::of((string) ($category->slug ?? ''))->lower()->trim()->toString();
+                $name = Str::of((string) ($category->name ?? ''))->lower()->trim()->toString();
+
+                return $needle === $slug || $needle === $name;
+            });
+        }
+    }
     $minPrice = request('min_price');
     $maxPrice = request('max_price');
     $minPrice = is_numeric($minPrice) ? (float) $minPrice : null;
     $maxPrice = is_numeric($maxPrice) ? (float) $maxPrice : null;
 
-    $productsQuery = Product::with(['category', 'brand'])
+    $productsQuery = Product::with(['category', 'categories', 'brand'])
+        ->when($selectedCategory, function ($query) use ($selectedCategory) {
+            $query->where(function ($categoryQuery) use ($selectedCategory) {
+                $categoryQuery
+                    ->where('category_id', $selectedCategory->id)
+                    ->orWhereHas('categories', fn ($relatedCategoryQuery) => $relatedCategoryQuery->where('categories.id', $selectedCategory->id));
+            });
+        })
         ->when($minPrice !== null, fn ($query) => $query->where('price', '>=', $minPrice))
         ->when($maxPrice !== null, fn ($query) => $query->where('price', '<=', $maxPrice))
         ->orderByDesc('created_at');
@@ -308,6 +351,7 @@ Route::get('/shop', function () {
 
     return view('shop', [
         'categories' => $categories,
+        'selectedCategory' => $selectedCategory,
         'products' => $products,
         'fallbackProducts' => $fallbackProducts,
         'minPrice' => $minPrice,
@@ -387,16 +431,30 @@ Route::get('/products/{product}', function (Product $product) {
     $footer = GlobalSection::ensure('footer', PageDefaults::footer());
     $purchasePopups = GlobalSection::ensure('purchase_popups', PageDefaults::purchasePopups());
     $purchasePopupProducts = resolvePurchasePopupProducts($purchasePopups->content ?? []);
-    $product->load(['category', 'brand', 'alternateImages', 'galleryImages', 'attributes', 'sizes', 'tags']);
-    $relatedProducts = Product::with(['category', 'alternateImages', 'galleryImages'])
+    $product->load(['category', 'categories', 'brand', 'alternateImages', 'galleryImages', 'attributes', 'sizes', 'tags']);
+    $relatedCategoryIds = $product->categories
+        ->pluck('id')
+        ->map(fn ($id) => (int) $id)
+        ->when($product->category_id, fn ($ids) => $ids->push((int) $product->category_id))
+        ->unique()
+        ->values()
+        ->all();
+
+    $relatedProducts = Product::with(['category', 'categories', 'alternateImages', 'galleryImages'])
         ->where('id', '!=', $product->id)
-        ->when($product->category_id, fn ($query) => $query->where('category_id', $product->category_id))
+        ->when(!empty($relatedCategoryIds), function ($query) use ($relatedCategoryIds) {
+            $query->where(function ($relatedCategoryQuery) use ($relatedCategoryIds) {
+                $relatedCategoryQuery
+                    ->whereIn('category_id', $relatedCategoryIds)
+                    ->orWhereHas('categories', fn ($categoryQuery) => $categoryQuery->whereIn('categories.id', $relatedCategoryIds));
+            });
+        })
         ->orderByDesc('created_at')
         ->take(4)
         ->get();
 
     if ($relatedProducts->count() < 4) {
-        $moreProducts = Product::with(['category', 'alternateImages', 'galleryImages'])
+        $moreProducts = Product::with(['category', 'categories', 'alternateImages', 'galleryImages'])
             ->where('id', '!=', $product->id)
             ->whereNotIn('id', $relatedProducts->pluck('id'))
             ->orderByDesc('created_at')
@@ -479,8 +537,14 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
     Route::get('/', function () {
         $categoryId = request('category');
 
-        $products = Product::with(['category', 'brand'])
-            ->when($categoryId, fn ($query) => $query->where('category_id', $categoryId))
+        $products = Product::with(['category', 'categories', 'brand'])
+            ->when($categoryId, function ($query) use ($categoryId) {
+                $query->where(function ($categoryQuery) use ($categoryId) {
+                    $categoryQuery
+                        ->where('category_id', $categoryId)
+                        ->orWhereHas('categories', fn ($relatedCategoryQuery) => $relatedCategoryQuery->where('categories.id', $categoryId));
+                });
+            })
             ->orderByDesc('created_at')
             ->paginate(10)
             ->withQueryString();
@@ -507,12 +571,19 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
     Route::delete('invoices/{invoice}/force', [InvoiceController::class, 'forceDelete'])->name('invoices.force');
     Route::get('invoices/settings', [InvoiceSettingController::class, 'edit'])->name('invoices.settings');
     Route::post('invoices/settings', [InvoiceSettingController::class, 'update'])->name('invoices.settings.update');
+    Route::post('invoices/settings/mpesa/test', [MpesaController::class, 'testCredentials'])->name('invoices.mpesa.test');
     Route::post('invoices/settings/mpesa/register', [MpesaController::class, 'registerC2b'])->name('invoices.mpesa.register');
     Route::post('invoices/{invoice}/payments', [InvoiceController::class, 'addPayment'])->name('invoices.payments.store');
     Route::post('invoices/{invoice}/mpesa/stk', [MpesaController::class, 'stkPush'])->name('invoices.mpesa.stk');
     Route::get('invoices/{invoice}/download', [InvoiceController::class, 'download'])->name('invoices.download');
     Route::post('invoices/{invoice}/send', [InvoiceController::class, 'sendEmail'])->name('invoices.send');
     Route::resource('invoices', InvoiceController::class);
+    Route::get('quotations/export', [QuotationController::class, 'export'])->name('quotations.export');
+    Route::get('quotations/trash', [QuotationController::class, 'trash'])->name('quotations.trash');
+    Route::post('quotations/{quotation}/restore', [QuotationController::class, 'restore'])->name('quotations.restore');
+    Route::delete('quotations/{quotation}/force', [QuotationController::class, 'forceDelete'])->name('quotations.force');
+    Route::get('quotations/{quotation}/download', [QuotationController::class, 'download'])->name('quotations.download');
+    Route::resource('quotations', QuotationController::class);
     Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
     Route::get('receipts', [ReceiptController::class, 'index'])->name('receipts.index');
 

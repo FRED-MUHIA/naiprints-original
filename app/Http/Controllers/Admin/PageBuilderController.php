@@ -129,12 +129,16 @@ class PageBuilderController extends Controller
 
         $headerPayload = $request->input('header', null);
         if (is_array($headerPayload)) {
-            $header->update(['content' => $headerPayload]);
+            $header->update([
+                'content' => $this->mergeGlobalContent((array) ($header->content ?? []), $headerPayload),
+            ]);
         }
 
         $footerPayload = $request->input('footer', null);
         if (is_array($footerPayload)) {
-            $footer->update(['content' => $footerPayload]);
+            $footer->update([
+                'content' => $this->mergeGlobalContent((array) ($footer->content ?? []), $footerPayload),
+            ]);
         }
 
         $purchasePayload = $request->input('purchase_popups', null);
@@ -163,11 +167,20 @@ class PageBuilderController extends Controller
                 ->all();
             $purchasePayload['items'] = $items;
 
-            $purchasePopups->update(['content' => $purchasePayload]);
+            $purchasePopups->update([
+                'content' => $this->mergeGlobalContent((array) ($purchasePopups->content ?? []), $purchasePayload),
+            ]);
         }
 
         return redirect()->route('admin.builder.index')
             ->with('success', 'Global sections updated.');
+    }
+
+    private function mergeGlobalContent(array $existing, array $payload): array
+    {
+        // Merge only root keys so each card/form can save independently.
+        // Nested arrays submitted by the form (e.g. columns/menu/items) fully replace their root key.
+        return array_replace($existing, $payload);
     }
 
     private function ensureDefaults()

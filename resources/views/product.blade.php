@@ -54,7 +54,11 @@
                     }
                 }
                 $productId = $product->id;
-                $categoryName = $product->category?->name ?? 'T-shirt';
+                $categoryNames = $product->categories->pluck('name')->filter()->values();
+                if ($categoryNames->isEmpty() && $product->category?->name) {
+                    $categoryNames = collect([$product->category->name]);
+                }
+                $categoryName = $categoryNames->first() ?? 'T-shirt';
                 $stockLabel = $product->stock ? 'In stock' : 'Made to order';
                 $soldCount = rand(5, 30);
                 $viewerCount = rand(12, 45);
@@ -267,7 +271,7 @@
                                         <path d="M18 8a3 3 0 1 0-2.83-4H15a3 3 0 0 0 0 6h.17A3 3 0 0 0 18 8Zm-12 8a3 3 0 1 0 2.83 4H9a3 3 0 0 0 0-6H8.83A3 3 0 0 0 6 16Zm12 0a3 3 0 1 0 2.83 4H21a3 3 0 0 0 0-6h-.17A3 3 0 0 0 18 16ZM8.9 12.5l6.2-3.5m-6.2 3.5l6.2 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
                                     </svg>
                                 </div>
-                                <p><strong>Categories:</strong> Designs, {{ $categoryName }}</p>
+                                <p><strong>Categories:</strong> {{ $categoryNames->isNotEmpty() ? $categoryNames->join(', ') : $categoryName }}</p>
                                 <p><strong>Tag:</strong> {{ $tagList->isNotEmpty() ? $tagList->join(', ') : 'Clothing Black' }}</p>
                                 <p><strong>SKU:</strong> {{ $sku }}</p>
                             </div>
@@ -424,5 +428,209 @@
 
             @include('partials.site-footer', ['globalFooter' => $globalFooter ?? []])
         </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                if (window.__naiProductUiFallbackBound) {
+                    return;
+                }
+                window.__naiProductUiFallbackBound = true;
+
+                const panel = document.querySelector('[data-product-panel]');
+
+                document.querySelectorAll('[data-option-group]').forEach((group) => {
+                    const items = Array.from(group.querySelectorAll('[data-option-item]'));
+                    if (items.length === 0) {
+                        return;
+                    }
+
+                    const groupType = (group.dataset.optionGroup || 'option').toLowerCase();
+                    const readValue = (item) => item.dataset.optionValue || item.textContent?.trim() || '';
+
+                    const applySelection = (selectedItem) => {
+                        items.forEach((item) => item.classList.remove('is-active'));
+                        selectedItem.classList.add('is-active');
+
+                        if (!panel) {
+                            return;
+                        }
+
+                        const value = readValue(selectedItem);
+                        if (!value) {
+                            return;
+                        }
+
+                        if (groupType === 'color') {
+                            panel.dataset.selectedColor = value;
+                        } else if (groupType === 'size') {
+                            panel.dataset.selectedSize = value;
+                        }
+                    };
+
+                    const preset = items.find((item) => item.classList.contains('is-active')) || items[0];
+                    if (preset) {
+                        applySelection(preset);
+                    }
+
+                    items.forEach((item) => {
+                        item.addEventListener('click', (event) => {
+                            event.preventDefault();
+                            applySelection(item);
+                        });
+                    });
+                });
+
+                const gallery = document.querySelector('[data-product-gallery]');
+                if (gallery) {
+                    const mainImage = gallery.querySelector('[data-gallery-main]');
+                    const thumbs = Array.from(gallery.querySelectorAll('[data-gallery-thumb]'));
+                    const prev = gallery.querySelector('[data-gallery-prev]');
+                    const next = gallery.querySelector('[data-gallery-next]');
+
+                    if (mainImage && thumbs.length > 0) {
+                        let activeIndex = Math.max(
+                            0,
+                            thumbs.findIndex((thumb) => thumb.classList.contains('is-active'))
+                        );
+
+                        const setActive = (index) => {
+                            const clamped = ((index % thumbs.length) + thumbs.length) % thumbs.length;
+                            const target = thumbs[clamped];
+                            const src = target?.dataset.gallerySrc;
+                            if (!src) {
+                                return;
+                            }
+
+                            activeIndex = clamped;
+                            mainImage.setAttribute('src', src);
+                            thumbs.forEach((thumb) => thumb.classList.remove('is-active'));
+                            target.classList.add('is-active');
+                        };
+
+                        thumbs.forEach((thumb, index) => {
+                            thumb.addEventListener('click', (event) => {
+                                event.preventDefault();
+                                setActive(index);
+                            });
+                        });
+
+                        prev?.addEventListener('click', (event) => {
+                            event.preventDefault();
+                            setActive(activeIndex - 1);
+                        });
+
+                        next?.addEventListener('click', (event) => {
+                            event.preventDefault();
+                            setActive(activeIndex + 1);
+                        });
+
+                        setActive(activeIndex);
+                    }
+                }
+
+                const qtyControl = panel?.querySelector('[data-qty-control]');
+                const qtyInput = qtyControl?.querySelector('[data-qty-input]');
+                const qtyDecrease = qtyControl?.querySelector('[data-qty-decrease]');
+                const qtyIncrease = qtyControl?.querySelector('[data-qty-increase]');
+
+                if (qtyInput) {
+                    const setQty = (value) => {
+                        const next = Number.isNaN(value) ? 1 : Math.max(1, value);
+                        qtyInput.value = String(next);
+                    };
+
+                    qtyDecrease?.addEventListener('click', (event) => {
+                        event.preventDefault();
+                        const current = Number.parseInt(qtyInput.value || '1', 10);
+                        setQty((Number.isNaN(current) ? 1 : current) - 1);
+                    });
+
+                    qtyIncrease?.addEventListener('click', (event) => {
+                        event.preventDefault();
+                        const current = Number.parseInt(qtyInput.value || '1', 10);
+                        setQty((Number.isNaN(current) ? 1 : current) + 1);
+                    });
+                }
+
+                window.setTimeout(() => {
+                    const addButton = document.querySelector('.purchase [data-add-to-cart]');
+                    if (!addButton || addButton.dataset.cartBound === '1' || addButton.dataset.cartFallbackBound === '1') {
+                        return;
+                    }
+
+                    addButton.dataset.cartFallbackBound = '1';
+                    const originalLabel = addButton.textContent;
+                    const cartKey = 'nai_cart';
+
+                    const readCart = () => {
+                        try {
+                            const stored = localStorage.getItem(cartKey);
+                            return stored ? JSON.parse(stored) : [];
+                        } catch (error) {
+                            return [];
+                        }
+                    };
+
+                    const writeCart = (items) => {
+                        try {
+                            localStorage.setItem(cartKey, JSON.stringify(items));
+                        } catch (error) {
+                            // Ignore storage errors.
+                        }
+                    };
+
+                    const updateCartBadges = () => {
+                        const count = readCart().reduce((total, item) => total + (Number(item.qty) || 0), 0);
+                        document.querySelectorAll('[data-cart-count]').forEach((badge) => {
+                            badge.textContent = String(count);
+                            badge.classList.toggle('hidden', count === 0);
+                            badge.classList.toggle('is-green', count > 0);
+                        });
+                    };
+
+                    addButton.addEventListener('click', (event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+
+                        const { productId, productName, productPrice, productImage, productUrl } = addButton.dataset;
+                        if (!productId) {
+                            return;
+                        }
+
+                        const selectedColor = panel?.dataset.selectedColor || '';
+                        const selectedSize = panel?.dataset.selectedSize || '';
+                        const qty = Math.max(1, Number.parseInt(qtyInput?.value || '1', 10) || 1);
+                        const variantId =
+                            selectedColor || selectedSize ? `${productId}::${selectedColor}::${selectedSize}` : productId;
+
+                        const items = readCart();
+                        const existing = items.find((item) => item.id === variantId);
+                        if (existing) {
+                            existing.qty = (Number(existing.qty) || 0) + qty;
+                        } else {
+                            items.push({
+                                id: variantId,
+                                baseId: productId,
+                                name: productName || 'Product',
+                                price: Number.parseFloat(productPrice || '0') || 0,
+                                image: productImage || '',
+                                url: productUrl || '',
+                                color: selectedColor,
+                                size: selectedSize,
+                                qty,
+                            });
+                        }
+
+                        writeCart(items);
+                        updateCartBadges();
+                        addButton.classList.add('is-added');
+                        addButton.textContent = 'Added to cart';
+                        window.setTimeout(() => {
+                            addButton.classList.remove('is-added');
+                            addButton.textContent = originalLabel;
+                        }, 1200);
+                    });
+                }, 0);
+            });
+        </script>
     </body>
 </html>

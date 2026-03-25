@@ -22,7 +22,7 @@ class ProductController extends Controller
      */
     public function index()
     {
-        $products = Product::with(['category', 'brand'])->orderByDesc('created_at')->get();
+        $products = Product::with(['category', 'categories', 'brand'])->orderByDesc('created_at')->get();
 
         return view('admin.products.index', compact('products'));
     }
@@ -49,6 +49,8 @@ class ProductController extends Controller
         $validator = $this->validator($request);
         $data = $validator->validate();
         $data['color_options'] = $this->parseColorOptions($request->input('color_options'));
+        $categoryIds = $this->resolveCategoryIds($request);
+        $data['category_id'] = $categoryIds[0] ?? null;
 
         if ($request->hasFile('image')) {
             $data['image_path'] = $request->file('image')->store('products', 'public');
@@ -59,6 +61,7 @@ class ProductController extends Controller
         $data['stock'] = $data['stock'] ?? 0;
 
         $product = Product::create($data);
+        $this->syncCategories($product, $categoryIds);
 
         $this->syncAlternateImages($product, $request);
         $this->syncGallery($product, $request);
@@ -73,7 +76,7 @@ class ProductController extends Controller
      */
     public function edit(Product $product)
     {
-        $product->load(['tags', 'attributes', 'sizes', 'alternateImages', 'galleryImages']);
+        $product->load(['tags', 'attributes', 'sizes', 'alternateImages', 'galleryImages', 'categories']);
         $brands = Brand::orderBy('name')->get();
         $categories = Category::orderBy('name')->get();
         $tags = Tag::orderBy('name')->get();
@@ -91,6 +94,8 @@ class ProductController extends Controller
         $validator = $this->validator($request);
         $data = $validator->validate();
         $data['color_options'] = $this->parseColorOptions($request->input('color_options'));
+        $categoryIds = $this->resolveCategoryIds($request, $product);
+        $data['category_id'] = $categoryIds[0] ?? null;
 
         if ($request->hasFile('image')) {
             if ($product->image_path) {
@@ -104,6 +109,7 @@ class ProductController extends Controller
         $data['stock'] = $data['stock'] ?? 0;
 
         $product->update($data);
+        $this->syncCategories($product, $categoryIds);
 
         $this->syncAlternateImages($product, $request);
         $this->syncGallery($product, $request);
@@ -138,6 +144,8 @@ class ProductController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:255'],
             'category_id' => ['nullable', 'exists:categories,id'],
+            'category_ids' => ['nullable', 'array'],
+            'category_ids.*' => ['integer', 'exists:categories,id'],
             'brand_id' => ['nullable', 'exists:brands,id'],
             'sku' => ['nullable', 'string', 'max:255'],
             'color_options' => ['nullable', 'string', 'max:1000'],
@@ -173,6 +181,49 @@ class ProductController extends Controller
         });
 
         return $validator;
+    }
+
+    private function resolveCategoryIds(Request $request, ?Product $product = null): array
+    {
+        $primaryCategoryId = $request->input('category_id');
+        $primaryCategoryId = is_numeric($primaryCategoryId) ? (int) $primaryCategoryId : null;
+
+        if ($request->exists('category_ids')) {
+            $selected = $request->input('category_ids', []);
+            if (!is_array($selected)) {
+                $selected = [];
+            }
+
+            $categoryIds = collect($selected)
+                ->filter(fn ($id) => is_numeric($id))
+                ->map(fn ($id) => (int) $id)
+                ->values();
+
+            if ($primaryCategoryId) {
+                $categoryIds->prepend($primaryCategoryId);
+            }
+
+            return $categoryIds->unique()->values()->all();
+        }
+
+        if ($product && !$request->boolean('sync_relations', true)) {
+            $existingCategoryIds = $product->categories()
+                ->pluck('categories.id')
+                ->map(fn ($id) => (int) $id);
+
+            if ($primaryCategoryId) {
+                $existingCategoryIds->prepend($primaryCategoryId);
+            }
+
+            return $existingCategoryIds->unique()->values()->all();
+        }
+
+        return $primaryCategoryId ? [$primaryCategoryId] : [];
+    }
+
+    private function syncCategories(Product $product, array $categoryIds): void
+    {
+        $product->categories()->sync($categoryIds);
     }
 
     private function parseColorOptions(?string $raw): ?array

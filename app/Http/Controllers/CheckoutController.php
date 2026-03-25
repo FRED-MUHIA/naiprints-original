@@ -3,26 +3,26 @@
 namespace App\Http\Controllers;
 
 use App\Mail\InvoiceMail;
+use App\Mail\OrderPlaced;
 use App\Models\Client;
 use App\Models\GlobalSection;
 use App\Models\Invoice;
-use App\Models\InvoiceItem;
 use App\Models\InvoiceSetting;
 use App\Models\MpesaTransaction;
+use App\Services\MailDispatchService;
 use App\Services\MpesaService;
 use App\Support\PageDefaults;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class CheckoutController extends Controller
 {
-    public function submit(Request $request)
+    public function submit(Request $request, MailDispatchService $mailDispatch)
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:120'],
-            'email' => ['required', 'email:rfc,dns', 'max:180'],
+            'email' => ['required', 'email', 'max:180'],
             'phone' => ['required', 'string', 'max:60'],
             'address' => ['required', 'string', 'max:180'],
             'city' => ['required', 'string', 'max:120'],
@@ -66,7 +66,7 @@ class CheckoutController extends Controller
             0.0
         );
 
-        $invoice = DB::transaction(function () use ($validated, $cleanItems, $subtotal) {
+        $invoice = DB::transaction(function () use ($validated, $cleanItems) {
             $client = Client::firstOrNew(['email' => $validated['email']]);
             $client->fill([
                 'name' => $validated['name'],
@@ -125,40 +125,36 @@ class CheckoutController extends Controller
         $footer = GlobalSection::ensure('footer', PageDefaults::footer());
         $logoPath = $header->content['logo_url'] ?? '/images/logo.svg';
         $logoUrl = url($logoPath ?: '/images/logo.svg');
+        $support = $mailDispatch->resolveSupportContact($footer->content ?? [], $logoUrl);
+        $clientEmail = $mailDispatch->normalizeEmail((string) ($validated['email'] ?? ''));
+        $supportEmail = $mailDispatch->normalizeEmail((string) ($support['email'] ?? ''));
+        $orderPayload = $this->buildOrderPayload($invoice, $validated, $cleanItems->all(), (float) $subtotal);
 
-        $contactLinks = collect($footer->content['columns'] ?? [])
-            ->flatMap(fn ($column) => $column['links'] ?? [])
-            ->filter(fn ($link) => is_array($link))
-            ->values();
-
-        $contactEmail = $contactLinks->first(function ($link) {
-            $label = (string) ($link['label'] ?? '');
-            $url = (string) ($link['url'] ?? '');
-            return str_contains($label, '@') || str_contains($url, '@');
-        });
-
-        $contactPhone = $contactLinks->first(function ($link) {
-            $label = (string) ($link['label'] ?? '');
-            return preg_match('/\\d{6,}/', $label);
-        });
-
-        $support = [
-            'brand' => $footer->content['brand'] ?? 'Nai Prints',
-            'email' => $contactEmail['label'] ?? config('mail.from.address', 'hello@naiprints.co.ke'),
-            'phone' => $contactPhone['label'] ?? '0700 000 000',
-            'logo_url' => $logoUrl,
-        ];
-
-        try {
-            Mail::to($validated['email'])->send(new InvoiceMail($invoice));
-            if ($support['email']) {
-                Mail::to($support['email'])->send(new InvoiceMail($invoice));
-            }
-        } catch (\Throwable $exception) {
-            logger()->error('Invoice email failed', [
+        $invoiceDelivery = $mailDispatch->sendToRecipients(
+            [$clientEmail, $supportEmail],
+            fn () => new InvoiceMail($invoice),
+            [
+                'event' => 'checkout.invoice_mail',
                 'invoice_id' => $invoice->id,
-                'error' => $exception->getMessage(),
-            ]);
+            ]
+        );
+
+        $orderDelivery = $mailDispatch->sendToRecipients(
+            [$clientEmail, $supportEmail],
+            fn () => new OrderPlaced($orderPayload, $support),
+            [
+                'event' => 'checkout.order_placed_mail',
+                'invoice_id' => $invoice->id,
+            ]
+        );
+
+        $emailFailures = collect([
+            ...$invoiceDelivery['failed'],
+            ...$orderDelivery['failed'],
+        ])->unique()->values()->all();
+
+        if (!empty($emailFailures)) {
+            session()->flash('warning', 'Order saved, but one or more confirmation emails failed to send.');
         }
 
         if ($validated['payment'] === 'mobile_money') {
@@ -171,19 +167,76 @@ class CheckoutController extends Controller
                     ->withErrors(['payment' => 'M-Pesa is not configured yet.']);
             }
 
-            $phone = $mpesa->normalizePhone($validated['phone']);
-            $callbackUrl = ($settings->mpesa_config['callback_url'] ?? null) ?: route('mpesa.stk.callback');
+            try {
+                $phone = method_exists($mpesa, 'validatePhone')
+                    ? $mpesa->validatePhone($validated['phone'])
+                    : (method_exists($mpesa, 'normalizePhone')
+                        ? $mpesa->normalizePhone($validated['phone'])
+                        : (function (string $raw): string {
+                            $digits = preg_replace('/\D+/', '', $raw) ?? '';
+                            if ($digits === '') {
+                                return '';
+                            }
+                            if (str_starts_with($digits, '0') && strlen($digits) === 10) {
+                                return '254' . substr($digits, 1);
+                            }
+                            if (str_starts_with($digits, '7') && strlen($digits) === 9) {
+                                return '254' . $digits;
+                            }
+
+                            return $digits;
+                        })((string) $validated['phone']));
+            } catch (\Throwable $exception) {
+                return redirect()
+                    ->route('invoice.public', $invoice->public_id)
+                    ->withErrors(['payment' => $exception->getMessage()]);
+            }
+
+            if (!preg_match('/^254[17]\d{8}$/', (string) $phone)) {
+                return redirect()
+                    ->route('invoice.public', $invoice->public_id)
+                    ->withErrors(['payment' => 'Invalid M-Pesa phone format. Use 07XXXXXXXX/01XXXXXXXX.']);
+            }
+
+            $rawCallbackUrl = (string) (($settings->mpesa_config['callback_url'] ?? null) ?: secure_url('/mpesa/stk/callback'));
+            $callbackUrl = method_exists($mpesa, 'sanitizeCallbackUrl')
+                ? $mpesa->sanitizeCallbackUrl($rawCallbackUrl)
+                : trim($rawCallbackUrl);
+
+            $amount = method_exists($mpesa, 'normalizeAmount')
+                ? $mpesa->normalizeAmount((float) $invoice->total)
+                : max(1, (int) round((float) $invoice->total));
+            $hasRecentPending = MpesaTransaction::query()
+                ->where('invoice_id', $invoice->id)
+                ->where('phone', $phone)
+                ->where('type', 'stk')
+                ->where('status', 'pending')
+                ->where('created_at', '>=', now()->subMinutes(2))
+                ->exists();
+
+            if ($hasRecentPending) {
+                return redirect()
+                    ->route('invoice.public', $invoice->public_id)
+                    ->withErrors(['payment' => 'An STK prompt was already sent in the last 2 minutes. Complete it on your phone, then retry if needed.']);
+            }
 
             try {
                 $response = $mpesa->stkPush([
-                    'Amount' => (float) $invoice->total,
+                    'Amount' => $amount,
                     'PartyA' => $phone,
                     'PhoneNumber' => $phone,
                     'CallBackURL' => $callbackUrl,
                     'AccountReference' => $invoice->number,
-                    'TransactionDesc' => 'Invoice ' . $invoice->number,
+                    'TransactionDesc' => 'Invoice payment',
                 ]);
             } catch (\Throwable $exception) {
+                logger()->error('Checkout STK push failed', [
+                    'invoice_id' => $invoice->id,
+                    'phone' => $phone,
+                    'amount' => $amount,
+                    'callback_url' => $callbackUrl,
+                    'error' => $exception->getMessage(),
+                ]);
                 return redirect()
                     ->route('invoice.public', $invoice->public_id)
                     ->withErrors(['payment' => 'M-Pesa request failed: ' . $exception->getMessage()]);
@@ -193,7 +246,7 @@ class CheckoutController extends Controller
                 'invoice_id' => $invoice->id,
                 'type' => 'stk',
                 'phone' => $phone,
-                'amount' => $invoice->total,
+                'amount' => $amount,
                 'reference' => $invoice->number,
                 'checkout_request_id' => $response['CheckoutRequestID'] ?? null,
                 'merchant_request_id' => $response['MerchantRequestID'] ?? null,
@@ -202,16 +255,72 @@ class CheckoutController extends Controller
                 'raw_request' => [
                     'source' => 'checkout',
                     'invoice_id' => $invoice->id,
+                    'order' => $orderPayload,
+                    'support' => $support,
+                    'order_email_sent_to' => $orderDelivery['sent'],
+                    'order_email_failed_to' => $orderDelivery['failed'],
+                    'order_email_sent' => empty($orderDelivery['failed']),
+                    'invoice_email_sent_to' => $invoiceDelivery['sent'],
+                    'invoice_email_failed_to' => $invoiceDelivery['failed'],
                 ],
             ]);
 
+            $mobileMoneyMessage = empty($emailFailures)
+                ? 'Invoice created. STK prompt sent to your phone. Enter your M-Pesa PIN to complete payment.'
+                : 'Invoice created and STK prompt sent, but one or more email notifications failed.';
+
             return redirect()
                 ->route('invoice.public', $invoice->public_id)
-                ->with('success', 'Invoice created. STK prompt sent to your phone. Enter your M-Pesa PIN to complete payment.');
+                ->with('success', $mobileMoneyMessage);
         }
+
+        $checkoutMessage = empty($emailFailures)
+            ? 'Invoice created and emailed. Please complete payment to confirm your order.'
+            : 'Invoice created. Some confirmation emails failed to send.';
 
         return redirect()
             ->route('invoice.public', $invoice->public_id)
-            ->with('success', 'Invoice created and emailed. Please complete payment to confirm your order.');
+            ->with('success', $checkoutMessage);
+    }
+
+    /**
+     * @param array<string, mixed> $validated
+     * @param array<int, array<string, mixed>> $items
+     * @return array<string, mixed>
+     */
+    private function buildOrderPayload(Invoice $invoice, array $validated, array $items, float $subtotal): array
+    {
+        return [
+            'number' => $invoice->number,
+            'invoice_public_id' => $invoice->public_id,
+            'invoice_url' => route('invoice.public', $invoice->public_id),
+            'payment_method' => $validated['payment'] ?? null,
+            'customer' => [
+                'name' => $validated['name'] ?? null,
+                'email' => $validated['email'] ?? null,
+                'phone' => $validated['phone'] ?? null,
+            ],
+            'shipping' => [
+                'address' => $validated['address'] ?? null,
+                'city' => $validated['city'] ?? null,
+                'notes' => $validated['notes'] ?? null,
+            ],
+            'items' => collect($items)
+                ->map(function (array $item) {
+                    return [
+                        'id' => $item['id'] ?? null,
+                        'name' => $item['name'] ?? null,
+                        'price' => (float) ($item['price'] ?? 0),
+                        'qty' => (float) ($item['qty'] ?? 0),
+                        'color' => $item['color'] ?? null,
+                        'size' => $item['size'] ?? null,
+                    ];
+                })
+                ->values()
+                ->all(),
+            'subtotal' => round($subtotal, 2),
+            'total' => round((float) $invoice->total, 2),
+            'placed_at' => now()->toIso8601String(),
+        ];
     }
 }

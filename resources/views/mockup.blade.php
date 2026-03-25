@@ -566,7 +566,7 @@
                 <main class="mockup-stage">
                     <div class="mockup-stage-toolbar">
                         <div class="mockup-stage-tabs">
-                            <button class="mockup-stage-tab is-active" type="button" data-tools-toggle aria-expanded="false">Tools</button>
+                            <button class="mockup-stage-tab is-active" type="button" data-tools-toggle aria-expanded="false" aria-haspopup="menu" aria-controls="mockup-tools-menu">Tools</button>
                             <button class="mockup-stage-tab" type="button">Animate</button>
                             <button class="mockup-stage-tab" type="button">Position</button>
                         </div>
@@ -597,7 +597,7 @@
                                 </svg>
                             </button>
                         </div>
-                        <div class="mockup-tools-menu" data-tools-menu hidden>
+                        <div class="mockup-tools-menu" id="mockup-tools-menu" data-tools-menu hidden>
                             <div class="mockup-text-toolbar" data-text-toolbar>
                                 <div class="mockup-toolbar-group">
                                     <select class="mockup-toolbar-select" data-text-font data-text-control>
@@ -770,6 +770,7 @@
                 const GUIDE_PRINT_STROKE = 2 * GUIDE_SCALE;
                 const GUIDE_SAFE_STROKE = 1.5 * GUIDE_SCALE;
                 const SAVED_STORAGE_KEY = 'nai_mockup_saved_designs';
+                const MOCKUP_TAB_STORAGE_KEY = 'nai_mockup_active_tab';
                 const SAVED_TTL_MS = 24 * 60 * 60 * 1000;
                 const BG_THEMES = {
                     light: '#f8fafc',
@@ -1102,6 +1103,7 @@
                 const shareToggle = document.querySelector('[data-share-toggle]');
                 const toolsToggle = document.querySelector('[data-tools-toggle]');
                 const toolsMenu = document.querySelector('[data-tools-menu]');
+                const stageToolbar = document.querySelector('.mockup-stage-toolbar');
                 const canvasWrap = document.querySelector('[data-canvas-wrap]');
                 const artboard = document.querySelector('.mockup-artboard');
                 const zoomRange = document.querySelector('[data-zoom-range]');
@@ -1157,11 +1159,46 @@
                 const brandLogoImg = document.querySelector('[data-brand-logo]');
                 const brandMarkEl = document.querySelector('[data-brand-mark]');
 
+                const isToolsMenuOpen = () => Boolean(toolsMenu?.classList.contains('is-open'));
+
+                const setToolsMenuOpen = (open) => {
+                    if (!toolsMenu) {
+                        return;
+                    }
+                    toolsMenu.classList.toggle('is-open', open);
+                    toolsMenu.hidden = !open;
+                    toolsToggle?.setAttribute('aria-expanded', String(open));
+                    stageToolbar?.classList.toggle('is-tools-open', open);
+                    if (!open && textSpacingPanel) {
+                        textSpacingPanel.hidden = true;
+                    }
+                };
+
+                const toggleToolsMenu = () => {
+                    setToolsMenuOpen(!isToolsMenuOpen());
+                };
+
                 const uploads = [];
                 let activeTool = 'select';
                 let activeColor = '#7c3aed';
                 let activePanel = 'mockups';
-                let activeMockupTab = 'all';
+                const MOCKUP_TAB_KEYS = ['all', 'designs', 'folders'];
+                const readSavedMockupTab = () => {
+                    try {
+                        const stored = (localStorage.getItem(MOCKUP_TAB_STORAGE_KEY) || '').toLowerCase().trim();
+                        return MOCKUP_TAB_KEYS.includes(stored) ? stored : 'all';
+                    } catch (err) {
+                        return 'all';
+                    }
+                };
+                const saveMockupTab = (tab) => {
+                    try {
+                        localStorage.setItem(MOCKUP_TAB_STORAGE_KEY, tab);
+                    } catch (err) {
+                        // Ignore storage errors.
+                    }
+                };
+                let activeMockupTab = readSavedMockupTab();
                 const BRAND_LOGO_KEY = 'nai_mockup_brand_logo';
 
                 const toDataUrl = (svg) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
@@ -1311,7 +1348,7 @@
                 };
 
                 const syncTextTools = (textTarget = null) => {
-                    const isTextTool = activeTool === 'text';
+                    const isTextTool = activeTool === 'text' || Boolean(textTarget);
                     if (panelShell) {
                         panelShell.classList.toggle('is-text-tool', isTextTool);
                     }
@@ -2085,26 +2122,41 @@
                     }, { crossOrigin: 'anonymous' });
                 };
 
-                const fitToContainer = () => {
+                const resolveCanvasViewport = (containerOverride = null) => {
                     const wrap = document.querySelector('[data-canvas-wrap]');
                     const artboard = document.querySelector('.mockup-artboard');
-                    const container = artboard || wrap;
-                    if (!container) {
+                    const elements = [containerOverride, wrap, artboard].filter(Boolean);
+                    const widths = elements
+                        .map((element) => element.clientWidth)
+                        .filter((size) => Number.isFinite(size) && size > 0);
+                    const heights = elements
+                        .map((element) => element.clientHeight)
+                        .filter((size) => Number.isFinite(size) && size > 0);
+
+                    return {
+                        width: widths.length ? Math.min(...widths) : CANVAS_WIDTH,
+                        height: heights.length ? Math.min(...heights) : CANVAS_HEIGHT,
+                    };
+                };
+
+                const fitToContainer = () => {
+                    const { width, height } = resolveCanvasViewport();
+                    if (!width || !height) {
                         return;
                     }
-                    setZoom(100, container);
+                    const fitRatio = Math.min(width / CANVAS_WIDTH, height / CANVAS_HEIGHT, 1);
+                    const fitPercent = Math.max(25, Math.round(fitRatio * 100));
+                    setZoom(fitPercent);
                 };
 
                 const setZoom = (value, containerOverride = null) => {
                     const zoom = Math.max(0.25, Math.min(2, value / 100));
                     canvas.setZoom(zoom);
-                    const wrap = document.querySelector('[data-canvas-wrap]');
-                    const artboard = document.querySelector('.mockup-artboard');
-                    const container = containerOverride || artboard || wrap;
+                    const viewport = resolveCanvasViewport(containerOverride);
                     const view = canvas.viewportTransform;
-                    if (container && view) {
-                        const offsetX = (container.clientWidth - CANVAS_WIDTH * zoom) / 2;
-                        const offsetY = (container.clientHeight - CANVAS_HEIGHT * zoom) / 2;
+                    if (view) {
+                        const offsetX = (viewport.width - CANVAS_WIDTH * zoom) / 2;
+                        const offsetY = (viewport.height - CANVAS_HEIGHT * zoom) / 2;
                         view[4] = Number.isFinite(offsetX) ? offsetX : 0;
                         view[5] = Number.isFinite(offsetY) ? offsetY : 0;
                         canvas.setViewportTransform(view);
@@ -2517,22 +2569,27 @@
                 const setActiveTool = (tool) => {
                     activeTool = tool;
                     toolButtons.forEach((btn) => btn.classList.toggle('is-active', btn.dataset.tool === tool));
+                    setToolsMenuOpen(tool === 'text');
                     canvas.isDrawingMode = false;
                     canvas.selection = tool === 'select';
                     syncTextTools(getActiveTextTarget());
                 };
 
-                const setMockupTab = (tab) => {
+                const setMockupTab = (tab, options = {}) => {
                     if (!mockupTabs.length || !mockupTabSections.length) {
                         return;
                     }
+                    const { persist = true } = options;
                     const normalizedTab = (tab || 'all').toLowerCase().trim();
-                    const tabKeys = ['all', 'designs', 'folders'];
-                    let resolvedTab = tabKeys.includes(normalizedTab) ? normalizedTab : 'all';
-                    if (activePanel === 'uploads') {
-                        resolvedTab = 'designs';
+                    const requestedTab = MOCKUP_TAB_KEYS.includes(normalizedTab) ? normalizedTab : activeMockupTab;
+                    const resolvedTab = activePanel === 'uploads' ? 'designs' : requestedTab;
+
+                    if (activePanel !== 'uploads') {
+                        activeMockupTab = requestedTab;
+                        if (persist) {
+                            saveMockupTab(activeMockupTab);
+                        }
                     }
-                    activeMockupTab = resolvedTab;
 
                     if (!['mockups', 'uploads'].includes(activePanel)) {
                         return;
@@ -2591,9 +2648,9 @@
                     }
 
                     if (resolvedPanel === 'uploads') {
-                        setMockupTab('designs');
+                        setMockupTab(activeMockupTab, { persist: false });
                     } else if (resolvedPanel === 'mockups') {
-                        setMockupTab(activeMockupTab);
+                        setMockupTab(activeMockupTab, { persist: false });
                     }
                 };
 
@@ -3458,9 +3515,7 @@
                 if (toolsToggle && toolsMenu) {
                     toolsToggle.addEventListener('click', (event) => {
                         event.stopPropagation();
-                        const isOpen = toolsMenu.classList.toggle('is-open');
-                        toolsMenu.hidden = !isOpen;
-                        toolsToggle.setAttribute('aria-expanded', String(isOpen));
+                        toggleToolsMenu();
                     });
                 }
 
@@ -3736,10 +3791,8 @@
                     if (shareWrap && !shareWrap.contains(event.target)) {
                         shareWrap.classList.remove('is-open');
                     }
-                    if (toolsMenu && !toolsMenu.contains(event.target) && event.target !== toolsToggle) {
-                        toolsMenu.classList.remove('is-open');
-                        toolsMenu.hidden = true;
-                        toolsToggle?.setAttribute('aria-expanded', 'false');
+                    if (toolsMenu && !toolsMenu.contains(event.target) && !toolsToggle?.contains(event.target)) {
+                        setToolsMenuOpen(false);
                     }
                     if (
                         textSpacingPanel &&
@@ -3780,9 +3833,9 @@
                 });
                 undoBtn.addEventListener('click', undo);
                 redoBtn.addEventListener('click', redo);
-                zoomRange.addEventListener('input', () => setZoom(100));
+                zoomRange.addEventListener('input', () => setZoom(Number(zoomRange.value)));
                 zoomRange.value = 100;
-                zoomRange.disabled = true;
+                zoomRange.disabled = false;
                 opacityRange.addEventListener('input', (event) => updateOpacity(Number(event.target.value)));
 
                 canvas.on('selection:created', updateOpacitySlider);
@@ -3822,6 +3875,9 @@
                         event.target instanceof HTMLInputElement ||
                         event.target instanceof HTMLTextAreaElement ||
                         event.target?.isContentEditable;
+                    if (event.key === 'Escape') {
+                        setToolsMenuOpen(false);
+                    }
                     if ((event.key === 'Delete' || event.key === 'Backspace') && canvas.getActiveObject() && !isInput) {
                         deleteActive();
                     }

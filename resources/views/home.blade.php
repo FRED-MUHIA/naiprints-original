@@ -23,6 +23,64 @@
                     $hasGiftFinderSection = collect($sections)->contains(function ($section) {
                         return ($section['type'] ?? '') === 'gift_finder';
                     });
+                    $normalizeGiftFinderKey = static function ($value) {
+                        return \Illuminate\Support\Str::of((string) $value)
+                            ->lower()
+                            ->replaceMatches('/[^a-z0-9]+/', '')
+                            ->toString();
+                    };
+                    $giftFinderCategoryEntries = collect($giftFinderCategories ?? [])
+                        ->map(function ($category) use ($normalizeGiftFinderKey) {
+                            $id = (int) data_get($category, 'id', 0);
+                            $name = (string) data_get($category, 'name', '');
+                            $slug = (string) data_get($category, 'slug', '');
+
+                            $aliases = array_values(array_unique(array_filter([
+                                $normalizeGiftFinderKey($name),
+                                $normalizeGiftFinderKey($slug),
+                                $normalizeGiftFinderKey(str_replace('-', ' ', $slug)),
+                            ])));
+
+                            return [
+                                'id' => $id,
+                                'aliases' => $aliases,
+                            ];
+                        })
+                        ->filter(fn ($category) => ($category['id'] ?? 0) > 0)
+                        ->values();
+                    $resolveGiftFinderOptionUrl = static function ($optionLabel, $fallbackUrl = '/shop', $preferredCategoryId = null) use ($giftFinderCategoryEntries, $normalizeGiftFinderKey) {
+                        $fallback = is_string($fallbackUrl) && trim($fallbackUrl) !== ''
+                            ? trim($fallbackUrl)
+                            : '/shop';
+
+                        if (is_numeric($preferredCategoryId)) {
+                            return route('shop', ['category' => (int) $preferredCategoryId]);
+                        }
+
+                        $needle = $normalizeGiftFinderKey($optionLabel);
+                        if ($needle === '') {
+                            return $fallback;
+                        }
+
+                        $match = $giftFinderCategoryEntries->first(function ($category) use ($needle) {
+                            $aliases = $category['aliases'] ?? [];
+                            if (in_array($needle, $aliases, true)) {
+                                return true;
+                            }
+
+                            foreach ($aliases as $alias) {
+                                if ($alias !== '' && (str_contains($needle, $alias) || str_contains($alias, $needle))) {
+                                    return true;
+                                }
+                            }
+
+                            return false;
+                        });
+
+                        return $match
+                            ? route('shop', ['category' => (int) $match['id']])
+                            : $fallback;
+                    };
                     $giftProducts = [];
                     $giftFinderSource = !empty($giftFinderProducts) && $giftFinderProducts->count()
                         ? $giftFinderProducts
@@ -420,8 +478,6 @@
                                         $rating = $product['rating'] ?? ($isModel ? ($product->rating ?? 4.8) : 4.8);
                                         $rating = is_numeric($rating) ? (float) $rating : 4.8;
                                         $filledStars = max(0, min(5, (int) round($rating)));
-                                        $safeName = e((string) $name);
-                                        $flameName = preg_replace('/\\bT[-\\s]?shirt\\b/i', '<span class=\"flame-text\">$0</span><span class=\"flame-emoji\" aria-hidden=\"true\">🔥</span>', $safeName);
                                     @endphp
                                     <article class="product-card" data-product-panel>
                                         <div class="product-media">
@@ -489,7 +545,7 @@
                                         </div>
                                         <div class="mt-4 space-y-2 product-card-body">
                                             <div>
-                                                <h3 class="product-card-title"><span class="heartbeat-emoji" aria-hidden="true">🔥</span>{!! $flameName !!}</h3>
+                                                <h3 class="product-card-title">{{ $name }}</h3>
                                             </div>
                                             <div class="product-card-price">
                                                 <span class="product-card-price-current">KSh {{ number_format($finalPrice, 0) }}</span>
@@ -533,6 +589,11 @@
                             $giftFinderCtaUrl = $data['cta_url'] ?? '/shop';
                             $giftFinderInterval = $data['carousel_interval'] ?? 5;
                             $giftFinderInterval = is_numeric($giftFinderInterval) ? max(1, (int) $giftFinderInterval) : 5;
+                            $giftFinderCategoryId = $data['product_category_id'] ?? null;
+                            $giftFinderCategoryId = is_numeric($giftFinderCategoryId) ? (int) $giftFinderCategoryId : null;
+                            if ($giftFinderCategoryId && ($giftFinderCtaUrl === '/shop' || trim((string) $giftFinderCtaUrl) === '')) {
+                                $giftFinderCtaUrl = route('shop', ['category' => $giftFinderCategoryId]);
+                            }
                         @endphp
                         <section class="gift-finder">
                             <div class="gift-finder-inner">
@@ -540,9 +601,15 @@
                                 <div class="gift-finder-select">
                                     <span>{{ $giftFinderLeadBefore }}</span>
                                     <div class="gift-finder-select-wrap">
-                                        <select aria-label="Select product">
+                                        <select aria-label="Select product"
+                                                data-gift-category-select
+                                                data-gift-fallback-url="{{ $giftFinderCtaUrl }}">
+                                            <option value="" selected disabled>Choose category</option>
                                             @foreach ($giftFinderOptions as $optionIndex => $option)
-                                                <option @if ($optionIndex === 0) selected @endif>{{ $option }}</option>
+                                                @php
+                                                    $optionUrl = $resolveGiftFinderOptionUrl($option, $giftFinderCtaUrl, $giftFinderCategoryId);
+                                                @endphp
+                                                <option value="{{ $optionUrl }}">{{ $option }}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -612,6 +679,11 @@
                                 $giftFinderCtaUrl = $giftFinder['cta_url'] ?? '/shop';
                                 $giftFinderInterval = $giftFinder['carousel_interval'] ?? 5;
                                 $giftFinderInterval = is_numeric($giftFinderInterval) ? max(1, (int) $giftFinderInterval) : 5;
+                                $giftFinderCategoryId = $giftFinder['product_category_id'] ?? null;
+                                $giftFinderCategoryId = is_numeric($giftFinderCategoryId) ? (int) $giftFinderCategoryId : null;
+                                if ($giftFinderCategoryId && ($giftFinderCtaUrl === '/shop' || trim((string) $giftFinderCtaUrl) === '')) {
+                                    $giftFinderCtaUrl = route('shop', ['category' => $giftFinderCategoryId]);
+                                }
                             @endphp
                             <section class="gift-finder">
                                 <div class="gift-finder-inner">
@@ -619,9 +691,15 @@
                                     <div class="gift-finder-select">
                                         <span>{{ $giftFinderLeadBefore }}</span>
                                         <div class="gift-finder-select-wrap">
-                                            <select aria-label="Select product">
+                                            <select aria-label="Select product"
+                                                    data-gift-category-select
+                                                    data-gift-fallback-url="{{ $giftFinderCtaUrl }}">
+                                                <option value="" selected disabled>Choose category</option>
                                                 @foreach ($giftFinderOptions as $optionIndex => $option)
-                                                    <option @if ($optionIndex === 0) selected @endif>{{ $option }}</option>
+                                                    @php
+                                                        $optionUrl = $resolveGiftFinderOptionUrl($option, $giftFinderCtaUrl, $giftFinderCategoryId);
+                                                    @endphp
+                                                    <option value="{{ $optionUrl }}">{{ $option }}</option>
                                                 @endforeach
                                             </select>
                                         </div>

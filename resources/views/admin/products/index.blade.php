@@ -26,6 +26,12 @@
             </thead>
             <tbody class="divide-y divide-slate-100">
                 @forelse ($products as $product)
+                    @php
+                        $categoryNames = $product->categories->pluck('name')->filter()->values();
+                        if ($categoryNames->isEmpty() && $product->category?->name) {
+                            $categoryNames = collect([$product->category->name]);
+                        }
+                    @endphp
                     <tr>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
@@ -44,7 +50,7 @@
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4 text-slate-500">{{ $product->category?->name ?? '—' }}</td>
+                        <td class="px-6 py-4 text-slate-500">{{ $categoryNames->isNotEmpty() ? $categoryNames->join(', ') : '—' }}</td>
                         <td class="px-6 py-4 text-slate-500">{{ $product->brand?->name ?? '—' }}</td>
                         <td class="px-6 py-4 text-slate-700">KSh {{ number_format($product->price, 2) }}</td>
                         <td class="px-6 py-4 text-slate-500">

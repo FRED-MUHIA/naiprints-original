@@ -50,6 +50,59 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const bindClientAutofill = (scope) => {
+        const select = scope.querySelector('[data-client-select]');
+        if (!select) {
+            return;
+        }
+
+        const fields = {
+            name: scope.querySelector('[data-client-field="name"]'),
+            company_name: scope.querySelector('[data-client-field="company_name"]'),
+            phone: scope.querySelector('[data-client-field="phone"]'),
+            email: scope.querySelector('[data-client-field="email"]'),
+            address: scope.querySelector('[data-client-field="address"]'),
+        };
+
+        const datasetMap = {
+            name: 'clientName',
+            company_name: 'clientCompanyName',
+            phone: 'clientPhone',
+            email: 'clientEmail',
+            address: 'clientAddress',
+        };
+
+        const applyClient = (clearWhenEmpty = true) => {
+            const selected = select.options[select.selectedIndex];
+            const hasClient = Boolean(select.value);
+
+            Object.entries(fields).forEach(([key, input]) => {
+                if (!input) {
+                    return;
+                }
+
+                if (!hasClient) {
+                    if (clearWhenEmpty) {
+                        input.value = '';
+                    }
+                    return;
+                }
+
+                const datasetKey = datasetMap[key];
+                input.value = selected?.dataset?.[datasetKey] ?? '';
+            });
+        };
+
+        select.addEventListener('change', () => applyClient(true));
+
+        const hasTypedValues = Object.values(fields).some((input) => (input?.value || '').trim() !== '');
+        if (select.value && !hasTypedValues) {
+            applyClient(false);
+        }
+    };
+
+    document.querySelectorAll('[data-client-autofill]').forEach(bindClientAutofill);
+
     const invoiceBuilder = document.querySelector('[data-invoice-builder]');
     if (invoiceBuilder) {
         const itemsBody = invoiceBuilder.querySelector('[data-invoice-items]');
@@ -384,6 +437,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     document.querySelectorAll('[data-add-to-cart]').forEach((button) => {
+        button.dataset.cartBound = '1';
         button.addEventListener('click', (event) => {
             event.preventDefault();
             event.stopPropagation();
@@ -610,6 +664,18 @@ document.addEventListener('DOMContentLoaded', () => {
         carousel.addEventListener('focusout', start);
 
         start();
+    });
+
+    document.querySelectorAll('[data-gift-category-select]').forEach((select) => {
+        const fallbackUrl = (select.dataset.giftFallbackUrl || '/shop').trim();
+
+        select.addEventListener('change', () => {
+            const selectedUrl = (select.value || fallbackUrl).trim();
+            if (!selectedUrl || selectedUrl === '#') {
+                return;
+            }
+            window.location.assign(selectedUrl);
+        });
     });
 
     document.querySelectorAll('[data-announcement-builder]').forEach((builder) => {

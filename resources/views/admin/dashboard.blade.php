@@ -47,6 +47,12 @@
 
             <div class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 @forelse ($products as $product)
+                    @php
+                        $categoryNames = $product->categories->pluck('name')->filter()->values();
+                        if ($categoryNames->isEmpty() && $product->category?->name) {
+                            $categoryNames = collect([$product->category->name]);
+                        }
+                    @endphp
                     <div class="admin-product-card">
                         <div class="admin-product-media">
                             <div class="admin-product-image">
@@ -59,7 +65,7 @@
                         </div>
                         <div class="mt-4">
                             <p class="text-sm font-semibold text-slate-900">{{ $product->name }}</p>
-                            <p class="mt-1 text-xs text-slate-500">{{ $product->category?->name ?? 'Uncategorized' }}</p>
+                            <p class="mt-1 text-xs text-slate-500">{{ $categoryNames->isNotEmpty() ? $categoryNames->join(', ') : 'Uncategorized' }}</p>
                             <p class="mt-3 text-sm font-semibold text-slate-900">KSh {{ number_format($product->price, 2) }}</p>
                             <div class="mt-3 flex items-center justify-between text-xs text-slate-500">
                                 <span>Stock {{ $product->stock }}</span>

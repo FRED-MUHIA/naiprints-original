@@ -7,11 +7,14 @@ use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Receipt;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class InvoicePaymentService
 {
+    public function __construct(private MailDispatchService $mailDispatch)
+    {
+    }
+
     public function record(Invoice $invoice, array $data): Payment
     {
         $receipt = null;
@@ -43,16 +46,19 @@ class InvoicePaymentService
         $payment->setRelation('receipt', $receipt);
         $invoice->loadMissing('client');
 
-        if ($receipt && $invoice->client?->email) {
-            try {
-                Mail::to($invoice->client->email)->send(new ReceiptMail($receipt));
-            } catch (\Throwable $exception) {
-                logger()->error('Receipt email failed', [
+        if ($receipt) {
+            $this->mailDispatch->sendToRecipients(
+                [
+                    (string) $invoice->client?->email,
+                    (string) config('mail.support.address', config('mail.from.address')),
+                ],
+                fn () => new ReceiptMail($receipt),
+                [
+                    'event' => 'invoice.receipt_mail',
                     'invoice_id' => $invoice->id,
                     'receipt_id' => $receipt->id,
-                    'error' => $exception->getMessage(),
-                ]);
-            }
+                ]
+            );
         }
 
         return $payment;

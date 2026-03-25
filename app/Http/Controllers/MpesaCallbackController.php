@@ -6,13 +6,13 @@ use App\Models\Invoice;
 use App\Models\MpesaTransaction;
 use App\Mail\OrderPlaced;
 use App\Services\InvoicePaymentService;
+use App\Services\MailDispatchService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Mail;
 
 class MpesaCallbackController extends Controller
 {
-    public function stkCallback(Request $request, InvoicePaymentService $payments)
+    public function stkCallback(Request $request, InvoicePaymentService $payments, MailDispatchService $mailDispatch)
     {
         $payload = $request->all();
         $callback = data_get($payload, 'Body.stkCallback');
@@ -60,43 +60,38 @@ class MpesaCallbackController extends Controller
 
         $transaction->save();
 
-        if ($resultCode === '0' && !$transaction->payment_id) {
-            if ($transaction->type === 'checkout') {
-                $raw = $transaction->raw_request ?? [];
-                $order = $raw['order'] ?? null;
-                $support = $raw['support'] ?? [];
-                $alreadySent = (bool) ($raw['order_email_sent'] ?? false);
+        if ($resultCode === '0') {
+            $rawRequest = is_array($transaction->raw_request) ? $transaction->raw_request : [];
+            $isCheckoutOrder = ($transaction->type === 'checkout')
+                || (($rawRequest['source'] ?? null) === 'checkout');
 
-                if ($order && !$alreadySent) {
-                    $customerEmail = data_get($order, 'customer.email');
-                    if ($customerEmail) {
-                        Mail::to($customerEmail)->send(new OrderPlaced($order, $support));
-                    }
-                    $supportEmail = $support['email'] ?? config('mail.from.address');
-                    if ($supportEmail) {
-                        Mail::to($supportEmail)->send(new OrderPlaced($order, $support));
-                    }
-                    $raw['order_email_sent'] = true;
-                    $transaction->raw_request = $raw;
-                    $transaction->save();
-                }
-
-                return response()->json(['ResultCode' => 0, 'ResultDesc' => 'Success']);
+            if ($isCheckoutOrder) {
+                $this->sendMissingOrderEmails($transaction, $mailDispatch, $checkoutId);
             }
 
-            $invoice = $transaction->invoice ?: $this->resolveInvoice($transaction->reference);
-            if ($invoice && $amount > 0) {
-                $payment = $payments->record($invoice, [
-                    'amount' => $amount,
-                    'method' => 'M-Pesa',
-                    'payment_date' => $transaction->occurred_at?->toDateString() ?? now()->toDateString(),
-                    'reference' => $receipt,
-                    'note' => 'M-Pesa STK push',
-                ]);
+            if (!$transaction->payment_id) {
+                $invoice = $transaction->invoice;
+                if (!$invoice) {
+                    $invoiceId = data_get($rawRequest, 'invoice_id');
+                    if (is_numeric($invoiceId)) {
+                        $invoice = Invoice::find((int) $invoiceId);
+                    }
+                }
 
-                $transaction->payment_id = $payment->id;
-                $transaction->invoice_id = $invoice->id;
-                $transaction->save();
+                $invoice = $invoice ?: $this->resolveInvoice($transaction->reference);
+                if ($invoice && $amount > 0) {
+                    $payment = $payments->record($invoice, [
+                        'amount' => $amount,
+                        'method' => 'M-Pesa',
+                        'payment_date' => $transaction->occurred_at?->toDateString() ?? now()->toDateString(),
+                        'reference' => $receipt,
+                        'note' => 'M-Pesa STK push',
+                    ]);
+
+                    $transaction->payment_id = $payment->id;
+                    $transaction->invoice_id = $invoice->id;
+                    $transaction->save();
+                }
             }
         }
 
@@ -178,5 +173,57 @@ class MpesaCallbackController extends Controller
         return Invoice::where('number', $reference)
             ->orWhere('public_id', $reference)
             ->first();
+    }
+
+    private function sendMissingOrderEmails(
+        MpesaTransaction $transaction,
+        MailDispatchService $mailDispatch,
+        ?string $checkoutRequestId = null
+    ): void {
+        $raw = is_array($transaction->raw_request) ? $transaction->raw_request : [];
+        $order = $raw['order'] ?? null;
+        if (!is_array($order) || empty($order)) {
+            return;
+        }
+
+        $support = is_array($raw['support'] ?? null) ? $raw['support'] : [];
+        $targetRecipients = $mailDispatch->uniqueRecipients([
+            (string) data_get($order, 'customer.email', ''),
+            (string) data_get($support, 'email', config('mail.support.address', config('mail.from.address'))),
+        ]);
+        if (empty($targetRecipients)) {
+            return;
+        }
+
+        $sentRecipients = $mailDispatch->uniqueRecipients($raw['order_email_sent_to'] ?? []);
+        $pendingRecipients = array_values(array_diff($targetRecipients, $sentRecipients));
+
+        if (!empty($pendingRecipients)) {
+            $delivery = $mailDispatch->sendToRecipients(
+                $pendingRecipients,
+                fn () => new OrderPlaced($order, $support),
+                [
+                    'event' => 'mpesa.checkout.order_placed_mail',
+                    'transaction_id' => $transaction->id,
+                    'checkout_request_id' => $checkoutRequestId,
+                ]
+            );
+            $sentRecipients = $mailDispatch->uniqueRecipients([
+                ...$sentRecipients,
+                ...$delivery['sent'],
+            ]);
+            $failedRecipients = $mailDispatch->uniqueRecipients([
+                ...($raw['order_email_failed_to'] ?? []),
+                ...$delivery['failed'],
+            ]);
+            $raw['order_email_failed_to'] = array_values(array_diff($failedRecipients, $sentRecipients));
+        }
+
+        $raw['order_email_sent_to'] = $sentRecipients;
+        $raw['order_email_sent'] = empty(array_diff($targetRecipients, $sentRecipients));
+        $raw['order_email_last_attempt_at'] = now()->toIso8601String();
+
+        $transaction->raw_request = $raw;
+        $transaction->save();
     }
 }

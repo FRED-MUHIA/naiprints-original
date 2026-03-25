@@ -250,9 +250,17 @@
                         M-Pesa Phone Number
                         <input type="text" name="phone" value="{{ old('phone', $invoice->client?->phone) }}" class="w-full rounded-xl border border-slate-200 px-4 py-2">
                     </label>
-                    <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                        Amount: <strong>KES {{ number_format($invoice->balance, 2) }}</strong>
-                    </div>
+                    <label class="space-y-2 text-sm font-semibold text-slate-600">
+                        Amount (KES)
+                        <input type="number"
+                               name="amount"
+                               min="1"
+                               max="{{ number_format($invoice->balance, 2, '.', '') }}"
+                               step="1"
+                               value="{{ old('amount', number_format($invoice->balance, 2, '.', '')) }}"
+                               class="w-full rounded-xl border border-slate-200 px-4 py-2">
+                    </label>
+                    <p class="text-xs text-slate-500">Maximum payable now: KES {{ number_format($invoice->balance, 2) }}</p>
                     <button type="submit" class="btn-brand w-full justify-center">Send STK Prompt</button>
                 </form>
             </div>
