@@ -6281,7 +6281,7 @@
 
     .footer-notice-copy {
         margin: 0;
-        font-size: clamp(1rem, 1.1vw, 1.7rem);
+        font-size: clamp(0.82rem, 0.8vw, 1.12rem);
         line-height: 1.5;
         letter-spacing: -0.01em;
         color: inherit;
@@ -6296,7 +6296,7 @@
     }
 
     .footer-notice-bar {
-        height: clamp(12px, 1.6vw, 28px);
+        height: clamp(2px, 0.35vw, 5px);
         background: var(--footer-notice-bar, #ff4b00);
     }
 
