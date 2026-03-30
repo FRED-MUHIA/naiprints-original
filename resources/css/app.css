@@ -3586,6 +3586,29 @@
 }
 
 @media (max-width: 768px) {
+    .hero-tile {
+        min-height: 0;
+        aspect-ratio: 3 / 4;
+    }
+
+    .hero-tile-image,
+    .hero-tile-face {
+        background-size: contain;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-color: #0b1026;
+    }
+
+    .tiles-section .hero-tile[data-tile-index="2"].hero-tile-image,
+    .tiles-section .hero-tile[data-tile-index="2"].hero-tile-image:hover {
+        background-size: contain;
+    }
+
+    .hero-tile-video-el {
+        transform: none;
+        object-fit: contain;
+    }
+
     .delivery {
         grid-template-columns: 1fr;
     }
