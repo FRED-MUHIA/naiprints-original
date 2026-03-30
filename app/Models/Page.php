@@ -36,6 +36,8 @@ class Page extends Model
         if ($slug === 'home') {
             $sections = $page->content['sections'] ?? [];
             $types = array_map(fn ($section) => $section['type'] ?? null, $sections);
+            $updated = false;
+
             if (!in_array('collection_showcase', $types, true)) {
                 $insert = PageDefaults::section('collection_showcase');
                 $bestIndex = array_search('best_sellers', $types, true);
@@ -44,7 +46,16 @@ class Page extends Model
                 } else {
                     array_splice($sections, $bestIndex, 0, [$insert]);
                 }
+                $types = array_map(fn ($section) => $section['type'] ?? null, $sections);
+                $updated = true;
+            }
 
+            if (!in_array('footer_notice', $types, true)) {
+                $sections[] = PageDefaults::section('footer_notice');
+                $updated = true;
+            }
+
+            if ($updated) {
                 $page->update(['content' => ['sections' => $sections]]);
             }
         }

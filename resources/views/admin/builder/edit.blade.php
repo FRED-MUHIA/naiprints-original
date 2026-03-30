@@ -553,6 +553,15 @@
                                     <input type="text" name="sections[{{ $index }}][data][button][label]" value="{{ $data['button']['label'] ?? '' }}" placeholder="Button label" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
                                     <input type="text" name="sections[{{ $index }}][data][button][url]" value="{{ $data['button']['url'] ?? '' }}" placeholder="Button URL" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
                                 </div>
+                            @elseif ($type === 'footer_notice')
+                                <input type="text" name="sections[{{ $index }}][data][headline]" value="{{ $data['headline'] ?? '' }}" placeholder="Headline (bold)" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                <textarea name="sections[{{ $index }}][data][message]" rows="3" placeholder="Notice message" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">{{ $data['message'] ?? '' }}</textarea>
+                                <div class="grid gap-3 sm:grid-cols-3">
+                                    <input type="text" name="sections[{{ $index }}][data][background_color]" value="{{ $data['background_color'] ?? '#efefef' }}" placeholder="Background color (#efefef)" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                    <input type="text" name="sections[{{ $index }}][data][bar_color]" value="{{ $data['bar_color'] ?? '#ff4b00' }}" placeholder="Bar color (#ff4b00)" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                    <input type="text" name="sections[{{ $index }}][data][text_color]" value="{{ $data['text_color'] ?? '#0f172a' }}" placeholder="Text color (#0f172a)" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                </div>
+                                <p class="text-xs text-slate-500">Use hex colors in #RRGGBB format.</p>
                             @elseif ($type === 'corporate_page')
                                 @php
                                     $hero = $data['hero'] ?? [];
@@ -1240,6 +1249,7 @@
                         <option value="how_it_works">How it works</option>
                         <option value="cta">Call to action</option>
                         <option value="design_studio">Design studio</option>
+                        <option value="footer_notice">Footer notice</option>
                         <option value="shop_header">Shop header</option>
                         <option value="embroidery_page">Embroidery page</option>
                         <option value="designer_page">Designer page</option>

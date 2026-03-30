@@ -6264,6 +6264,45 @@
         }
     }
 
+    .footer-notice {
+        margin: 0;
+    }
+
+    .footer-notice-shell {
+        background: var(--footer-notice-bg, #efefef);
+        color: var(--footer-notice-text, #0f172a);
+    }
+
+    .footer-notice-content {
+        max-width: 1800px;
+        margin: 0 auto;
+        padding: clamp(18px, 2.6vw, 44px) clamp(16px, 4vw, 88px);
+    }
+
+    .footer-notice-copy {
+        margin: 0;
+        font-size: clamp(1rem, 1.15vw, 1.85rem);
+        line-height: 1.32;
+        letter-spacing: -0.01em;
+        color: inherit;
+    }
+
+    .footer-notice-copy strong {
+        font-weight: 800;
+        margin-right: 0.3em;
+    }
+
+    .footer-notice-bar {
+        height: clamp(12px, 1.6vw, 28px);
+        background: var(--footer-notice-bar, #ff4b00);
+    }
+
+    @media (max-width: 640px) {
+        .footer-notice-copy {
+            line-height: 1.45;
+        }
+    }
+
     .purchase-popup {
         position: fixed;
         left: 24px;

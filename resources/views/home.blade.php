@@ -878,6 +878,36 @@
                                 </div>
                             </div>
                         </section>
+                    @elseif ($type === 'footer_notice')
+                        @php
+                            $data = $section['data'] ?? [];
+                            $headline = trim((string) ($data['headline'] ?? ''));
+                            $message = trim((string) ($data['message'] ?? ''));
+                            $sanitizeHexColor = static function ($value, $fallback) {
+                                return is_string($value) && preg_match('/^#(?:[0-9a-fA-F]{3}){1,2}$/', $value)
+                                    ? $value
+                                    : $fallback;
+                            };
+                            $backgroundColor = $sanitizeHexColor($data['background_color'] ?? '', '#efefef');
+                            $barColor = $sanitizeHexColor($data['bar_color'] ?? '', '#ff4b00');
+                            $textColor = $sanitizeHexColor($data['text_color'] ?? '', '#0f172a');
+                        @endphp
+                        <section class="footer-notice" role="note" aria-label="Promotional notice">
+                            <div class="footer-notice-shell"
+                                 style="--footer-notice-bg: {{ $backgroundColor }}; --footer-notice-bar: {{ $barColor }}; --footer-notice-text: {{ $textColor }};">
+                                <div class="footer-notice-content">
+                                    <p class="footer-notice-copy">
+                                        @if ($headline !== '')
+                                            <strong>{{ $headline }}</strong>
+                                        @endif
+                                        @if ($message !== '')
+                                            {{ $message }}
+                                        @endif
+                                    </p>
+                                </div>
+                                <div class="footer-notice-bar"></div>
+                            </div>
+                        </section>
                     @endif
                 @endfor
             </main>

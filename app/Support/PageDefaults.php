@@ -139,6 +139,16 @@ class PageDefaults
                         'button' => ['label' => 'Launch designer', 'url' => '#'],
                     ],
                 ],
+                [
+                    'type' => 'footer_notice',
+                    'data' => [
+                        'headline' => '*15% off Office Supplies:',
+                        'message' => 'Valid through 11:59 PM PST on 3/30/26. Prices as marked. Max $75 discount off per order. Discount does not apply to taxes or shipping. Cannot be combined with other discounts, rebates or offers, including negotiated pricing.',
+                        'background_color' => '#efefef',
+                        'bar_color' => '#ff4b00',
+                        'text_color' => '#0f172a',
+                    ],
+                ],
             ],
         ];
     }
@@ -651,6 +661,7 @@ class PageDefaults
             'how_it_works' => self::home()['sections'][6],
             'cta' => self::home()['sections'][7],
             'design_studio' => self::home()['sections'][8],
+            'footer_notice' => self::home()['sections'][9],
             'shop_header' => self::shop()['sections'][0],
             'embroidery_page' => self::embroidery()['sections'][0],
             'corporate_page' => self::corporate()['sections'][0],
