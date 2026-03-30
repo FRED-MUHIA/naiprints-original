@@ -6296,7 +6296,7 @@
     }
 
     .footer-notice-bar {
-        height: clamp(2px, 0.35vw, 5px);
+        height: clamp(1px, 0.2vw, 3px);
         background: var(--footer-notice-bar, #ff4b00);
     }
 
