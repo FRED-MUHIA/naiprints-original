@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\ReceiptController;
 use App\Http\Controllers\Admin\SizeController;
 use App\Http\Controllers\Admin\TagController;
 use App\Http\Controllers\MpesaCallbackController;
+use App\Http\Controllers\MockupAiController;
 use App\Http\Controllers\PublicInvoiceController;
 use App\Http\Controllers\PublicMpesaController;
 use App\Http\Controllers\PublicReceiptController;
@@ -425,6 +426,9 @@ Route::get('/mockup', function () {
         'globalPurchasePopupProducts' => $purchasePopupProducts,
     ]);
 })->name('mockup');
+
+Route::post('/mockup/ai/generate', [MockupAiController::class, 'generate'])
+    ->name('mockup.ai.generate');
 
 Route::get('/products/{product}', function (Product $product) {
     $header = GlobalSection::ensure('header', PageDefaults::header());

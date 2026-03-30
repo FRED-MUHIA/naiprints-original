@@ -772,6 +772,8 @@
                 const SAVED_STORAGE_KEY = 'nai_mockup_saved_designs';
                 const MOCKUP_TAB_STORAGE_KEY = 'nai_mockup_active_tab';
                 const SAVED_TTL_MS = 24 * 60 * 60 * 1000;
+                const templateGenerateUrl = @json(route('mockup.ai.generate'));
+                const csrfToken = @json(csrf_token());
                 const BG_THEMES = {
                     light: '#f8fafc',
                     dark: '#0f172a',
@@ -3193,13 +3195,35 @@
                 const templateVoice = document.querySelector('[data-template-voice]');
                 const templateUploads = [];
                 const templateStaticItems = document.querySelectorAll('[data-template-static]');
+                const templateGenerateLabel = templateGenerate?.textContent?.trim() || 'Generate design';
+                let templateIsGenerating = false;
+
+                const getActiveTemplateTab = () => {
+                    const active = document.querySelector('[data-template-tab].is-active');
+                    return active?.dataset?.templateTab || 'templates';
+                };
 
                 const updateTemplateSubmit = () => {
                     if (!templateSubmit || !templateInput) {
                         return;
                     }
                     const hasValue = templateInput.value.trim().length > 0;
-                    templateSubmit.disabled = !hasValue;
+                    templateSubmit.disabled = templateIsGenerating || !hasValue;
+                    if (templateGenerate) {
+                        templateGenerate.disabled = templateIsGenerating || !hasValue;
+                    }
+                };
+
+                const setTemplateGenerating = (isGenerating) => {
+                    templateIsGenerating = isGenerating;
+                    if (templateGenerate) {
+                        templateGenerate.textContent = isGenerating ? 'Generating…' : templateGenerateLabel;
+                        templateGenerate.setAttribute('aria-busy', isGenerating ? 'true' : 'false');
+                    }
+                    if (templateSubmit) {
+                        templateSubmit.setAttribute('aria-busy', isGenerating ? 'true' : 'false');
+                    }
+                    updateTemplateSubmit();
                 };
 
                 templateInput?.addEventListener('input', updateTemplateSubmit);
@@ -3209,24 +3233,22 @@
                     tab.addEventListener('click', () => {
                         templateTabs.forEach((btn) => btn.classList.remove('is-active'));
                         tab.classList.add('is-active');
+                        updateTemplateSubmit();
                     });
                 });
 
-                templateSubmit?.addEventListener('click', () => {
-                    if (templateSubmit.disabled) {
+                const removeRenderedTemplateUploads = () => {
+                    if (!templateGrid) {
                         return;
                     }
-                    alert('Generating design…');
-                });
-
-                templateGenerate?.addEventListener('click', () => {
-                    alert('Generating design…');
-                });
+                    templateGrid.querySelectorAll('[data-template-uploaded]').forEach((node) => node.remove());
+                };
 
                 const renderTemplateUploads = () => {
                     if (!templateGrid) {
                         return;
                     }
+                    removeRenderedTemplateUploads();
                     const placeholders = templateGrid.querySelectorAll('[data-template-placeholder]');
                     placeholders.forEach((placeholder) => {
                         placeholder.hidden = templateUploads.length > 0;
@@ -3261,14 +3283,82 @@
                         if (!dataUrl) {
                             return;
                         }
-                        templateUploads.unshift({ id: `${Date.now()}-${Math.random()}`, name: file.name, url: dataUrl });
-                        if (templateGrid) {
-                            templateGrid.querySelectorAll('[data-template-uploaded]').forEach((node) => node.remove());
-                        }
+                        templateUploads.unshift({
+                            id: `${Date.now()}-${Math.random()}`,
+                            name: file.name,
+                            url: dataUrl,
+                            file,
+                        });
                         renderTemplateUploads();
                     };
                     reader.readAsDataURL(file);
                 };
+
+                const generateTemplateDesign = async () => {
+                    if (!templateInput || templateIsGenerating) {
+                        return;
+                    }
+
+                    const prompt = templateInput.value.trim();
+                    if (!prompt) {
+                        updateTemplateSubmit();
+                        return;
+                    }
+
+                    setTemplateGenerating(true);
+
+                    try {
+                        const formData = new FormData();
+                        formData.append('prompt', prompt);
+                        formData.append('style_tab', getActiveTemplateTab());
+
+                        const response = await fetch(templateGenerateUrl, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': csrfToken,
+                                'Accept': 'application/json',
+                            },
+                            credentials: 'same-origin',
+                            body: formData,
+                        });
+
+                        const payload = await response.json().catch(() => ({}));
+
+                        if (!response.ok) {
+                            throw new Error(payload?.message || 'Unable to generate design right now.');
+                        }
+
+                        const imageDataUrl = payload?.image_data_url || payload?.image_url || '';
+                        if (!imageDataUrl) {
+                            throw new Error('AI returned no image. Try a different prompt.');
+                        }
+
+                        const generatedName = `AI Design ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+                        templateUploads.unshift({
+                            id: `ai-${Date.now()}-${Math.random()}`,
+                            name: generatedName,
+                            url: imageDataUrl,
+                            file: null,
+                        });
+                        renderTemplateUploads();
+                        placeUpload(imageDataUrl);
+                    } catch (error) {
+                        alert(error?.message || 'Unable to generate design right now.');
+                    } finally {
+                        setTemplateGenerating(false);
+                    }
+                };
+
+                templateSubmit?.addEventListener('click', generateTemplateDesign);
+
+                templateGenerate?.addEventListener('click', generateTemplateDesign);
+
+                templateInput?.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        generateTemplateDesign();
+                    }
+                });
 
                 templateUpload?.addEventListener('click', () => {
                     templateUploadInput?.click();
