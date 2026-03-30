@@ -41,4 +41,10 @@ return [
         'image_model' => env('OPENAI_IMAGE_MODEL', 'gpt-image-1'),
     ],
 
+    'gemini' => [
+        'api_key' => env('GEMINI_API_KEY'),
+        'base_url' => env('GEMINI_BASE_URL', 'https://generativelanguage.googleapis.com/v1beta'),
+        'image_model' => env('GEMINI_IMAGE_MODEL', 'gemini-2.5-flash-image'),
+    ],
+
 ];
