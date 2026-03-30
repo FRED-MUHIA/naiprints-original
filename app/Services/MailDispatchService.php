@@ -61,12 +61,13 @@ class MailDispatchService
     /**
      * @param array<int, ?string> $candidates
      * @param callable(): \Illuminate\Mail\Mailable $mailableFactory
-     * @return array{sent: array<int, string>, failed: array<int, string>}
+     * @return array{sent: array<int, string>, failed: array<int, string>, errors: array<string, string>}
      */
     public function sendToRecipients(array $candidates, callable $mailableFactory, array $context = []): array
     {
         $sent = [];
         $failed = [];
+        $errors = [];
 
         foreach ($this->uniqueRecipients($candidates) as $recipient) {
             try {
@@ -74,6 +75,7 @@ class MailDispatchService
                 $sent[] = $recipient;
             } catch (\Throwable $exception) {
                 $failed[] = $recipient;
+                $errors[$recipient] = $exception->getMessage();
                 logger()->error('Email delivery failed', array_merge($context, [
                     'recipient' => $recipient,
                     'mailer' => config('mail.default'),
@@ -85,6 +87,7 @@ class MailDispatchService
         return [
             'sent' => $sent,
             'failed' => $failed,
+            'errors' => $errors,
         ];
     }
 

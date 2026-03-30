@@ -269,7 +269,7 @@ class InvoiceController extends Controller
         $invoice->load('client');
 
         $data = $request->validate([
-            'email' => ['nullable', 'email'],
+            'email' => ['nullable', 'email:rfc,dns'],
         ]);
 
         $recipient = $mailDispatch->normalizeEmail((string) ($data['email'] ?? $invoice->client?->email));
@@ -288,7 +288,17 @@ class InvoiceController extends Controller
         );
 
         if (!empty($delivery['failed'])) {
-            return back()->withErrors(['email' => 'We could not send the invoice email. Please try again.']);
+            $reason = trim((string) collect($delivery['errors'] ?? [])->first());
+            if ($reason !== '' && str_contains(strtolower($reason), 'failed to authenticate on smtp server')) {
+                $reason = 'SMTP authentication failed. Update MAIL_PASSWORD in .env to the real mailbox password.';
+            }
+
+            $message = 'We could not send the invoice email. Please try again.';
+            if ($reason !== '') {
+                $message .= ' ' . $reason;
+            }
+
+            return back()->withErrors(['email' => $message]);
         }
 
         return back()->with('success', 'Invoice email sent successfully.');
