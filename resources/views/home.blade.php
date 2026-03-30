@@ -832,10 +832,10 @@
                             <div class="design-studio-card shadow-soft {{ $backgroundImage ? 'has-bg' : '' }}"
                                  @if ($backgroundStyle) style="{{ $backgroundStyle }}" @endif>
                                 <div class="design-studio-content flex flex-wrap items-center justify-between gap-4">
-                                    <div>
+                                    <div class="design-studio-copy">
                                         <p class="section-kicker">{{ $data['kicker'] ?? '' }}</p>
                                         <h2 class="section-title">{{ $data['title'] ?? '' }}</h2>
-                                        <p class="mt-3 text-sm text-slate-600">
+                                        <p class="design-studio-body mt-3">
                                             {{ $data['body'] ?? '' }}
                                         </p>
                                     </div>
