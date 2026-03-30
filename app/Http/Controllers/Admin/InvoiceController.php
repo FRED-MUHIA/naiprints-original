@@ -56,7 +56,7 @@ class InvoiceController extends Controller
         return view('admin.invoices.create', compact('clients', 'settings', 'nextNumber'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, MailDispatchService $mailDispatch)
     {
         $data = $this->validateInvoice($request);
 
@@ -104,8 +104,30 @@ class InvoiceController extends Controller
             return $invoice;
         });
 
+        $invoice->loadMissing('client');
+
+        $delivery = $mailDispatch->sendToRecipients(
+            [
+                (string) $invoice->client?->email,
+                (string) config('mail.support.address', config('mail.from.address')),
+            ],
+            fn () => new InvoiceMail($invoice),
+            [
+                'event' => 'admin.invoice_created_mail',
+                'invoice_id' => $invoice->id,
+            ]
+        );
+
+        if (!empty($delivery['failed'])) {
+            session()->flash('warning', 'Invoice saved, but one or more emails failed to send.');
+        }
+
+        $message = empty($delivery['failed'])
+            ? 'Invoice created and emailed successfully.'
+            : 'Invoice created. Some emails failed to send.';
+
         return redirect()->route('admin.invoices.show', $invoice)
-            ->with('success', 'Invoice created successfully.');
+            ->with('success', $message);
     }
 
     public function show(Invoice $invoice)

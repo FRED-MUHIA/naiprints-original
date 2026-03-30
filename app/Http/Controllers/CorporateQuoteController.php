@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Mail\CorporateQuoteMail;
+use App\Services\MailDispatchService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
 
 class CorporateQuoteController extends Controller
 {
-    public function store(Request $request)
+    public function store(Request $request, MailDispatchService $mailDispatch)
     {
         $data = $request->validate([
             'full_name' => ['required', 'string', 'max:120'],
@@ -44,8 +44,28 @@ class CorporateQuoteController extends Controller
             ];
         }
 
-        Mail::to('info@naiprints.co.ke')->send(new CorporateQuoteMail($data, $attachments));
+        $delivery = $mailDispatch->sendToRecipients(
+            [
+                (string) config('mail.support.address', config('mail.from.address')),
+                (string) ($data['email'] ?? ''),
+            ],
+            fn () => new CorporateQuoteMail($data, $attachments),
+            [
+                'event' => 'corporate.quote_mail',
+                'submitted_email' => (string) ($data['email'] ?? ''),
+            ]
+        );
 
-        return back()->with('status', 'Thanks! Your quote request has been submitted.');
+        if (empty($delivery['sent'])) {
+            return back()
+                ->withErrors(['email' => 'Quote request was received, but email delivery failed. Please try again.'])
+                ->withInput();
+        }
+
+        $status = empty($delivery['failed'])
+            ? 'Thanks! Your quote request has been submitted.'
+            : 'Quote submitted, but one or more email notifications failed to send.';
+
+        return back()->with('status', $status);
     }
 }

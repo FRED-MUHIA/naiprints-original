@@ -95,15 +95,14 @@ class MailDispatchService
             ->filter(fn ($link) => is_array($link))
             ->values();
 
-        $email = $links
+        $configuredEmail = $this->normalizeEmail((string) config('mail.support.address'))
+            ?? $this->normalizeEmail((string) config('mail.from.address'));
+
+        $footerEmail = $links
             ->map(fn (array $link) => $this->extractEmailFromLink($link))
             ->first(fn ($value) => !empty($value));
 
-        if (!$email) {
-            $email = $this->normalizeEmail((string) config('mail.support.address'))
-                ?? $this->normalizeEmail((string) config('mail.from.address'))
-                ?? 'info@naiprints.co.ke';
-        }
+        $email = $configuredEmail ?: ($footerEmail ?: 'info@naiprints.co.ke');
 
         $phone = $links
             ->map(function (array $link) {
