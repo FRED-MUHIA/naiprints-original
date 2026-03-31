@@ -18,9 +18,20 @@
                 @forelse ($payments as $payment)
                     <tr>
                         <td class="font-semibold text-slate-700">
-                            <a href="{{ route('admin.invoices.show', $payment->invoice) }}">{{ $payment->invoice?->number }}</a>
+                            @php
+                                $invoice = $payment->invoice;
+                                $isTrashedInvoice = $invoice && method_exists($invoice, 'trashed') && $invoice->trashed();
+                            @endphp
+
+                            @if ($invoice && !$isTrashedInvoice)
+                                <a href="{{ route('admin.invoices.show', $invoice) }}">{{ $invoice->number }}</a>
+                            @elseif ($invoice)
+                                {{ $invoice->number }} <span class="text-xs text-slate-400">(trashed)</span>
+                            @else
+                                {{ $payment->invoice_id ? "Invoice #{$payment->invoice_id}" : '-' }}
+                            @endif
                         </td>
-                        <td>{{ $payment->invoice?->client?->display_name ?? '-' }}</td>
+                        <td>{{ $invoice?->client?->display_name ?? '-' }}</td>
                         <td>{{ optional($payment->payment_date)->format('M d, Y') }}</td>
                         <td>{{ $payment->method ?? '-' }}</td>
                         <td>KES {{ number_format($payment->amount, 2) }}</td>

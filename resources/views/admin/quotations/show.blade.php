@@ -21,6 +21,16 @@
             </div>
             <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                 <a href="{{ route('admin.quotations.download', $quotation) }}" class="admin-btn-outline whitespace-nowrap">Download PDF</a>
+                <form method="POST" action="{{ route('admin.quotations.send', $quotation) }}" class="w-full sm:w-auto">
+                    @csrf
+                    <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+                        <input type="email"
+                               name="email"
+                               placeholder="{{ $quotation->client?->email ?? 'Enter email address' }}"
+                               class="admin-input border border-slate-200 rounded-xl px-3 py-2 text-sm sm:w-64 md:w-72">
+                        <button type="submit" class="admin-btn-outline whitespace-nowrap">Send Email</button>
+                    </div>
+                </form>
                 <form method="POST" action="{{ route('admin.quotations.destroy', $quotation) }}" onsubmit="return confirm('Delete this quotation? This cannot be undone.');">
                     @csrf
                     @method('DELETE')

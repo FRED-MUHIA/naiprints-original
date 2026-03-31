@@ -4,11 +4,13 @@ namespace Tests\Feature;
 
 use App\Mail\InvoiceMail;
 use App\Mail\OrderPlaced;
+use App\Mail\QuotationMail;
 use App\Mail\ReceiptMail;
 use App\Models\Client;
 use App\Models\GlobalSection;
 use App\Models\Invoice;
 use App\Models\MpesaTransaction;
+use App\Models\Quotation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -166,6 +168,21 @@ class EmailSystemTest extends TestCase
         $this->assertNotNull($transaction->payment_id);
     }
 
+    public function test_admin_can_send_quotation_email_to_client(): void
+    {
+        Mail::fake();
+
+        $quotation = $this->createQuotation('quotation.customer@example.com');
+
+        $response = $this->withSession(['admin_authenticated' => true])
+            ->post(route('admin.quotations.send', $quotation));
+
+        $response->assertSessionHasNoErrors();
+        $response->assertSessionHas('success', 'Quotation email sent successfully.');
+
+        Mail::assertSent(QuotationMail::class, fn (QuotationMail $mail) => $mail->hasTo('quotation.customer@example.com'));
+    }
+
     private function createInvoice(string $email): Invoice
     {
         $client = Client::create([
@@ -202,5 +219,41 @@ class EmailSystemTest extends TestCase
         $invoice->save();
 
         return $invoice;
+    }
+
+    private function createQuotation(string $email): Quotation
+    {
+        $client = Client::create([
+            'name' => 'Quotation Client',
+            'email' => $email,
+            'phone' => '0700000000',
+            'address' => 'Kimathi Street',
+        ]);
+
+        $sequence = (int) Quotation::max('sequence') + 1;
+        $quotation = Quotation::create([
+            'client_id' => $client->id,
+            'sequence' => $sequence,
+            'number' => 'QTN-' . str_pad((string) $sequence, 4, '0', STR_PAD_LEFT),
+            'issue_date' => now()->toDateString(),
+            'valid_until' => now()->addDays(14)->toDateString(),
+            'status' => 'draft',
+            'discount_amount' => 0,
+            'tax_rate' => null,
+        ]);
+
+        $quotation->items()->create([
+            'name' => 'Corporate Polo',
+            'quantity' => 10,
+            'unit_price' => 1200,
+            'total' => 12000,
+            'position' => 0,
+        ]);
+
+        $quotation->load('items');
+        $quotation->recalculateTotals();
+        $quotation->save();
+
+        return $quotation;
     }
 }

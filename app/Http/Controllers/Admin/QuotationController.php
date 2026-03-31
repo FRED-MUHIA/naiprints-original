@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\QuotationMail;
 use App\Models\Client;
 use App\Models\InvoiceSetting;
 use App\Models\Quotation;
+use App\Services\MailDispatchService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -206,6 +208,46 @@ class QuotationController extends Controller
             ->setOption('isRemoteEnabled', true);
 
         return $pdf->download("{$quotation->number}.pdf");
+    }
+
+    public function sendEmail(Request $request, Quotation $quotation, MailDispatchService $mailDispatch)
+    {
+        $quotation->load('client', 'items');
+
+        $data = $request->validate([
+            'email' => ['nullable', 'email:rfc,dns'],
+        ]);
+
+        $recipient = $mailDispatch->normalizeEmail((string) ($data['email'] ?? $quotation->client?->email));
+
+        if (!$recipient) {
+            return back()->withErrors(['email' => 'This client does not have an email address.']);
+        }
+
+        $delivery = $mailDispatch->sendToRecipients(
+            [$recipient],
+            fn () => new QuotationMail($quotation),
+            [
+                'event' => 'admin.quotation_mail',
+                'quotation_id' => $quotation->id,
+            ]
+        );
+
+        if (!empty($delivery['failed'])) {
+            $reason = trim((string) collect($delivery['errors'] ?? [])->first());
+            if ($reason !== '' && str_contains(strtolower($reason), 'failed to authenticate on smtp server')) {
+                $reason = 'SMTP authentication failed. Update MAIL_PASSWORD in .env to the real mailbox password.';
+            }
+
+            $message = 'We could not send the quotation email. Please try again.';
+            if ($reason !== '') {
+                $message .= ' ' . $reason;
+            }
+
+            return back()->withErrors(['email' => $message]);
+        }
+
+        return back()->with('success', 'Quotation email sent successfully.');
     }
 
     public function export(Request $request)

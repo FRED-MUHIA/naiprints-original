@@ -587,6 +587,7 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
     Route::post('quotations/{quotation}/restore', [QuotationController::class, 'restore'])->name('quotations.restore');
     Route::delete('quotations/{quotation}/force', [QuotationController::class, 'forceDelete'])->name('quotations.force');
     Route::get('quotations/{quotation}/download', [QuotationController::class, 'download'])->name('quotations.download');
+    Route::post('quotations/{quotation}/send', [QuotationController::class, 'sendEmail'])->name('quotations.send');
     Route::resource('quotations', QuotationController::class);
     Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
     Route::get('receipts', [ReceiptController::class, 'index'])->name('receipts.index');

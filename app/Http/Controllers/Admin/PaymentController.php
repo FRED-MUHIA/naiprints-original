@@ -9,7 +9,9 @@ class PaymentController extends Controller
 {
     public function index()
     {
-        $payments = Payment::with(['invoice.client'])
+        $payments = Payment::with([
+            'invoice' => fn ($query) => $query->withTrashed()->with('client'),
+        ])
             ->orderByDesc('payment_date')
             ->paginate(15);
 
