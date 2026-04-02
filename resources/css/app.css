@@ -3591,6 +3591,10 @@
         aspect-ratio: 3 / 4;
     }
 
+    .hero-tile.hero-bold {
+        aspect-ratio: 16 / 9;
+    }
+
     .hero-tile-image,
     .hero-tile-face {
         background-size: contain;
@@ -3602,6 +3606,11 @@
     .tiles-section .hero-tile[data-tile-index="2"].hero-tile-image,
     .tiles-section .hero-tile[data-tile-index="2"].hero-tile-image:hover {
         background-size: contain;
+    }
+
+    .hero-tile.hero-bold.hero-tile-image,
+    .hero-tile.hero-bold .hero-tile-face {
+        background-size: cover;
     }
 
     .hero-tile-video-el {
