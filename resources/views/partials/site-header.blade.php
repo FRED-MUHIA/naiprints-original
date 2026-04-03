@@ -2,6 +2,25 @@
     $header = $globalHeader ?? [];
     $logoUrl = $header['logo_url'] ?? null;
     $menu = $header['menu'] ?? [];
+    $menu = array_values(array_filter($menu, static function ($item) {
+        $label = strtolower(trim((string) ($item['label'] ?? '')));
+        return !in_array($label, ['gift', 'gifts'], true);
+    }));
+    $hasJerseyLink = collect($menu)->contains(function ($item) {
+        return strtolower(trim((string) ($item['label'] ?? ''))) === 'jersey';
+    });
+    if (!$hasJerseyLink) {
+        $embroideryIndex = collect($menu)->search(function ($item) {
+            return strtolower(trim((string) ($item['label'] ?? ''))) === 'embroidery';
+        });
+
+        $jerseyMenuItem = ['label' => 'Jersey', 'url' => '/jersey'];
+        if ($embroideryIndex === false) {
+            $menu[] = $jerseyMenuItem;
+        } else {
+            array_splice($menu, $embroideryIndex + 1, 0, [$jerseyMenuItem]);
+        }
+    }
     $menuStrip = $header['menu_strip'] ?? [];
     $menuStripCta = $header['menu_strip_cta'] ?? null;
     $ctaPosition = $header['menu_strip_cta_position'] ?? 8;

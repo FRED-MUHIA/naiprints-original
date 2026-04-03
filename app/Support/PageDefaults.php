@@ -292,6 +292,73 @@ class PageDefaults
         ];
     }
 
+    public static function jersey(): array
+    {
+        return [
+            'sections' => [
+                [
+                    'type' => 'jersey_page',
+                    'data' => [
+                        'hero' => [
+                            'kicker' => 'Custom Jersey Printing Kenya',
+                            'title' => 'Jersey Sales and Custom Branding for',
+                            'highlight' => 'Teams, Schools & Football Academies',
+                            'body' => 'From school tournaments to football league weekends, Nai Prints delivers premium jerseys with names, numbers, and sponsor branding. We support small and bulk orders with fast production in Nairobi and delivery across Kenya.',
+                            'primary' => ['label' => 'Shop Jerseys', 'url' => '/shop'],
+                            'secondary' => ['label' => 'Open 3D Designer', 'url' => '/mockup'],
+                            'stats' => [
+                                ['value' => '48-72 Hrs', 'label' => 'Typical turnaround'],
+                                ['value' => '10+ Pieces', 'label' => 'Minimum team order'],
+                                ['value' => 'Nationwide', 'label' => 'Delivery in Kenya'],
+                            ],
+                        ],
+                        'audiences' => [
+                            'kicker' => 'Who We Serve',
+                            'title' => 'Made for competitive and school sports programs',
+                            'items' => [
+                                [
+                                    'title' => 'Teams & Clubs',
+                                    'body' => 'Match-day jerseys, away kits, training tops, and goalkeeper designs with full customization.',
+                                ],
+                                [
+                                    'title' => 'Schools',
+                                    'body' => 'Inter-house and inter-school sports kits with clear numbering, durable print quality, and consistent sizing.',
+                                ],
+                                [
+                                    'title' => 'Football Academies',
+                                    'body' => 'Academy kits with player names, sponsor logos, and repeat-order consistency for every season.',
+                                ],
+                            ],
+                        ],
+                        'designs' => [
+                            'kicker' => 'Jersey Gallery',
+                            'title' => 'Different jersey design inspirations',
+                            'items' => [
+                                ['image_url' => 'https://source.unsplash.com/1200x1200/?football,jersey,red', 'image_alt' => 'Red football jersey design'],
+                                ['image_url' => 'https://source.unsplash.com/1200x1200/?soccer,uniform,blue', 'image_alt' => 'Blue soccer jersey design'],
+                                ['image_url' => 'https://source.unsplash.com/1200x1200/?sports,jersey,green', 'image_alt' => 'Green sports jersey design'],
+                                ['image_url' => 'https://source.unsplash.com/1200x1200/?football,academy,kit', 'image_alt' => 'Football academy jersey kit'],
+                                ['image_url' => 'https://source.unsplash.com/1200x1200/?school,sports,uniform', 'image_alt' => 'School sports jersey design'],
+                                ['image_url' => 'https://source.unsplash.com/1200x1200/?team,kit,football', 'image_alt' => 'Team football jersey set'],
+                            ],
+                        ],
+                        'video' => [
+                            'kicker' => 'Branding Video',
+                            'title' => 'See custom jersey branding in action',
+                            'embed_url' => 'https://www.youtube.com/embed?listType=search&list=custom+jersey+printing+kenya',
+                        ],
+                        'cta' => [
+                            'title' => 'Ready to create your next jersey set?',
+                            'body' => 'Use our 3D designer to start your concept, or contact our team for school and club bulk pricing.',
+                            'primary' => ['label' => 'Launch 3D Designer', 'url' => '/mockup'],
+                            'secondary' => ['label' => 'Request Team Quote', 'url' => '/corporate'],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+    }
+
     public static function designer(): array
     {
         return [
@@ -545,7 +612,7 @@ class PageDefaults
                 ['label' => 'Kids', 'url' => '#'],
                 ['label' => 'Corporate', 'url' => '/corporate'],
                 ['label' => 'Embroidery', 'url' => '/embroidery'],
-                ['label' => 'Gifts', 'url' => '#'],
+                ['label' => 'Jersey', 'url' => '/jersey'],
                 ['label' => 'Birthday', 'url' => '#'],
                 ['label' => 'Couple', 'url' => '#'],
             ],
@@ -664,6 +731,7 @@ class PageDefaults
             'footer_notice' => self::home()['sections'][9],
             'shop_header' => self::shop()['sections'][0],
             'embroidery_page' => self::embroidery()['sections'][0],
+            'jersey_page' => self::jersey()['sections'][0],
             'corporate_page' => self::corporate()['sections'][0],
             'designer_page' => self::designer()['sections'][0],
             'mockup_page' => self::mockup()['sections'][0],

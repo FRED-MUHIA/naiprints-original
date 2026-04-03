@@ -286,6 +286,22 @@ Route::get('/embroidery', function () {
     ]);
 })->name('embroidery');
 
+Route::get('/jersey', function () {
+    $page = Page::ensure('jersey', 'Jersey', PageDefaults::jersey());
+    $header = GlobalSection::ensure('header', PageDefaults::header());
+    $footer = GlobalSection::ensure('footer', PageDefaults::footer());
+    $purchasePopups = GlobalSection::ensure('purchase_popups', PageDefaults::purchasePopups());
+    $purchasePopupProducts = resolvePurchasePopupProducts($purchasePopups->content ?? []);
+
+    return view('jersey', [
+        'pageContent' => $page->content,
+        'globalHeader' => $header->content,
+        'globalFooter' => $footer->content,
+        'globalPurchasePopups' => $purchasePopups->content,
+        'globalPurchasePopupProducts' => $purchasePopupProducts,
+    ]);
+})->name('jersey');
+
 Route::get('/shop', function () {
     $page = Page::ensure('shop', 'Shop', PageDefaults::shop());
     $header = GlobalSection::ensure('header', PageDefaults::header());
