@@ -21,6 +21,21 @@
             array_splice($menu, $embroideryIndex + 1, 0, [$jerseyMenuItem]);
         }
     }
+    $hasDesigner3dLink = collect($menu)->contains(function ($item) {
+        return strtolower(trim((string) ($item['label'] ?? ''))) === '3d designer';
+    });
+    if (!$hasDesigner3dLink) {
+        $jerseyIndex = collect($menu)->search(function ($item) {
+            return strtolower(trim((string) ($item['label'] ?? ''))) === 'jersey';
+        });
+
+        $designerMenuItem = ['label' => '3D Designer', 'url' => '/3d-designer'];
+        if ($jerseyIndex === false) {
+            $menu[] = $designerMenuItem;
+        } else {
+            array_splice($menu, $jerseyIndex + 1, 0, [$designerMenuItem]);
+        }
+    }
     $menuStrip = $header['menu_strip'] ?? [];
     $menuStripCta = $header['menu_strip_cta'] ?? null;
     $ctaPosition = $header['menu_strip_cta_position'] ?? 8;

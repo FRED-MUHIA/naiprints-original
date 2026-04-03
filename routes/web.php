@@ -36,6 +36,10 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Http\Controllers\CorporateQuoteController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\JerseyCatalogController;
+use App\Http\Controllers\JerseyDesignController;
+use App\Http\Controllers\JerseyLogoController;
+use App\Http\Controllers\JerseyOrderController;
 
 if (!function_exists('resolvePurchasePopupProducts')) {
     function resolvePurchasePopupProducts(array $popupContent): array
@@ -301,6 +305,31 @@ Route::get('/jersey', function () {
         'globalPurchasePopupProducts' => $purchasePopupProducts,
     ]);
 })->name('jersey');
+
+Route::get('/3d-designer', function () {
+    $header = GlobalSection::ensure('header', PageDefaults::header());
+    $footer = GlobalSection::ensure('footer', PageDefaults::footer());
+
+    return view('jersey-designer', [
+        'globalHeader' => $header->content,
+        'globalFooter' => $footer->content,
+        'designerBoot' => [
+            'save_url' => url('/design/save'),
+            'load_url_base' => url('/design'),
+            'upload_logo_url' => url('/upload-logo'),
+            'catalog_url' => url('/jerseys'),
+            'order_url' => url('/order'),
+            'pricing' => config('jersey.pricing', []),
+            'autosave_interval' => 15000,
+        ],
+    ]);
+})->name('designer.3d');
+
+Route::get('/jerseys', [JerseyCatalogController::class, 'index'])->name('jerseys.index');
+Route::post('/upload-logo', [JerseyLogoController::class, 'store'])->name('jerseys.logo.upload');
+Route::post('/design/save', [JerseyDesignController::class, 'save'])->name('jerseys.design.save');
+Route::get('/design/{id}', [JerseyDesignController::class, 'show'])->name('jerseys.design.show');
+Route::post('/order', [JerseyOrderController::class, 'store'])->name('jerseys.order.store');
 
 Route::get('/shop', function () {
     $page = Page::ensure('shop', 'Shop', PageDefaults::shop());

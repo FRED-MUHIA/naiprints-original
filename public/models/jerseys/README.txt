@@ -1,0 +1,1 @@
+Place high-quality jersey GLB files here:\n- football-short.glb\n- football-long.glb\n- basketball.glb\n- training.glb\n\nThe 3D designer will load these automatically and fallback to procedural jerseys when missing.

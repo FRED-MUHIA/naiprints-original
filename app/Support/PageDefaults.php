@@ -613,6 +613,7 @@ class PageDefaults
                 ['label' => 'Corporate', 'url' => '/corporate'],
                 ['label' => 'Embroidery', 'url' => '/embroidery'],
                 ['label' => 'Jersey', 'url' => '/jersey'],
+                ['label' => '3D Designer', 'url' => '/3d-designer'],
                 ['label' => 'Birthday', 'url' => '#'],
                 ['label' => 'Couple', 'url' => '#'],
             ],

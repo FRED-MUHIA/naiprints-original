@@ -1,7 +1,10 @@
 import './bootstrap';
 import './designer';
+import { mountJerseyDesigner } from './jersey-3d-designer';
 
 document.addEventListener('DOMContentLoaded', () => {
+    mountJerseyDesigner();
+
     const mobileMenu = document.querySelector('[data-mobile-menu]');
     const mobileToggle = document.querySelector('[data-mobile-menu-toggle]');
 
