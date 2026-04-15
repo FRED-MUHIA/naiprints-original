@@ -125,6 +125,21 @@ const weaveTexture = () => {
     return t;
 };
 
+const curvedPanelGeometry = (width, height, curvature = 0.08, segments = 36) => {
+    const geometry = new THREE.PlaneGeometry(width, height, segments, 1);
+    const position = geometry.attributes.position;
+    const halfWidth = Math.max(width / 2, 0.0001);
+    for (let i = 0; i < position.count; i += 1) {
+        const x = position.getX(i);
+        const normalized = x / halfWidth;
+        const depth = Math.cos(normalized * Math.PI * 0.5) * curvature - curvature;
+        position.setZ(i, depth);
+    }
+    position.needsUpdate = true;
+    geometry.computeVertexNormals();
+    return geometry;
+};
+
 export const mountJerseyDesigner = () => {
     if (!root || !fabricLib) return;
 
@@ -141,6 +156,7 @@ export const mountJerseyDesigner = () => {
             const activeArtboard = ref('front');
             const loadDesignId = ref('');
             const saveStatus = ref('Ready');
+            const mockupStatus = ref('');
             const lightingMode = ref('studio');
             const sizeOptions = ['S', 'M', 'L', 'XL', 'XXL'];
             const sportsFonts = ref(['Nunito Sans', 'Rajdhani', 'Space Grotesk', 'Bebas Neue', 'Montserrat', 'Oswald']);
@@ -172,6 +188,29 @@ export const mountJerseyDesigner = () => {
             const lightingModeLabel = computed(() => (lightingMode.value === 'studio' ? 'Studio' : 'Stadium'));
             const prettyArea = (a) => ({ front: 'Front', back: 'Back', sleeve: 'Sleeve', sleeve_left: 'Sleeve Left', sleeve_right: 'Sleeve Right' }[a] || 'Sleeve');
             const activeCanvas = () => fabrics[activeArtboard.value];
+            const modelCandidates = (jersey) => {
+                const seen = new Set();
+                const urls = [];
+                const push = (value) => {
+                    const raw = String(value || '').trim();
+                    if (!raw) return;
+                    const normalized = raw.startsWith('/') ? raw : `/${raw}`;
+                    if (seen.has(normalized)) return;
+                    seen.add(normalized);
+                    urls.push(normalized);
+                };
+
+                if (!jersey) return urls;
+                push(jersey.model_url);
+                const metadata = jersey.metadata && typeof jersey.metadata === 'object' ? jersey.metadata : {};
+                if (Array.isArray(metadata.model_urls)) metadata.model_urls.forEach(push);
+                if (typeof metadata.model_url === 'string') push(metadata.model_url);
+                if (jersey.slug) {
+                    push(`/models/jerseys/${jersey.slug}.glb`);
+                    push(`/models/jerseys/${jersey.slug}.gltf`);
+                }
+                return urls;
+            };
 
             const persistLocal = () => {
                 try {
@@ -202,6 +241,7 @@ export const mountJerseyDesigner = () => {
                 if (!c2 || !h || index < 0 || index >= h.stack.length) return;
                 h.index = index;
                 c2.loadFromJSON(h.stack[index], () => {
+                    ensureTransparentCanvas(c2);
                     c2.renderAll();
                     syncTextures();
                 });
@@ -233,8 +273,13 @@ export const mountJerseyDesigner = () => {
                 });
                 canvas.on('mouse:up', () => canvas.clearContext(canvas.contextTop));
             };
+            const ensureTransparentCanvas = (canvas) => {
+                if (!canvas) return;
+                canvas.backgroundColor = 'rgba(0,0,0,0)';
+            };
             const createCanvas = (el, area) => {
-                const c2 = new fabricLib.Canvas(el, { width: 1024, height: 1024, preserveObjectStacking: true, selection: true, backgroundColor: '#ffffff' });
+                const c2 = new fabricLib.Canvas(el, { width: 1024, height: 1024, preserveObjectStacking: true, selection: true });
+                ensureTransparentCanvas(c2);
                 attachGuides(c2);
                 ['object:added', 'object:modified', 'object:removed'].forEach((evt) =>
                     c2.on(evt, () => {
@@ -271,20 +316,50 @@ export const mountJerseyDesigner = () => {
                 sleeveMat.needsUpdate = true;
                 collarMat.needsUpdate = true;
             };
+            const createDecalMaterial = (map) =>
+                new THREE.MeshStandardMaterial({
+                    map,
+                    alphaMap: map,
+                    transparent: true,
+                    alphaTest: 0.02,
+                    depthWrite: false,
+                    polygonOffset: true,
+                    polygonOffsetFactor: -1,
+                    polygonOffsetUnits: -1,
+                    roughness: 0.92,
+                    metalness: 0,
+                    side: THREE.DoubleSide,
+                });
+
             const mountDecals = (container, bounds) => {
                 const size = bounds.getSize(new THREE.Vector3());
                 const center = bounds.getCenter(new THREE.Vector3());
-                const front = new THREE.Mesh(new THREE.PlaneGeometry(size.x * 0.45, size.y * 0.4), new THREE.MeshStandardMaterial({ map: frontTex, transparent: true, alphaTest: 0.02, side: THREE.DoubleSide }));
-                const back = new THREE.Mesh(new THREE.PlaneGeometry(size.x * 0.45, size.y * 0.4), new THREE.MeshStandardMaterial({ map: backTex, transparent: true, alphaTest: 0.02, side: THREE.DoubleSide }));
-                const sleeve = new THREE.Mesh(new THREE.PlaneGeometry(size.x * 0.2, size.y * 0.22), new THREE.MeshStandardMaterial({ map: sleeveTex, transparent: true, alphaTest: 0.02, side: THREE.DoubleSide }));
-                front.position.set(center.x, center.y + size.y * 0.03, bounds.max.z + 0.02);
-                back.position.set(center.x, center.y + size.y * 0.03, bounds.min.z - 0.02);
+
+                const torsoWidth = size.x * 0.54;
+                const torsoHeight = size.y * 0.56;
+                const torsoCurvature = Math.max(size.x * 0.06, 0.04);
+                const front = new THREE.Mesh(curvedPanelGeometry(torsoWidth, torsoHeight, torsoCurvature), createDecalMaterial(frontTex));
+                const back = new THREE.Mesh(curvedPanelGeometry(torsoWidth, torsoHeight, torsoCurvature), createDecalMaterial(backTex));
+                front.position.set(center.x, center.y + size.y * 0.03, bounds.max.z + 0.018);
+                back.position.set(center.x, center.y + size.y * 0.03, bounds.min.z - 0.018);
                 back.rotation.y = Math.PI;
-                sleeve.position.set(bounds.max.x + 0.015, center.y, center.z);
-                sleeve.rotation.y = -Math.PI / 2;
+
+                const sleeveWidth = size.x * 0.2;
+                const sleeveHeight = size.y * 0.24;
+                const sleeveCurve = Math.max(size.x * 0.03, 0.02);
+                const sleeveLeft = new THREE.Mesh(curvedPanelGeometry(sleeveWidth, sleeveHeight, sleeveCurve, 24), createDecalMaterial(sleeveTex));
+                const sleeveRight = new THREE.Mesh(curvedPanelGeometry(sleeveWidth, sleeveHeight, sleeveCurve, 24), createDecalMaterial(sleeveTex));
+                sleeveLeft.position.set(bounds.min.x - 0.016, center.y + size.y * 0.02, center.z);
+                sleeveLeft.rotation.y = Math.PI / 2;
+                sleeveRight.position.set(bounds.max.x + 0.016, center.y + size.y * 0.02, center.z);
+                sleeveRight.rotation.y = -Math.PI / 2;
+
                 container.add(front);
                 container.add(back);
-                container.add(sleeve);
+                if (supportsSleeves.value) {
+                    container.add(sleeveLeft);
+                    container.add(sleeveRight);
+                }
             };
             const fallbackModel = () => {
                 bodyMat = new THREE.MeshStandardMaterial({ color: colors.body, roughness: 0.65, metalness: 0.04, bumpMap: weaveTexture(), bumpScale: 0.03 });
@@ -309,41 +384,48 @@ export const mountJerseyDesigner = () => {
                 mountDecals(g, new THREE.Box3().setFromObject(g));
                 return g;
             };
-            const loadModel = async (modelUrl) => {
+            const loadModel = async (jersey) => {
                 if (jerseyGroup && scene) scene.remove(jerseyGroup);
-                if (!modelUrl) {
-                    jerseyGroup = fallbackModel();
-                    scene.add(jerseyGroup);
-                    applyMaterials();
-                    return;
+                const candidates = modelCandidates(jersey);
+                const loader = new GLTFLoader();
+
+                for (const modelUrl of candidates) {
+                    try {
+                        const gltf = await loader.loadAsync(modelUrl);
+                        const g = gltf.scene || gltf.scenes?.[0];
+                        if (!g) continue;
+                        bodyMat = null;
+                        sleeveMat = null;
+                        collarMat = null;
+                        g.scale.setScalar(1.4);
+                        g.position.y = -0.25;
+                        g.traverse((n) => {
+                            if (!n.isMesh) return;
+                            n.castShadow = true;
+                            n.receiveShadow = true;
+                            const nm = (n.name || '').toLowerCase();
+                            if (nm.includes('sleeve')) sleeveMat = n.material;
+                            else if (nm.includes('collar') || nm.includes('neck')) collarMat = n.material;
+                            else bodyMat = n.material;
+                        });
+                        bodyMat ||= new THREE.MeshStandardMaterial({ color: colors.body });
+                        sleeveMat ||= bodyMat;
+                        collarMat ||= bodyMat;
+                        mountDecals(g, new THREE.Box3().setFromObject(g));
+                        jerseyGroup = g;
+                        scene.add(jerseyGroup);
+                        mockupStatus.value = '';
+                        applyMaterials();
+                        return;
+                    } catch {
+                        // Try the next candidate path.
+                    }
                 }
-                try {
-                    const gltf = await new GLTFLoader().loadAsync(modelUrl);
-                    const g = gltf.scene || gltf.scenes?.[0];
-                    if (!g) throw new Error('No model');
-                    g.scale.setScalar(1.4);
-                    g.position.y = -0.25;
-                    g.traverse((n) => {
-                        if (!n.isMesh) return;
-                        n.castShadow = true;
-                        n.receiveShadow = true;
-                        const nm = (n.name || '').toLowerCase();
-                        if (nm.includes('sleeve')) sleeveMat = n.material;
-                        else if (nm.includes('collar') || nm.includes('neck')) collarMat = n.material;
-                        else bodyMat = n.material;
-                    });
-                    bodyMat ||= new THREE.MeshStandardMaterial({ color: colors.body });
-                    sleeveMat ||= bodyMat;
-                    collarMat ||= bodyMat;
-                    mountDecals(g, new THREE.Box3().setFromObject(g));
-                    jerseyGroup = g;
-                    scene.add(jerseyGroup);
-                    applyMaterials();
-                } catch {
-                    jerseyGroup = fallbackModel();
-                    scene.add(jerseyGroup);
-                    applyMaterials();
-                }
+
+                jerseyGroup = fallbackModel();
+                scene.add(jerseyGroup);
+                mockupStatus.value = 'Fallback mockup in use. Add GLB files in /public/models/jerseys for photoreal view.';
+                applyMaterials();
             };
             const setLightMode = () => {
                 if (!keyLight || !fillLight || !stadiumLight || !floorMesh) return;
@@ -417,7 +499,7 @@ export const mountJerseyDesigner = () => {
                 floorMesh.position.y = -1.8;
                 floorMesh.receiveShadow = true;
                 scene.add(floorMesh);
-                await loadModel(selectedJersey.value?.model_url || '');
+                await loadModel(selectedJersey.value);
                 setLightMode();
                 const tick = () => {
                     frameId = window.requestAnimationFrame(tick);
@@ -458,6 +540,7 @@ export const mountJerseyDesigner = () => {
                     new Promise((resolve) => {
                         if (!json || !fabrics[area]) return resolve();
                         fabrics[area].loadFromJSON(json, () => {
+                            ensureTransparentCanvas(fabrics[area]);
                             fabrics[area].renderAll();
                             snapHistory(area);
                             resolve();
@@ -592,6 +675,7 @@ export const mountJerseyDesigner = () => {
                 const c2 = activeCanvas();
                 if (!c2) return;
                 c2.getObjects().forEach((o) => c2.remove(o));
+                ensureTransparentCanvas(c2);
                 c2.renderAll();
                 snapHistory(activeArtboard.value);
                 syncTextures();
@@ -607,7 +691,7 @@ export const mountJerseyDesigner = () => {
             const selectJersey = async (id) => {
                 selectedJerseyId.value = id;
                 if (!supportsSleeves.value && activeArtboard.value === 'sleeve') activeArtboard.value = 'front';
-                await loadModel(selectedJersey.value?.model_url || '');
+                await loadModel(selectedJersey.value);
                 applyMaterials();
                 setView('front');
                 persistLocal();
@@ -668,6 +752,7 @@ export const mountJerseyDesigner = () => {
                 activeArtboard,
                 loadDesignId,
                 saveStatus,
+                mockupStatus,
                 colors,
                 player,
                 sportsFonts,

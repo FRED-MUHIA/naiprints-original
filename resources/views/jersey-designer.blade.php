@@ -108,7 +108,7 @@
                         <div ref="threeMountRef" class="jersey-viewer"></div>
                         <div class="jersey-view-meta">
                             <span>Rotate 360° · Zoom · HDR Lighting</span>
-                            <span>@{{ saveStatus }}</span>
+                            <span>@{{ mockupStatus || saveStatus }}</span>
                         </div>
                     </div>
                     <div class="jersey-bottom-toggle">
