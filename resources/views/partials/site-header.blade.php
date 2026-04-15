@@ -36,12 +36,6 @@
             array_splice($menu, $jerseyIndex + 1, 0, [$designerMenuItem]);
         }
     }
-    $hasBlogLink = collect($menu)->contains(function ($item) {
-        return strtolower(trim((string) ($item['label'] ?? ''))) === 'blog';
-    });
-    if (!$hasBlogLink) {
-        $menu[] = ['label' => 'Blog', 'url' => '/blogs'];
-    }
     $menuStrip = $header['menu_strip'] ?? [];
     $menuStripCta = $header['menu_strip_cta'] ?? null;
     $ctaPosition = $header['menu_strip_cta_position'] ?? 8;
