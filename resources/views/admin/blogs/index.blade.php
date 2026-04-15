@@ -53,7 +53,15 @@
                         <td class="px-6 py-4 text-slate-500">{{ $blog->meta_title ?: '—' }}</td>
                         <td class="px-6 py-4">
                             <div class="flex justify-end gap-3">
-                                <a href="{{ route('admin.blogs.edit', $blog) }}" class="text-slate-700 hover:text-slate-900">Edit</a>
+                                <a href="{{ route('admin.blogs.edit.quick', $blog->id) }}" class="text-slate-700 hover:text-slate-900">Edit</a>
+                                @if ($blog->status !== 'published')
+                                    <form method="POST" action="{{ route('admin.blogs.publish', $blog->id) }}">
+                                        @csrf
+                                        <button type="submit" class="text-emerald-700 hover:text-emerald-800">
+                                            Publish
+                                        </button>
+                                    </form>
+                                @endif
                                 <form method="POST" action="{{ route('admin.blogs.destroy', $blog) }}">
                                     @csrf
                                     @method('DELETE')

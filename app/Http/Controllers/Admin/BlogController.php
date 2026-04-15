@@ -97,7 +97,7 @@ class BlogController extends Controller
     public function edit(string $blog): View
     {
         abort_unless(Schema::hasTable('blogs'), 404);
-        $blog = Blog::findOrFail($blog);
+        $blog = $this->resolveBlog($blog);
         $categories = Schema::hasTable('blog_categories')
             ? BlogCategory::orderBy('name')->get()
             : collect();
@@ -111,7 +111,7 @@ class BlogController extends Controller
     public function update(Request $request, string $blog): RedirectResponse
     {
         abort_unless(Schema::hasTable('blogs'), 404);
-        $blog = Blog::findOrFail($blog);
+        $blog = $this->resolveBlog($blog);
         $hasCategoriesTable = Schema::hasTable('blog_categories');
 
         $data = $request->validate([
@@ -158,7 +158,7 @@ class BlogController extends Controller
     public function destroy(string $blog): RedirectResponse
     {
         abort_unless(Schema::hasTable('blogs'), 404);
-        $blog = Blog::findOrFail($blog);
+        $blog = $this->resolveBlog($blog);
 
         if ($blog->cover_image_path) {
             Storage::disk('public')->delete($blog->cover_image_path);
@@ -168,6 +168,21 @@ class BlogController extends Controller
 
         return redirect()->route('admin.blogs.index')
             ->with('success', 'Blog post deleted.');
+    }
+
+    public function publish(string $blog): RedirectResponse
+    {
+        abort_unless(Schema::hasTable('blogs'), 404);
+        $blog = $this->resolveBlog($blog);
+
+        if ($blog->status !== 'published') {
+            $blog->status = 'published';
+            $blog->published_at = $blog->published_at ?: now();
+            $blog->save();
+        }
+
+        return redirect()->route('admin.blogs.index')
+            ->with('success', 'Blog post published.');
     }
 
     private function resolvePublishedAt(array $data): ?string
@@ -199,5 +214,18 @@ class BlogController extends Controller
         }
 
         return $slug;
+    }
+
+    private function resolveBlog(string $value): Blog
+    {
+        $query = Blog::query();
+
+        if (is_numeric($value)) {
+            $query->where('id', (int) $value);
+        } else {
+            $query->where('slug', $value);
+        }
+
+        return $query->firstOrFail();
     }
 }
