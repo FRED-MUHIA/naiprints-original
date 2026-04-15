@@ -10,13 +10,13 @@
     $logoUrl = !empty($footer['logo_url']) ? $footer['logo_url'] : '/images/logo.svg';
 @endphp
 
-<footer class="border-t border-white/10 bg-[#0b1f4d] text-slate-100">
+<footer class="border-t border-white/10 bg-[#0b1f4d] text-white">
     <div class="mx-auto grid max-w-6xl gap-8 px-4 py-10 md:grid-cols-4">
         <div>
             <img src="{{ $logoUrl }}" alt="{{ $footer['brand'] ?? 'Nai Prints' }} logo" class="h-10 w-10 rounded-full object-cover">
-            <p class="mt-2 text-sm text-slate-200">{{ $footer['description'] ?? '' }}</p>
+            <p class="mt-2 text-sm text-white">{{ $footer['description'] ?? '' }}</p>
             @if (!empty($hours))
-                <div class="mt-4 flex gap-3 text-sm text-slate-300">
+                <div class="mt-4 flex gap-3 text-sm text-white/90">
                     @foreach ($hours as $value)
                         <span>{{ $value }}</span>
                     @endforeach
@@ -25,18 +25,18 @@
         </div>
         @foreach ($columns as $column)
             <div>
-                <p class="text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">{{ $column['title'] ?? '' }}</p>
-                <ul class="mt-3 space-y-2 text-sm text-slate-100">
+                <p class="text-sm font-semibold uppercase tracking-[0.2em] text-white">{{ $column['title'] ?? '' }}</p>
+                <ul class="mt-3 space-y-2 text-sm text-white">
                     @foreach (($column['links'] ?? []) as $link)
                         <li>
-                            <a class="hover:text-brand-sun" href="{{ $link['url'] ?? '#' }}">{{ $link['label'] ?? '' }}</a>
+                            <a class="text-white hover:text-brand-sun" href="{{ $link['url'] ?? '#' }}">{{ $link['label'] ?? '' }}</a>
                         </li>
                     @endforeach
                 </ul>
             </div>
         @endforeach
     </div>
-    <div class="border-t border-white/10 py-4 text-center text-xs text-slate-300">
+    <div class="border-t border-white/10 py-4 text-center text-xs text-white/90">
         {{ $footer['copyright'] ?? '' }}
     </div>
 </footer>
