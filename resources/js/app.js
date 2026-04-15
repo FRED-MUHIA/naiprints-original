@@ -5,6 +5,98 @@ import { mountJerseyDesigner } from './jersey-3d-designer';
 document.addEventListener('DOMContentLoaded', () => {
     mountJerseyDesigner();
 
+    const processedImages = new WeakSet();
+    let eagerBudget = 4;
+
+    const setIntrinsicDimensions = (img) => {
+        if (
+            img.hasAttribute('width') &&
+            img.hasAttribute('height')
+        ) {
+            return;
+        }
+
+        const applyDimensions = () => {
+            if (!img.naturalWidth || !img.naturalHeight) {
+                return;
+            }
+            if (!img.hasAttribute('width')) {
+                img.setAttribute('width', String(img.naturalWidth));
+            }
+            if (!img.hasAttribute('height')) {
+                img.setAttribute('height', String(img.naturalHeight));
+            }
+        };
+
+        if (img.complete) {
+            applyDimensions();
+            return;
+        }
+
+        img.addEventListener('load', applyDimensions, { once: true });
+    };
+
+    const shouldPrioritizeImage = (img) => {
+        if (img.closest('header')) {
+            return true;
+        }
+
+        const rect = img.getBoundingClientRect();
+        const viewportHeight = window.innerHeight || 900;
+        const aboveFoldThreshold = viewportHeight * 1.2;
+
+        return rect.top < aboveFoldThreshold && rect.bottom > -120;
+    };
+
+    const optimizeImage = (img) => {
+        if (!(img instanceof HTMLImageElement) || processedImages.has(img)) {
+            return;
+        }
+
+        processedImages.add(img);
+        setIntrinsicDimensions(img);
+
+        if (!img.hasAttribute('decoding')) {
+            img.decoding = 'async';
+        }
+
+        const canPrioritize = shouldPrioritizeImage(img) && eagerBudget > 0;
+
+        if (!img.hasAttribute('fetchpriority')) {
+            img.fetchPriority = canPrioritize ? 'high' : 'low';
+        }
+
+        if (!img.hasAttribute('loading')) {
+            img.loading = canPrioritize ? 'eager' : 'lazy';
+        }
+
+        if (canPrioritize) {
+            eagerBudget -= 1;
+        }
+    };
+
+    document.querySelectorAll('img').forEach(optimizeImage);
+
+    const imageObserver = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+                if (node instanceof HTMLImageElement) {
+                    optimizeImage(node);
+                    return;
+                }
+
+                if (node instanceof HTMLElement) {
+                    node.querySelectorAll('img').forEach(optimizeImage);
+                }
+            });
+        });
+    });
+
+    imageObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+    });
+
     const mobileMenu = document.querySelector('[data-mobile-menu]');
     const mobileToggle = document.querySelector('[data-mobile-menu-toggle]');
 

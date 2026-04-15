@@ -61,6 +61,10 @@
                                         <a href="{{ route('blogs.show', $blog) }}" class="hover:text-brand">{{ $blog->title }}</a>
                                     </h2>
                                     <p class="text-sm leading-7 text-slate-700">{{ $excerpt }}</p>
+                                    <a href="{{ route('blogs.show', $blog) }}"
+                                       class="inline-flex items-center justify-center rounded-full bg-[#003354] px-5 py-2 text-sm font-semibold text-white transition hover:opacity-90">
+                                        Read More
+                                    </a>
                                 </div>
                             </article>
                         @endforeach
