@@ -614,6 +614,9 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
 
     Route::resource('products', ProductController::class)->except(['show']);
     Route::post('blogs/{blog}/publish', [AdminBlogController::class, 'publish'])->name('blogs.publish');
+    Route::get('blogs/{blog}', [AdminBlogController::class, 'edit'])
+        ->whereNumber('blog')
+        ->name('blogs.edit.alias');
     Route::resource('blogs', AdminBlogController::class)->except(['show']);
     Route::resource('blog-categories', BlogCategoryController::class)->except(['show']);
     Route::resource('blog-posters', BlogPosterController::class)->except(['show']);
