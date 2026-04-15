@@ -6458,7 +6458,7 @@
     min-height: 100vh;
     background: radial-gradient(circle at top, #1d2854, #0b1026 55%, #050812 100%);
     color: #e2e8f0;
-    font-family: 'Space Grotesk', var(--font-sans);
+    font-family: var(--font-sans);
 }
 
 .jersey-builder-shell {
@@ -6497,7 +6497,7 @@
 .jersey-brand strong {
     display: block;
     font-weight: 700;
-    font-family: 'Rajdhani', var(--font-display);
+    font-family: var(--font-display);
     letter-spacing: 0.04em;
 }
 

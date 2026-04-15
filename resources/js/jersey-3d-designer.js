@@ -143,12 +143,12 @@ export const mountJerseyDesigner = () => {
             const saveStatus = ref('Ready');
             const lightingMode = ref('studio');
             const sizeOptions = ['S', 'M', 'L', 'XL', 'XXL'];
-            const sportsFonts = ref(['Rajdhani', 'Space Grotesk', 'Bebas Neue', 'Montserrat', 'Oswald']);
+            const sportsFonts = ref(['Nunito Sans', 'Rajdhani', 'Space Grotesk', 'Bebas Neue', 'Montserrat', 'Oswald']);
             const sizeQuantities = reactive({ S: 0, M: 0, L: 0, XL: 0, XXL: 0 });
             const orderCustomer = reactive({ name: '', email: '', phone: '' });
             const savedDesign = reactive({ id: null, public_id: null });
             const colors = reactive({ body: '#0f172a', sleeve: '#1f2937', collar: '#f8fafc' });
-            const player = reactive({ name: '', number: '', fontFamily: 'Rajdhani', size: 118, spacing: 90, color: '#ffffff', outline: '#111827' });
+            const player = reactive({ name: '', number: '', fontFamily: 'Nunito Sans', size: 118, spacing: 90, color: '#ffffff', outline: '#111827' });
             const fabrics = reactive({ front: null, back: null, sleeve: null });
             const history = reactive({ front: { stack: [], index: -1 }, back: { stack: [], index: -1 }, sleeve: { stack: [], index: -1 } });
 
