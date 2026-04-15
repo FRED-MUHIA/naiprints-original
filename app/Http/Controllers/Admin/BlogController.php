@@ -8,6 +8,7 @@ use App\Models\BlogCategory;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -82,7 +83,7 @@ class BlogController extends Controller
         ]);
 
         $data['slug'] = $this->makeUniqueSlug($data['slug'] ?? $data['title']);
-        $data['content'] = $this->sanitizeContent((string) $data['content']);
+        $data['content'] = $this->prepareContent((string) $data['content']);
         $data['published_at'] = $this->resolvePublishedAt($data);
         if (!$hasCategoriesTable) {
             $data['blog_category_id'] = null;
@@ -136,7 +137,7 @@ class BlogController extends Controller
         ]);
 
         $data['slug'] = $this->makeUniqueSlug($data['slug'] ?? $data['title'], $blog->id);
-        $data['content'] = $this->sanitizeContent((string) $data['content']);
+        $data['content'] = $this->prepareContent((string) $data['content']);
         $data['published_at'] = $this->resolvePublishedAt($data);
         if (!$hasCategoriesTable) {
             $data['blog_category_id'] = null;
@@ -228,6 +229,164 @@ class BlogController extends Controller
         $content = preg_replace('/\s(href|src)\s*=\s*("|\')\s*javascript:.*?\2/i', ' $1="#"', $content) ?? $content;
 
         return trim($content);
+    }
+
+    private function prepareContent(string $content): string
+    {
+        $content = $this->sanitizeContent($content);
+        return $this->localizeEmbeddedImages($content);
+    }
+
+    private function localizeEmbeddedImages(string $content): string
+    {
+        if (!str_contains(strtolower($content), '<img')) {
+            return $content;
+        }
+
+        $previous = libxml_use_internal_errors(true);
+        $dom = new \DOMDocument('1.0', 'UTF-8');
+        $loaded = $dom->loadHTML(
+            '<?xml encoding="utf-8" ?>' . $content,
+            LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD
+        );
+
+        if (!$loaded) {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previous);
+            return $content;
+        }
+
+        $images = $dom->getElementsByTagName('img');
+        $toProcess = [];
+        foreach ($images as $image) {
+            $toProcess[] = $image;
+        }
+
+        foreach ($toProcess as $image) {
+            $src = trim((string) $image->getAttribute('src'));
+            if ($src === '') {
+                continue;
+            }
+
+            $storedPath = null;
+            if (preg_match('/^data:image\//i', $src) === 1) {
+                $storedPath = $this->storeDataUriImage($src);
+            } elseif (preg_match('#^https?://#i', $src) === 1 || str_starts_with($src, '//')) {
+                $url = str_starts_with($src, '//') ? ('https:' . $src) : $src;
+                $storedPath = $this->storeRemoteImage($url);
+            }
+
+            if ($storedPath) {
+                $image->setAttribute('src', Storage::url($storedPath));
+                if ($image->hasAttribute('srcset')) {
+                    $image->removeAttribute('srcset');
+                }
+            }
+        }
+
+        $html = $dom->saveHTML() ?: $content;
+        $html = preg_replace('/^<\?xml[^>]+>\s*/', '', $html) ?? $html;
+
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+
+        return trim($html);
+    }
+
+    private function storeDataUriImage(string $src): ?string
+    {
+        if (!preg_match('/^data:image\/([a-zA-Z0-9.+-]+);base64,(.+)$/s', $src, $matches)) {
+            return null;
+        }
+
+        $rawType = strtolower((string) ($matches[1] ?? ''));
+        $data = (string) ($matches[2] ?? '');
+        $binary = base64_decode($data, true);
+        if ($binary === false || $binary === '') {
+            return null;
+        }
+
+        if (strlen($binary) > 10 * 1024 * 1024) {
+            return null;
+        }
+
+        $extension = $this->resolveImageExtension($rawType);
+        if (!$extension) {
+            return null;
+        }
+
+        $path = 'blogs/content/' . Str::uuid() . '.' . $extension;
+        Storage::disk('public')->put($path, $binary);
+
+        return $path;
+    }
+
+    private function storeRemoteImage(string $url): ?string
+    {
+        try {
+            $response = Http::timeout(20)
+                ->withHeaders(['User-Agent' => 'Mozilla/5.0'])
+                ->get($url);
+        } catch (\Throwable $e) {
+            return null;
+        }
+
+        if (!$response->ok()) {
+            return null;
+        }
+
+        $body = $response->body();
+        if ($body === '') {
+            return null;
+        }
+
+        if (strlen($body) > 10 * 1024 * 1024) {
+            return null;
+        }
+
+        $contentType = strtolower(trim((string) $response->header('Content-Type')));
+        $contentType = explode(';', $contentType)[0] ?? $contentType;
+        $extension = $this->resolveImageExtension($contentType);
+
+        if (!$extension) {
+            $path = parse_url($url, PHP_URL_PATH);
+            $pathExtension = strtolower((string) pathinfo((string) $path, PATHINFO_EXTENSION));
+            $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'avif'];
+            $extension = in_array($pathExtension, $allowed, true) ? $pathExtension : null;
+        }
+
+        if (!$extension) {
+            return null;
+        }
+
+        $path = 'blogs/content/' . Str::uuid() . '.' . $extension;
+        Storage::disk('public')->put($path, $body);
+
+        return $path;
+    }
+
+    private function resolveImageExtension(string $mimeOrSubtype): ?string
+    {
+        $value = strtolower(trim($mimeOrSubtype));
+        $map = [
+            'image/jpeg' => 'jpg',
+            'jpeg' => 'jpg',
+            'jpg' => 'jpg',
+            'image/jpg' => 'jpg',
+            'image/png' => 'png',
+            'png' => 'png',
+            'image/gif' => 'gif',
+            'gif' => 'gif',
+            'image/webp' => 'webp',
+            'webp' => 'webp',
+            'image/svg+xml' => 'svg',
+            'svg+xml' => 'svg',
+            'svg' => 'svg',
+            'image/avif' => 'avif',
+            'avif' => 'avif',
+        ];
+
+        return $map[$value] ?? null;
     }
 
     private function resolveBlog(string $value): Blog
