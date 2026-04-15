@@ -304,6 +304,8 @@ class PageDefaults
                             'title' => 'Jersey Sales and Custom Branding for',
                             'highlight' => 'Teams, Schools & Football Academies',
                             'body' => 'From school tournaments to football league weekends, Nai Prints delivers premium jerseys with names, numbers, and sponsor branding. We support small and bulk orders with fast production in Nairobi and delivery across Kenya.',
+                            'image' => '',
+                            'image_alt' => 'Custom jersey showcase',
                             'primary' => ['label' => 'Shop Jerseys', 'url' => '/shop'],
                             'secondary' => ['label' => 'Open 3D Designer', 'url' => '/mockup'],
                             'stats' => [
@@ -611,6 +613,7 @@ class PageDefaults
                 ['label' => 'Sports', 'url' => '#'],
                 ['label' => 'Kids', 'url' => '#'],
                 ['label' => 'Corporate', 'url' => '/corporate'],
+                ['label' => 'Contact', 'url' => '/contact'],
                 ['label' => 'Embroidery', 'url' => '/embroidery'],
                 ['label' => 'Jersey', 'url' => '/jersey'],
                 ['label' => '3D Designer', 'url' => '/3d-designer'],

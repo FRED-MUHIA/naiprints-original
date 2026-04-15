@@ -24,6 +24,8 @@
                     $data = $section['data'] ?? [];
 
                     $hero = $data['hero'] ?? ($defaults['hero'] ?? []);
+                    $heroImage = $hero['image'] ?? ($defaults['hero']['image'] ?? '');
+                    $heroImageAlt = $hero['image_alt'] ?? ($defaults['hero']['image_alt'] ?? 'Jersey hero image');
                     $heroStats = $hero['stats'] ?? ($defaults['hero']['stats'] ?? []);
                     $audiences = $data['audiences'] ?? ($defaults['audiences'] ?? []);
                     $audienceItems = $audiences['items'] ?? ($defaults['audiences']['items'] ?? []);
@@ -34,38 +36,50 @@
                 @endphp
 
                 <section class="hero-card">
-                    @if (!empty($hero['kicker']))
-                        <p class="pill">{{ $hero['kicker'] }}</p>
-                    @endif
-                    <h1 class="mt-6 text-4xl font-semibold leading-tight text-white md:text-5xl">
-                        {{ $hero['title'] ?? '' }}
-                        @if (!empty($hero['highlight']))
-                            <span class="text-brand">{{ $hero['highlight'] }}</span>
+                    <div class="grid gap-8 lg:grid-cols-3 lg:items-start">
+                        @if (!empty($heroImage))
+                            <figure class="overflow-hidden rounded-3xl border border-white/10 bg-slate-900/30 lg:col-span-1">
+                                <img
+                                    src="{{ $heroImage }}"
+                                    alt="{{ $heroImageAlt }}"
+                                    class="h-64 w-full object-cover md:h-80 lg:h-[420px]">
+                            </figure>
                         @endif
-                    </h1>
-                    @if (!empty($hero['body']))
-                        <p class="mt-4 max-w-3xl text-sm text-white/85 md:text-base">
-                            {{ $hero['body'] }}
-                        </p>
-                    @endif
-                    <div class="mt-8 flex flex-wrap items-center gap-4">
-                        @if (!empty($hero['primary']['label']))
-                            <a href="{{ $hero['primary']['url'] ?? '#' }}" class="btn-primary">{{ $hero['primary']['label'] }}</a>
-                        @endif
-                        @if (!empty($hero['secondary']['label']))
-                            <a href="{{ $hero['secondary']['url'] ?? '#' }}" class="btn-secondary">{{ $hero['secondary']['label'] }}</a>
-                        @endif
-                    </div>
-                    @if (!empty($heroStats))
-                        <div class="mt-10 grid gap-4 text-sm text-white/80 md:grid-cols-3">
-                            @foreach ($heroStats as $stat)
-                                <div>
-                                    <p class="text-xl font-semibold text-white">{{ $stat['value'] ?? '' }}</p>
-                                    <p>{{ $stat['label'] ?? '' }}</p>
+                        <div class="{{ !empty($heroImage) ? 'lg:col-span-2' : 'lg:col-span-3' }}">
+                            @if (!empty($hero['kicker']))
+                                <p class="pill">{{ $hero['kicker'] }}</p>
+                            @endif
+                            <h1 class="mt-6 text-4xl font-semibold leading-tight text-white md:text-5xl">
+                                {{ $hero['title'] ?? '' }}
+                                @if (!empty($hero['highlight']))
+                                    <span class="text-brand">{{ $hero['highlight'] }}</span>
+                                @endif
+                            </h1>
+                            @if (!empty($hero['body']))
+                                <p class="mt-4 max-w-3xl text-sm text-white/85 md:text-base">
+                                    {{ $hero['body'] }}
+                                </p>
+                            @endif
+                            <div class="mt-8 flex flex-wrap items-center gap-4">
+                                @if (!empty($hero['primary']['label']))
+                                    <a href="{{ $hero['primary']['url'] ?? '#' }}" class="btn-primary">{{ $hero['primary']['label'] }}</a>
+                                @endif
+                                @if (!empty($hero['secondary']['label']))
+                                    <a href="{{ $hero['secondary']['url'] ?? '#' }}" class="btn-secondary">{{ $hero['secondary']['label'] }}</a>
+                                @endif
+                            </div>
+                            @if (!empty($heroStats))
+                                <div class="mt-10 grid gap-4 text-sm text-white/80 md:grid-cols-3">
+                                    @foreach ($heroStats as $stat)
+                                        <div>
+                                            <p class="text-xl font-semibold text-white">{{ $stat['value'] ?? '' }}</p>
+                                            <p>{{ $stat['label'] ?? '' }}</p>
+                                        </div>
+                                    @endforeach
                                 </div>
-                            @endforeach
+                            @endif
                         </div>
-                    @endif
+                    </div>
                 </section>
 
                 <section class="mt-12">

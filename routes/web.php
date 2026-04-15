@@ -39,6 +39,7 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Http\Controllers\CorporateQuoteController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\JerseyCatalogController;
 use App\Http\Controllers\JerseyDesignController;
 use App\Http\Controllers\JerseyLogoController;
@@ -454,6 +455,9 @@ Route::get('/corporate', function () {
         'globalPurchasePopupProducts' => $purchasePopupProducts,
     ]);
 })->name('corporate');
+
+Route::get('/contact', [ContactController::class, 'show'])->name('contact.show');
+Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 
 Route::post('/newsletter', function (Request $request) {
     $request->validate([

@@ -562,6 +562,137 @@
                                     <input type="text" name="sections[{{ $index }}][data][text_color]" value="{{ $data['text_color'] ?? '#0f172a' }}" placeholder="Text color (#0f172a)" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
                                 </div>
                                 <p class="text-xs text-slate-500">Use hex colors in #RRGGBB format.</p>
+                            @elseif ($type === 'jersey_page')
+                                @php
+                                    $hero = $data['hero'] ?? [];
+                                    $heroStats = $hero['stats'] ?? [];
+                                    if (empty($heroStats)) {
+                                        $heroStats = [
+                                            ['value' => '', 'label' => ''],
+                                            ['value' => '', 'label' => ''],
+                                            ['value' => '', 'label' => ''],
+                                        ];
+                                    }
+
+                                    $audiences = $data['audiences'] ?? [];
+                                    $audienceItems = $audiences['items'] ?? [];
+                                    if (empty($audienceItems)) {
+                                        $audienceItems = [
+                                            ['title' => '', 'body' => ''],
+                                            ['title' => '', 'body' => ''],
+                                            ['title' => '', 'body' => ''],
+                                        ];
+                                    }
+
+                                    $designs = $data['designs'] ?? [];
+                                    $designItems = $designs['items'] ?? [];
+                                    if (empty($designItems)) {
+                                        $designItems = [
+                                            ['image_url' => '', 'image_alt' => ''],
+                                            ['image_url' => '', 'image_alt' => ''],
+                                            ['image_url' => '', 'image_alt' => ''],
+                                            ['image_url' => '', 'image_alt' => ''],
+                                            ['image_url' => '', 'image_alt' => ''],
+                                            ['image_url' => '', 'image_alt' => ''],
+                                        ];
+                                    }
+
+                                    $video = $data['video'] ?? [];
+                                    $cta = $data['cta'] ?? [];
+                                @endphp
+                                <div class="rounded-2xl border border-slate-200 p-4">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Hero</p>
+                                    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                                        <input type="text" name="sections[{{ $index }}][data][hero][kicker]" value="{{ $hero['kicker'] ?? '' }}" placeholder="Kicker" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                        <input type="text" name="sections[{{ $index }}][data][hero][highlight]" value="{{ $hero['highlight'] ?? '' }}" placeholder="Highlight text" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                    </div>
+                                    <input type="text" name="sections[{{ $index }}][data][hero][title]" value="{{ $hero['title'] ?? '' }}" placeholder="Title" class="mt-3 rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                    <textarea name="sections[{{ $index }}][data][hero][body]" rows="3" placeholder="Body" class="mt-3 rounded-xl border border-slate-200 px-3 py-2 text-sm">{{ $hero['body'] ?? '' }}</textarea>
+                                    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                                        <input type="text" name="sections[{{ $index }}][data][hero][image]" value="{{ $hero['image'] ?? '' }}" placeholder="Left image URL" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                        <input type="file"
+                                               name="sections[{{ $index }}][data][hero][image_file]"
+                                               accept="image/*"
+                                               class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                    </div>
+                                    <input type="text" name="sections[{{ $index }}][data][hero][image_alt]" value="{{ $hero['image_alt'] ?? '' }}" placeholder="Left image alt text" class="mt-3 rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                    @if (!empty($hero['image']))
+                                        <div class="mt-2 text-xs text-slate-500">
+                                            Current: <a href="{{ $hero['image'] }}" class="text-brand underline underline-offset-4" target="_blank" rel="noopener">View image</a>
+                                        </div>
+                                    @endif
+                                    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                                        <input type="text" name="sections[{{ $index }}][data][hero][primary][label]" value="{{ $hero['primary']['label'] ?? '' }}" placeholder="Primary button label" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                        <input type="text" name="sections[{{ $index }}][data][hero][primary][url]" value="{{ $hero['primary']['url'] ?? '' }}" placeholder="Primary button URL" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                    </div>
+                                    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                                        <input type="text" name="sections[{{ $index }}][data][hero][secondary][label]" value="{{ $hero['secondary']['label'] ?? '' }}" placeholder="Secondary button label" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                        <input type="text" name="sections[{{ $index }}][data][hero][secondary][url]" value="{{ $hero['secondary']['url'] ?? '' }}" placeholder="Secondary button URL" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                    </div>
+                                    <div class="mt-3 grid gap-3">
+                                        @foreach ($heroStats as $statIndex => $stat)
+                                            <div class="grid gap-3 sm:grid-cols-2">
+                                                <input type="text" name="sections[{{ $index }}][data][hero][stats][{{ $statIndex }}][value]" value="{{ $stat['value'] ?? '' }}" placeholder="Stat value" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                <input type="text" name="sections[{{ $index }}][data][hero][stats][{{ $statIndex }}][label]" value="{{ $stat['label'] ?? '' }}" placeholder="Stat label" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+
+                                <div class="rounded-2xl border border-slate-200 p-4">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Who We Serve</p>
+                                    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                                        <input type="text" name="sections[{{ $index }}][data][audiences][kicker]" value="{{ $audiences['kicker'] ?? '' }}" placeholder="Kicker" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                        <input type="text" name="sections[{{ $index }}][data][audiences][title]" value="{{ $audiences['title'] ?? '' }}" placeholder="Title" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                    </div>
+                                    <div class="mt-3 grid gap-3">
+                                        @foreach ($audienceItems as $audienceIndex => $audienceItem)
+                                            <div class="grid gap-3 sm:grid-cols-2">
+                                                <input type="text" name="sections[{{ $index }}][data][audiences][items][{{ $audienceIndex }}][title]" value="{{ $audienceItem['title'] ?? '' }}" placeholder="Audience title" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                <input type="text" name="sections[{{ $index }}][data][audiences][items][{{ $audienceIndex }}][body]" value="{{ $audienceItem['body'] ?? '' }}" placeholder="Audience description" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+
+                                <div class="rounded-2xl border border-slate-200 p-4">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Jersey Gallery</p>
+                                    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                                        <input type="text" name="sections[{{ $index }}][data][designs][kicker]" value="{{ $designs['kicker'] ?? '' }}" placeholder="Kicker" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                        <input type="text" name="sections[{{ $index }}][data][designs][title]" value="{{ $designs['title'] ?? '' }}" placeholder="Title" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                    </div>
+                                    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                                        @foreach ($designItems as $designIndex => $designItem)
+                                            <div class="grid gap-2">
+                                                <input type="text" name="sections[{{ $index }}][data][designs][items][{{ $designIndex }}][image_url]" value="{{ $designItem['image_url'] ?? '' }}" placeholder="Image URL" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                <input type="text" name="sections[{{ $index }}][data][designs][items][{{ $designIndex }}][image_alt]" value="{{ $designItem['image_alt'] ?? '' }}" placeholder="Image alt text" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+
+                                <div class="rounded-2xl border border-slate-200 p-4">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Branding Video</p>
+                                    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                                        <input type="text" name="sections[{{ $index }}][data][video][kicker]" value="{{ $video['kicker'] ?? '' }}" placeholder="Kicker" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                        <input type="text" name="sections[{{ $index }}][data][video][title]" value="{{ $video['title'] ?? '' }}" placeholder="Title" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                    </div>
+                                    <input type="text" name="sections[{{ $index }}][data][video][embed_url]" value="{{ $video['embed_url'] ?? '' }}" placeholder="YouTube embed URL" class="mt-3 rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                </div>
+
+                                <div class="rounded-2xl border border-slate-200 p-4">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Call To Action</p>
+                                    <input type="text" name="sections[{{ $index }}][data][cta][title]" value="{{ $cta['title'] ?? '' }}" placeholder="Title" class="mt-3 rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                    <textarea name="sections[{{ $index }}][data][cta][body]" rows="3" placeholder="Body" class="mt-3 rounded-xl border border-slate-200 px-3 py-2 text-sm">{{ $cta['body'] ?? '' }}</textarea>
+                                    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                                        <input type="text" name="sections[{{ $index }}][data][cta][primary][label]" value="{{ $cta['primary']['label'] ?? '' }}" placeholder="Primary label" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                        <input type="text" name="sections[{{ $index }}][data][cta][primary][url]" value="{{ $cta['primary']['url'] ?? '' }}" placeholder="Primary URL" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                    </div>
+                                    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                                        <input type="text" name="sections[{{ $index }}][data][cta][secondary][label]" value="{{ $cta['secondary']['label'] ?? '' }}" placeholder="Secondary label" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                        <input type="text" name="sections[{{ $index }}][data][cta][secondary][url]" value="{{ $cta['secondary']['url'] ?? '' }}" placeholder="Secondary URL" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                    </div>
+                                </div>
                             @elseif ($type === 'corporate_page')
                                 @php
                                     $hero = $data['hero'] ?? [];
@@ -1252,6 +1383,8 @@
                         <option value="footer_notice">Footer notice</option>
                         <option value="shop_header">Shop header</option>
                         <option value="embroidery_page">Embroidery page</option>
+                        <option value="jersey_page">Jersey page</option>
+                        <option value="corporate_page">Corporate page</option>
                         <option value="designer_page">Designer page</option>
                         <option value="mockup_page">Mockup page</option>
                     </select>

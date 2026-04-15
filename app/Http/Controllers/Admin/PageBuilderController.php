@@ -189,6 +189,7 @@ class PageBuilderController extends Controller
         $shop = Page::ensure('shop', 'Shop', PageDefaults::shop());
         $checkout = Page::ensure('checkout', 'Checkout', PageDefaults::checkout());
         $embroidery = Page::ensure('embroidery', 'Embroidery', PageDefaults::embroidery());
+        $jersey = Page::ensure('jersey', 'Jersey', PageDefaults::jersey());
         $mockup = Page::ensure('mockup', 'Mockup', PageDefaults::mockup());
         $corporate = Page::ensure('corporate', 'Corporate', PageDefaults::corporate());
 
@@ -355,7 +356,12 @@ class PageBuilderController extends Controller
     private function mergeCorporateUploads(array $sections, array $sectionFiles): array
     {
         foreach ($sectionFiles as $sectionIndex => $sectionPayload) {
-            if (!isset($sections[$sectionIndex]) || ($sections[$sectionIndex]['type'] ?? '') !== 'corporate_page') {
+            if (!isset($sections[$sectionIndex])) {
+                continue;
+            }
+
+            $type = (string) ($sections[$sectionIndex]['type'] ?? '');
+            if (!in_array($type, ['corporate_page', 'jersey_page'], true)) {
                 continue;
             }
 
@@ -364,7 +370,10 @@ class PageBuilderController extends Controller
                 continue;
             }
 
-            $path = $file->store('page-builder/corporate', 'public');
+            $folder = $type === 'jersey_page'
+                ? 'page-builder/jersey'
+                : 'page-builder/corporate';
+            $path = $file->store($folder, 'public');
             $sections[$sectionIndex]['data']['hero']['image'] = Storage::url($path);
         }
 
@@ -374,7 +383,8 @@ class PageBuilderController extends Controller
     private function stripCorporateUploadFields(array $sections): array
     {
         foreach ($sections as $sectionIndex => $section) {
-            if (($section['type'] ?? '') !== 'corporate_page') {
+            $type = (string) ($section['type'] ?? '');
+            if (!in_array($type, ['corporate_page', 'jersey_page'], true)) {
                 continue;
             }
 
