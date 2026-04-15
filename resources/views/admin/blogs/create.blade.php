@@ -47,6 +47,14 @@
                 </div>
 
                 <div class="admin-card">
+                    <div class="rounded-[24px] border border-slate-200 bg-slate-50 px-6 py-6">
+                        <p class="text-2xl font-semibold uppercase tracking-[0.32em] text-slate-900">SEO READY</p>
+                        <p class="mt-4 text-sm leading-relaxed text-slate-700">
+                            Each post supports custom meta title, meta description, category organization, and clean slug URLs for better search visibility.
+                        </p>
+                    </div>
+
+                    <div class="mt-6 border-t border-slate-200 pt-6">
                     <h2 class="text-lg font-semibold">SEO Meta</h2>
                     <div class="mt-4 grid gap-5">
                         <div>
@@ -57,6 +65,7 @@
                             <label class="text-sm font-semibold text-slate-700">Meta description</label>
                             <input type="text" name="meta_description" value="{{ old('meta_description') }}" maxlength="255" class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-brand focus:outline-none">
                         </div>
+                    </div>
                     </div>
                 </div>
             </div>
@@ -100,4 +109,3 @@
         </div>
     </form>
 @endsection
-
