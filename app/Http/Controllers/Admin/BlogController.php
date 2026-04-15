@@ -79,6 +79,7 @@ class BlogController extends Controller
         ]);
 
         $data['slug'] = $this->makeUniqueSlug($data['slug'] ?? $data['title']);
+        $data['content'] = $this->sanitizeContent((string) $data['content']);
         $data['published_at'] = $this->resolvePublishedAt($data);
         if (!$hasCategoriesTable) {
             $data['blog_category_id'] = null;
@@ -132,6 +133,7 @@ class BlogController extends Controller
         ]);
 
         $data['slug'] = $this->makeUniqueSlug($data['slug'] ?? $data['title'], $blog->id);
+        $data['content'] = $this->sanitizeContent((string) $data['content']);
         $data['published_at'] = $this->resolvePublishedAt($data);
         if (!$hasCategoriesTable) {
             $data['blog_category_id'] = null;
@@ -214,6 +216,17 @@ class BlogController extends Controller
         }
 
         return $slug;
+    }
+
+    private function sanitizeContent(string $content): string
+    {
+        $content = preg_replace('#<\s*(script|style)[^>]*>.*?<\s*/\s*\1>#is', '', $content) ?? $content;
+        $allowedTags = '<p><br><strong><b><em><i><u><s><ul><ol><li><blockquote><a><h1><h2><h3><h4><h5><h6><code><pre><img><table><thead><tbody><tr><th><td><hr>';
+        $content = strip_tags($content, $allowedTags);
+        $content = preg_replace('/\son\w+\s*=\s*(".*?"|\'.*?\'|[^\s>]+)/i', '', $content) ?? $content;
+        $content = preg_replace('/\s(href|src)\s*=\s*("|\')\s*javascript:.*?\2/i', ' $1="#"', $content) ?? $content;
+
+        return trim($content);
     }
 
     private function resolveBlog(string $value): Blog

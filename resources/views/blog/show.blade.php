@@ -62,18 +62,40 @@
                         @endif
 
                         @php
-                            $paragraphs = collect(preg_split('/\r\n|\r|\n/', trim((string) $blog->content)))
-                                ->map(fn ($line) => trim($line))
-                                ->filter(fn ($line) => $line !== '')
-                                ->values();
+                            $content = (string) $blog->content;
+                            $contentHasHtml = $content !== strip_tags($content);
                         @endphp
-                        <div class="mt-8 space-y-5 text-[1.02rem] leading-8 text-slate-700">
-                            @forelse ($paragraphs as $paragraph)
-                                <p>{{ $paragraph }}</p>
-                            @empty
-                                <p>{{ $blog->content }}</p>
-                            @endforelse
-                        </div>
+                        @if ($contentHasHtml)
+                            <div class="mt-8 text-[1.02rem] leading-8 text-slate-700
+                                        [&_h1]:mt-6 [&_h1]:text-3xl [&_h1]:font-semibold
+                                        [&_h2]:mt-6 [&_h2]:text-2xl [&_h2]:font-semibold
+                                        [&_h3]:mt-6 [&_h3]:text-xl [&_h3]:font-semibold
+                                        [&_p]:mt-4
+                                        [&_ul]:mt-4 [&_ul]:list-disc [&_ul]:pl-6
+                                        [&_ol]:mt-4 [&_ol]:list-decimal [&_ol]:pl-6
+                                        [&_blockquote]:mt-4 [&_blockquote]:border-l-4 [&_blockquote]:border-slate-300 [&_blockquote]:pl-4 [&_blockquote]:italic
+                                        [&_a]:text-brand [&_a]:underline
+                                        [&_img]:mt-5 [&_img]:rounded-2xl
+                                        [&_table]:mt-5 [&_table]:w-full [&_table]:border-collapse
+                                        [&_th]:border [&_th]:border-slate-300 [&_th]:px-3 [&_th]:py-2 [&_th]:text-left
+                                        [&_td]:border [&_td]:border-slate-300 [&_td]:px-3 [&_td]:py-2">
+                                {!! $content !!}
+                            </div>
+                        @else
+                            @php
+                                $paragraphs = collect(preg_split('/\r\n|\r|\n/', trim($content)))
+                                    ->map(fn ($line) => trim($line))
+                                    ->filter(fn ($line) => $line !== '')
+                                    ->values();
+                            @endphp
+                            <div class="mt-8 space-y-5 text-[1.02rem] leading-8 text-slate-700">
+                                @forelse ($paragraphs as $paragraph)
+                                    <p>{{ $paragraph }}</p>
+                                @empty
+                                    <p>{{ $content }}</p>
+                                @endforelse
+                            </div>
+                        @endif
                     </article>
 
                     <aside class="space-y-6">
