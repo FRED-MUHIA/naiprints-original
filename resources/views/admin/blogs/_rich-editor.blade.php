@@ -34,6 +34,7 @@
                     const addFormButton = editorRoot.querySelector('[data-editor-action="add-form"]');
                     const addContactFormButton = editorRoot.querySelector('[data-editor-action="add-contact-form"]');
                     const form = editorRoot.closest('form');
+                    const csrfToken = form?.querySelector('input[name="_token"]')?.value || '';
 
                     if (!textarea) {
                         return;
@@ -92,6 +93,72 @@
                         insertIntoTextarea(textarea, value);
                     };
 
+                    const uploadImageBlob = async (blob) => {
+                        if (!csrfToken) {
+                            throw new Error('Missing CSRF token.');
+                        }
+                        const formData = new FormData();
+                        formData.append('_token', csrfToken);
+                        formData.append('file', blob, blob.name || ('pasted-image-' + Date.now() + '.png'));
+
+                        const response = await fetch('{{ route('admin.blogs.editor.upload-image') }}', {
+                            method: 'POST',
+                            body: formData,
+                            credentials: 'same-origin',
+                        });
+                        const payload = await response.json().catch(() => ({}));
+
+                        if (!response.ok || !payload.location) {
+                            throw new Error(payload.message || 'Image upload failed.');
+                        }
+
+                        return payload.location;
+                    };
+
+                    const normalizePastedHtml = (html) => {
+                        const wrapper = document.createElement('div');
+                        wrapper.innerHTML = html;
+                        wrapper.querySelectorAll('img').forEach((img) => {
+                            const attrs = ['src', 'data-src', 'data-lazy-src', 'data-original', 'data-srcset', 'srcset'];
+                            let chosen = '';
+
+                            for (const attr of attrs) {
+                                let value = (img.getAttribute(attr) || '').trim();
+                                if (!value) {
+                                    continue;
+                                }
+                                if (attr.includes('srcset')) {
+                                    value = value.split(',')[0]?.trim() || '';
+                                    value = value.split(/\s+/)[0] || '';
+                                }
+                                if (!value) {
+                                    continue;
+                                }
+                                if (attr === 'src') {
+                                    const lower = value.toLowerCase();
+                                    const isPlaceholder = lower === 'about:blank'
+                                        || lower === '#'
+                                        || lower.startsWith('data:image/gif;base64,r0lgod');
+                                    if (!isPlaceholder) {
+                                        chosen = value;
+                                        break;
+                                    }
+                                    if (!chosen) {
+                                        chosen = value;
+                                    }
+                                } else if (!chosen || chosen.toLowerCase().startsWith('data:image/gif;base64,r0lgod')) {
+                                    chosen = value;
+                                }
+                            }
+
+                            if (chosen) {
+                                img.setAttribute('src', chosen);
+                            }
+                        });
+
+                        return wrapper.innerHTML;
+                    };
+
                     window.tinymce.init({
                         target: textarea,
                         menubar: false,
@@ -112,6 +179,14 @@
                         toolbar: 'blocks | bold italic underline strikethrough | numlist bullist blockquote | alignleft aligncenter alignright | link image media table | removeformat | undo redo | code fullscreen',
                         block_formats: 'Paragraph=p; Heading 1=h1; Heading 2=h2; Heading 3=h3; Heading 4=h4; Heading 5=h5; Heading 6=h6',
                         content_style: 'body { font-family: Nunito Sans, sans-serif; font-size: 15px; line-height: 1.7; }',
+                        images_upload_handler: function (blobInfo, success, failure) {
+                            uploadImageBlob(blobInfo.blob())
+                                .then((location) => success(location))
+                                .catch((error) => failure(error.message || 'Image upload failed'));
+                        },
+                        paste_preprocess: function (plugin, args) {
+                            args.content = normalizePastedHtml(args.content || '');
+                        },
                         setup(editor) {
                             editorInstance = editor;
 
@@ -140,7 +215,24 @@
 
                         if (isImage) {
                             const altText = window.prompt('Alt text (optional):', '') || '';
-                            insertContent('<img src="' + safeUrl + '" alt="' + escapeHtml(altText) + '" />');
+                            const payload = new FormData();
+                            payload.append('_token', csrfToken);
+                            payload.append('url', safeUrl);
+                            fetch('{{ route('admin.blogs.editor.upload-image-url') }}', {
+                                method: 'POST',
+                                body: payload,
+                                credentials: 'same-origin',
+                            })
+                                .then(async (response) => {
+                                    const data = await response.json().catch(() => ({}));
+                                    if (!response.ok || !data.location) {
+                                        throw new Error(data.message || 'Could not localize image URL.');
+                                    }
+                                    insertContent('<img src="' + escapeHtml(data.location) + '" alt="' + escapeHtml(altText) + '" />');
+                                })
+                                .catch(() => {
+                                    insertContent('<img src="' + safeUrl + '" alt="' + escapeHtml(altText) + '" />');
+                                });
                             return;
                         }
 
@@ -173,4 +265,3 @@
         </script>
     @endpush
 @endonce
-

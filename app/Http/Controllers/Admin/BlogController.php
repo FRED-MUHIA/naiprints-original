@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Blog;
 use App\Models\BlogCategory;
 use Carbon\Carbon;
+use DOMElement;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -191,6 +193,37 @@ class BlogController extends Controller
             ->with('success', 'Blog post published.');
     }
 
+    public function uploadEditorImage(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'file' => ['required', 'image', 'max:10240'],
+        ]);
+
+        $path = $data['file']->store('blogs/content', 'public');
+
+        return response()->json([
+            'location' => $this->publicMediaUrl($path),
+        ]);
+    }
+
+    public function uploadEditorImageUrl(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'url' => ['required', 'url', 'max:2048'],
+        ]);
+
+        $path = $this->storeRemoteImage((string) $data['url']);
+        if (!$path) {
+            return response()->json([
+                'message' => 'Could not fetch image from the provided URL.',
+            ], 422);
+        }
+
+        return response()->json([
+            'location' => $this->publicMediaUrl($path),
+        ]);
+    }
+
     private function resolvePublishedAt(array $data): ?string
     {
         if (($data['status'] ?? 'draft') !== 'published') {
@@ -263,10 +296,12 @@ class BlogController extends Controller
         }
 
         foreach ($toProcess as $image) {
-            $src = trim((string) $image->getAttribute('src'));
-            if ($src === '') {
+            $src = $this->resolveImageSource($image);
+            if (!$src) {
                 continue;
             }
+
+            $image->setAttribute('src', $src);
 
             $storedPath = null;
             if (preg_match('/^data:image\//i', $src) === 1) {
@@ -277,9 +312,14 @@ class BlogController extends Controller
             }
 
             if ($storedPath) {
-                $image->setAttribute('src', Storage::url($storedPath));
+                $image->setAttribute('src', $this->publicMediaUrl($storedPath));
                 if ($image->hasAttribute('srcset')) {
                     $image->removeAttribute('srcset');
+                }
+                foreach (['data-src', 'data-lazy-src', 'data-original', 'data-srcset'] as $attr) {
+                    if ($image->hasAttribute($attr)) {
+                        $image->removeAttribute($attr);
+                    }
                 }
             }
         }
@@ -300,7 +340,7 @@ class BlogController extends Controller
         }
 
         $rawType = strtolower((string) ($matches[1] ?? ''));
-        $data = (string) ($matches[2] ?? '');
+        $data = str_replace(' ', '+', (string) ($matches[2] ?? ''));
         $binary = base64_decode($data, true);
         if ($binary === false || $binary === '') {
             return null;
@@ -387,6 +427,76 @@ class BlogController extends Controller
         ];
 
         return $map[$value] ?? null;
+    }
+
+    private function resolveImageSource(DOMElement $image): ?string
+    {
+        $attributeCandidates = [
+            'src',
+            'data-src',
+            'data-lazy-src',
+            'data-original',
+            'data-orig-src',
+            'data-image',
+            'data-actualsrc',
+            'data-srcset',
+            'srcset',
+        ];
+
+        $best = null;
+        foreach ($attributeCandidates as $attribute) {
+            if (!$image->hasAttribute($attribute)) {
+                continue;
+            }
+            $value = trim((string) $image->getAttribute($attribute));
+            if ($value === '') {
+                continue;
+            }
+
+            if (str_contains($attribute, 'srcset')) {
+                $value = trim((string) preg_split('/[\s,]+/', $value)[0]);
+            }
+            if ($value === '') {
+                continue;
+            }
+
+            if ($attribute === 'src') {
+                $best = $value;
+                if (!$this->isLikelyPlaceholderImage($value)) {
+                    return $value;
+                }
+                continue;
+            }
+
+            if ($best === null || $this->isLikelyPlaceholderImage($best)) {
+                $best = $value;
+            }
+        }
+
+        return $best ? trim($best) : null;
+    }
+
+    private function isLikelyPlaceholderImage(string $value): bool
+    {
+        $value = strtolower(trim($value));
+        if ($value === '' || $value === '#' || $value === 'about:blank') {
+            return true;
+        }
+
+        if (str_starts_with($value, 'data:image/gif;base64,r0lgod')) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function publicMediaUrl(string $path): string
+    {
+        if (\Illuminate\Support\Facades\Route::has('blogs.media')) {
+            return route('blogs.media', ['path' => ltrim($path, '/')]);
+        }
+
+        return Storage::url($path);
     }
 
     private function resolveBlog(string $value): Blog

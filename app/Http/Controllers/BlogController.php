@@ -10,6 +10,7 @@ use App\Support\PageDefaults;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -164,6 +165,27 @@ class BlogController extends Controller
             'globalFooter' => $footer->content,
             'globalPurchasePopups' => $purchasePopups->content,
             'globalPurchasePopupProducts' => [],
+        ]);
+    }
+
+    public function media(string $path)
+    {
+        $cleanPath = trim($path, '/');
+        abort_if($cleanPath === '' || str_contains($cleanPath, '..'), 404);
+
+        $disk = Storage::disk('public');
+        abort_unless($disk->exists($cleanPath), 404);
+
+        $mimeType = $disk->mimeType($cleanPath) ?: 'application/octet-stream';
+        $stream = $disk->readStream($cleanPath);
+        abort_unless(is_resource($stream), 404);
+
+        return response()->stream(function () use ($stream) {
+            fpassthru($stream);
+            fclose($stream);
+        }, 200, [
+            'Content-Type' => $mimeType,
+            'Cache-Control' => 'public, max-age=31536000',
         ]);
     }
 

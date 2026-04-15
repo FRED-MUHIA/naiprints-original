@@ -64,6 +64,17 @@
                         @php
                             $content = (string) $blog->content;
                             $contentHasHtml = $content !== strip_tags($content);
+                            $content = preg_replace_callback(
+                                '/(<img[^>]+src=["\'])(?:https?:\/\/[^"\']+)?\/?storage\/([^"\']+)(["\'])/i',
+                                function ($matches) {
+                                    $path = ltrim((string) ($matches[2] ?? ''), '/');
+                                    if ($path === '') {
+                                        return $matches[0];
+                                    }
+                                    return $matches[1] . e(route('blogs.media', ['path' => $path])) . $matches[3];
+                                },
+                                $content
+                            ) ?? $content;
                         @endphp
                         @if ($contentHasHtml)
                             <div class="mt-8 text-[1.02rem] leading-8 text-slate-700

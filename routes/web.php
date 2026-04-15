@@ -416,6 +416,9 @@ Route::get('/shop', function () {
 
 Route::get('/blogs', [BlogController::class, 'index'])->name('blogs.index');
 Route::get('/blogs/{slug}', [BlogController::class, 'show'])->name('blogs.show');
+Route::get('/blog-media/{path}', [BlogController::class, 'media'])
+    ->where('path', '.*')
+    ->name('blogs.media');
 
 Route::get('/checkout', function () {
     $page = Page::ensure('checkout', 'Checkout', PageDefaults::checkout());
@@ -613,6 +616,8 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
     })->name('dashboard');
 
     Route::resource('products', ProductController::class)->except(['show']);
+    Route::post('blogs/editor/upload-image', [AdminBlogController::class, 'uploadEditorImage'])->name('blogs.editor.upload-image');
+    Route::post('blogs/editor/upload-image-url', [AdminBlogController::class, 'uploadEditorImageUrl'])->name('blogs.editor.upload-image-url');
     Route::post('blogs/{blog}/publish', [AdminBlogController::class, 'publish'])->name('blogs.publish');
     Route::get('blogs/{blog}', [AdminBlogController::class, 'edit'])
         ->whereNumber('blog')
