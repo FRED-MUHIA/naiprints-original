@@ -185,7 +185,7 @@
                                     $brandName = $isModel ? ($product->brand?->name ?? 'Nai Prints') : 'Nai Prints';
                                     $categoryName = $isModel ? ($product->category?->name ?? 'Apparel') : 'Apparel';
                                     $safeName = e((string) $name);
-                                    $flameName = preg_replace('/\\bT[-\\s]?shirt\\b/i', '<span class=\"flame-text\">$0</span><span class=\"flame-emoji\" aria-hidden=\"true\">🔥</span>', $safeName);
+                                    $flameName = preg_replace('/\\bT[-\\s]?shirt\\b/i', '<span class=\"flame-text\">$0</span>', $safeName);
                                 @endphp
                                 <article class="shop-card">
                                     <div class="shop-card-media">
@@ -212,11 +212,11 @@
                                             <div>
                                                 @if ($detailUrl)
                                                     <a href="{{ $detailUrl }}" class="text-sm font-semibold text-slate-700 hover:text-brand">
-                                                        <span class="heartbeat-emoji" aria-hidden="true">🔥</span>{!! $flameName !!}
+                                                        {!! $flameName !!}
                                                     </a>
                                                 @else
                                                     <p class="text-sm font-semibold text-slate-700">
-                                                        <span class="heartbeat-emoji" aria-hidden="true">🔥</span>{!! $flameName !!}
+                                                        {!! $flameName !!}
                                                     </p>
                                                 @endif
                                                 <p class="text-lg font-semibold">KSh {{ number_format($rawPrice, 0) }}</p>
