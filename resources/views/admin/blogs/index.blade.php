@@ -3,6 +3,12 @@
 @section('title', 'Blogs')
 
 @section('content')
+    @if (($blogTablesReady ?? true) === false)
+        <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Blog tables are not available yet. Run <code>php artisan migrate --force</code> on this server.
+        </div>
+    @endif
+
     <div class="flex items-center justify-between">
         <p class="text-sm text-slate-500">Manage blog posts, SEO fields, and publication status.</p>
         <a href="{{ route('admin.blogs.create') }}" class="admin-btn-primary">

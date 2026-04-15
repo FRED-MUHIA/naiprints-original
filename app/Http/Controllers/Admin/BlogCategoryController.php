@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BlogCategory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -13,9 +14,29 @@ class BlogCategoryController extends Controller
 {
     public function index(): View
     {
-        $categories = BlogCategory::withCount('blogs')->orderBy('name')->get();
+        $hasCategoriesTable = Schema::hasTable('blog_categories');
+        $hasBlogsTable = Schema::hasTable('blogs');
 
-        return view('admin.blog-categories.index', compact('categories'));
+        if (!$hasCategoriesTable) {
+            return view('admin.blog-categories.index', [
+                'categories' => collect(),
+                'blogTablesReady' => false,
+            ]);
+        }
+
+        if ($hasBlogsTable) {
+            $categories = BlogCategory::withCount('blogs')->orderBy('name')->get();
+        } else {
+            $categories = BlogCategory::orderBy('name')->get()->map(function (BlogCategory $category) {
+                $category->setAttribute('blogs_count', 0);
+                return $category;
+            });
+        }
+
+        return view('admin.blog-categories.index', [
+            'categories' => $categories,
+            'blogTablesReady' => true,
+        ]);
     }
 
     public function create(): View
@@ -25,6 +46,11 @@ class BlogCategoryController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        if (!Schema::hasTable('blog_categories')) {
+            return redirect()->route('admin.blog-categories.index')
+                ->withErrors(['blog_tables' => 'Blog tables are missing. Run migrations first.']);
+        }
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', 'regex:/^[a-z0-9-]+$/i'],
@@ -39,13 +65,19 @@ class BlogCategoryController extends Controller
             ->with('success', 'Blog category created.');
     }
 
-    public function edit(BlogCategory $blogCategory): View
+    public function edit(string $blogCategory): View
     {
+        abort_unless(Schema::hasTable('blog_categories'), 404);
+        $blogCategory = BlogCategory::findOrFail($blogCategory);
+
         return view('admin.blog-categories.edit', compact('blogCategory'));
     }
 
-    public function update(Request $request, BlogCategory $blogCategory): RedirectResponse
+    public function update(Request $request, string $blogCategory): RedirectResponse
     {
+        abort_unless(Schema::hasTable('blog_categories'), 404);
+        $blogCategory = BlogCategory::findOrFail($blogCategory);
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', 'regex:/^[a-z0-9-]+$/i'],
@@ -60,8 +92,11 @@ class BlogCategoryController extends Controller
             ->with('success', 'Blog category updated.');
     }
 
-    public function destroy(BlogCategory $blogCategory): RedirectResponse
+    public function destroy(string $blogCategory): RedirectResponse
     {
+        abort_unless(Schema::hasTable('blog_categories'), 404);
+        $blogCategory = BlogCategory::findOrFail($blogCategory);
+
         $blogCategory->delete();
 
         return redirect()->route('admin.blog-categories.index')
@@ -86,4 +121,3 @@ class BlogCategoryController extends Controller
         return $slug;
     }
 }
-

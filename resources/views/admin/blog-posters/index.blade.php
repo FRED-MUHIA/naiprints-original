@@ -3,6 +3,12 @@
 @section('title', 'Blog Posters')
 
 @section('content')
+    @if (($blogTablesReady ?? true) === false)
+        <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Blog tables are not available yet. Run <code>php artisan migrate --force</code> on this server.
+        </div>
+    @endif
+
     <div class="flex items-center justify-between">
         <p class="text-sm text-slate-500">Manage sidebar poster banners shown on blog detail pages.</p>
         <a href="{{ route('admin.blog-posters.create') }}" class="admin-btn-primary">
@@ -72,4 +78,3 @@
         </table>
     </div>
 @endsection
-
