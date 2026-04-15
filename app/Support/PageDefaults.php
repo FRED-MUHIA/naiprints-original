@@ -613,12 +613,12 @@ class PageDefaults
                 ['label' => 'Sports', 'url' => '#'],
                 ['label' => 'Kids', 'url' => '#'],
                 ['label' => 'Corporate', 'url' => '/corporate'],
-                ['label' => 'Contact', 'url' => '/contact'],
                 ['label' => 'Embroidery', 'url' => '/embroidery'],
                 ['label' => 'Jersey', 'url' => '/jersey'],
                 ['label' => '3D Designer', 'url' => '/3d-designer'],
                 ['label' => 'Birthday', 'url' => '#'],
                 ['label' => 'Couple', 'url' => '#'],
+                ['label' => 'Contact', 'url' => '/contact'],
             ],
             'menu_strip' => [
                 ['icon' => '🍀', 'label' => 'St Patricks Day', 'url' => '#'],

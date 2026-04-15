@@ -36,21 +36,19 @@
             array_splice($menu, $jerseyIndex + 1, 0, [$designerMenuItem]);
         }
     }
-    $hasContactLink = collect($menu)->contains(function ($item) {
-        return strtolower(trim((string) ($item['label'] ?? ''))) === 'contact';
-    });
-    if (!$hasContactLink) {
-        $corporateIndex = collect($menu)->search(function ($item) {
-            return strtolower(trim((string) ($item['label'] ?? ''))) === 'corporate';
-        });
-
-        $contactMenuItem = ['label' => 'Contact', 'url' => '/contact'];
-        if ($corporateIndex === false) {
-            $menu[] = $contactMenuItem;
-        } else {
-            array_splice($menu, $corporateIndex + 1, 0, [$contactMenuItem]);
+    $contactItem = null;
+    $menu = array_values(array_filter($menu, function ($item) use (&$contactItem) {
+        $isContact = strtolower(trim((string) ($item['label'] ?? ''))) === 'contact';
+        if ($isContact && $contactItem === null) {
+            $contactItem = [
+                'label' => 'Contact',
+                'url' => (string) (($item['url'] ?? '') ?: '/contact'),
+            ];
         }
-    }
+
+        return !$isContact;
+    }));
+    $menu[] = $contactItem ?? ['label' => 'Contact', 'url' => '/contact'];
     $menuStrip = $header['menu_strip'] ?? [];
     $menuStripCta = $header['menu_strip_cta'] ?? null;
     $ctaPosition = $header['menu_strip_cta_position'] ?? 8;
