@@ -1,0 +1,68 @@
+@extends('admin.layout')
+
+@section('title', 'Create Blog Poster')
+
+@section('content')
+    <form method="POST" action="{{ route('admin.blog-posters.store') }}" class="space-y-6" enctype="multipart/form-data">
+        @csrf
+
+        <div class="admin-card max-w-3xl">
+            <h2 class="text-lg font-semibold">Poster Details</h2>
+            <div class="mt-4 grid gap-5">
+                <div>
+                    <label class="text-sm font-semibold text-slate-700">Title</label>
+                    <input type="text" name="title" value="{{ old('title') }}" class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-brand focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="text-sm font-semibold text-slate-700">Blog (optional)</label>
+                    <select name="blog_id" class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-brand focus:outline-none">
+                        <option value="">Global (show on all blogs)</option>
+                        @foreach ($blogs as $blog)
+                            <option value="{{ $blog->id }}" @selected((string) old('blog_id') === (string) $blog->id)>
+                                {{ $blog->title }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <label class="text-sm font-semibold text-slate-700">Poster image</label>
+                    <input type="file" name="image" accept="image/*" class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-brand focus:outline-none" required>
+                </div>
+
+                <div>
+                    <label class="text-sm font-semibold text-slate-700">Alt text</label>
+                    <input type="text" name="alt_text" value="{{ old('alt_text') }}" class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-brand focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="text-sm font-semibold text-slate-700">Link URL (optional)</label>
+                    <input type="url" name="link_url" value="{{ old('link_url') }}" placeholder="https://example.com" class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-brand focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="text-sm font-semibold text-slate-700">Position</label>
+                    <input type="number" name="position" min="0" value="{{ old('position', 0) }}" class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-brand focus:outline-none">
+                </div>
+
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <label class="flex items-center gap-2 text-sm text-slate-700">
+                        <input type="checkbox" name="is_active" value="1" @checked(old('is_active', 1)) class="h-4 w-4 rounded border-slate-300">
+                        Active
+                    </label>
+                    <label class="flex items-center gap-2 text-sm text-slate-700">
+                        <input type="checkbox" name="open_in_new_tab" value="1" @checked(old('open_in_new_tab')) class="h-4 w-4 rounded border-slate-300">
+                        Open link in new tab
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <button type="submit" class="admin-btn-primary">Save poster</button>
+            <a href="{{ route('admin.blog-posters.index') }}" class="admin-btn-outline">Cancel</a>
+        </div>
+    </form>
+@endsection
+

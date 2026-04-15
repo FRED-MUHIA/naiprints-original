@@ -2,6 +2,9 @@
 
 use App\Http\Controllers\Admin\AttributeController;
 use App\Http\Controllers\Admin\BrandController;
+use App\Http\Controllers\Admin\BlogCategoryController;
+use App\Http\Controllers\Admin\BlogController as AdminBlogController;
+use App\Http\Controllers\Admin\BlogPosterController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\InvoiceController;
@@ -40,6 +43,7 @@ use App\Http\Controllers\JerseyCatalogController;
 use App\Http\Controllers\JerseyDesignController;
 use App\Http\Controllers\JerseyLogoController;
 use App\Http\Controllers\JerseyOrderController;
+use App\Http\Controllers\BlogController;
 
 if (!function_exists('resolvePurchasePopupProducts')) {
     function resolvePurchasePopupProducts(array $popupContent): array
@@ -410,6 +414,9 @@ Route::get('/shop', function () {
     ]);
 })->name('shop');
 
+Route::get('/blogs', [BlogController::class, 'index'])->name('blogs.index');
+Route::get('/blogs/{blog:slug}', [BlogController::class, 'show'])->name('blogs.show');
+
 Route::get('/checkout', function () {
     $page = Page::ensure('checkout', 'Checkout', PageDefaults::checkout());
     $header = GlobalSection::ensure('header', PageDefaults::header());
@@ -606,6 +613,9 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
     })->name('dashboard');
 
     Route::resource('products', ProductController::class)->except(['show']);
+    Route::resource('blogs', AdminBlogController::class)->except(['show']);
+    Route::resource('blog-categories', BlogCategoryController::class)->except(['show']);
+    Route::resource('blog-posters', BlogPosterController::class)->except(['show']);
     Route::resource('categories', CategoryController::class)->except(['show']);
     Route::resource('brands', BrandController::class)->except(['show']);
     Route::resource('tags', TagController::class)->except(['show']);

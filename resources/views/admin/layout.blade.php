@@ -33,6 +33,18 @@
                                class="block rounded-2xl px-4 py-3 transition {{ request()->routeIs('admin.products.*') ? 'bg-brand text-white shadow-md' : 'text-slate-600 hover:bg-slate-100' }}">
                                 Products
                             </a>
+                            <a href="{{ route('admin.blogs.index') }}"
+                               class="block rounded-2xl px-4 py-3 transition {{ request()->routeIs('admin.blogs.*') ? 'bg-brand text-white shadow-md' : 'text-slate-600 hover:bg-slate-100' }}">
+                                Blogs
+                            </a>
+                            <a href="{{ route('admin.blog-categories.index') }}"
+                               class="block rounded-2xl px-4 py-3 transition {{ request()->routeIs('admin.blog-categories.*') ? 'bg-brand text-white shadow-md' : 'text-slate-600 hover:bg-slate-100' }}">
+                                Blog Categories
+                            </a>
+                            <a href="{{ route('admin.blog-posters.index') }}"
+                               class="block rounded-2xl px-4 py-3 transition {{ request()->routeIs('admin.blog-posters.*') ? 'bg-brand text-white shadow-md' : 'text-slate-600 hover:bg-slate-100' }}">
+                                Blog Posters
+                            </a>
                             <a href="{{ route('admin.categories.index') }}"
                                class="block rounded-2xl px-4 py-3 transition {{ request()->routeIs('admin.categories.*') ? 'bg-brand text-white shadow-md' : 'text-slate-600 hover:bg-slate-100' }}">
                                 Catalogue
