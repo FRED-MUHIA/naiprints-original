@@ -121,7 +121,7 @@ class PageDefaults
                         'kicker' => 'Corporate & Bulk Orders',
                         'title' => 'Outfit your team in 72 hours.',
                         'body' => 'From branded polos to event merch, our production team handles large orders fast. Request a quote and get a dedicated account manager.',
-                        'primary' => ['label' => 'Request a quote', 'url' => '#'],
+                        'primary' => ['label' => 'Request a quote', 'url' => '/contact'],
                         'secondary' => ['label' => 'View lookbook', 'url' => '#'],
                         'stats' => [
                             ['value' => '250+', 'label' => 'Corporate clients'],
@@ -195,7 +195,7 @@ class PageDefaults
                             'title' => 'Embroidery that elevates your brand in',
                             'highlight' => 'Nairobi and beyond.',
                             'body' => 'Nai Prints delivers premium embroidery branding services designed to make your business stand out. From embroidered patches and uniforms to caps, hats, and custom apparel, we combine precision digitizing, durable threads, and expert stitching to create clean, professional results that strengthen brand identity and visibility.',
-                            'primary' => ['label' => 'Request a Quote', 'url' => '/shop'],
+                            'primary' => ['label' => 'Request a Quote', 'url' => '/contact'],
                             'secondary' => ['label' => 'View Apparel', 'url' => '/shop'],
                             'stats' => [
                                 ['value' => 'Small or Bulk', 'label' => 'Flexible order sizes.'],
@@ -283,7 +283,7 @@ class PageDefaults
                             'kicker' => 'Ready to Brand',
                             'title' => 'Let’s build your embroidery identity.',
                             'body' => 'Share your logo and project details. Nai Prints will recommend the best embroidery options for your team, event, or retail line in Nairobi, across Kenya, and the region.',
-                            'primary' => ['label' => 'Start Your Order', 'url' => '/shop'],
+                            'primary' => ['label' => 'Start Your Order', 'url' => '/contact'],
                             'secondary' => ['label' => 'Talk to a Specialist', 'url' => '/shop'],
                         ],
                     ],
@@ -584,7 +584,7 @@ class PageDefaults
                         'cta' => [
                             'title' => 'Ready for a corporate quote?',
                             'body' => 'Send your requirements and get a tailored proposal within 24 hours.',
-                            'primary' => ['label' => 'Request a quote', 'url' => '/shop'],
+                            'primary' => ['label' => 'Request a quote', 'url' => '/contact'],
                             'secondary' => ['label' => 'Talk to sales', 'url' => '/shop'],
                         ],
                     ],

@@ -81,6 +81,18 @@
                             ? route('shop', ['category' => (int) $match['id']])
                             : $fallback;
                     };
+                    $resolveContactCtaUrl = static function ($label, $url = '#') {
+                        $normalizedLabel = strtolower(trim((string) $label));
+                        $resolvedUrl = trim((string) $url);
+                        if (
+                            in_array($normalizedLabel, ['request a quote', 'start your order'], true)
+                            && ($resolvedUrl === '' || $resolvedUrl === '#' || $resolvedUrl === '/shop')
+                        ) {
+                            return route('contact.show');
+                        }
+
+                        return $resolvedUrl !== '' ? $resolvedUrl : '#';
+                    };
                     $giftProducts = [];
                     $giftFinderSource = !empty($giftFinderProducts) && $giftFinderProducts->count()
                         ? $giftFinderProducts
@@ -132,6 +144,8 @@
                     @if ($type === 'hero')
                         @php
                             $data = $section['data'] ?? [];
+                            $heroPrimaryLabel = trim((string) ($data['primary']['label'] ?? ''));
+                            $heroPrimaryUrl = $resolveContactCtaUrl($heroPrimaryLabel, $data['primary']['url'] ?? '#');
                             $tilesSection = null;
                             if (isset($sections[$i + 1]) && ($sections[$i + 1]['type'] ?? '') === 'tiles') {
                                 $tilesSection = $sections[$i + 1];
@@ -149,8 +163,8 @@
                                     {{ $data['body'] ?? '' }}
                                 </p>
                                 <div class="mt-8 flex flex-wrap items-center gap-4">
-                                    @if (!empty($data['primary']['label']))
-                                        <a href="{{ $data['primary']['url'] ?? '#' }}" class="btn-primary">{{ $data['primary']['label'] }}</a>
+                                    @if ($heroPrimaryLabel !== '')
+                                        <a href="{{ $heroPrimaryUrl }}" class="btn-primary">{{ $heroPrimaryLabel }}</a>
                                     @endif
                                     @if (!empty($data['secondary']['label']))
                                         <a href="{{ $data['secondary']['url'] ?? '#' }}" class="btn-secondary">{{ $data['secondary']['label'] }}</a>
@@ -756,6 +770,10 @@
                                     </div>
                                 </div>
                                 @if ($hasCta)
+                                @php
+                                    $ctaPrimaryLabel = trim((string) ($ctaData['primary']['label'] ?? ''));
+                                    $ctaPrimaryUrl = $resolveContactCtaUrl($ctaPrimaryLabel, $ctaData['primary']['url'] ?? '#');
+                                @endphp
                                 <div class="cta-card">
                                     <p class="cta-kicker">{{ $ctaData['kicker'] ?? '' }}</p>
                                     <h2 class="mt-4 text-3xl font-semibold text-white">{{ $ctaData['title'] ?? '' }}</h2>
@@ -763,8 +781,8 @@
                                         {{ $ctaData['body'] ?? '' }}
                                     </p>
                                     <div class="mt-6 flex flex-wrap gap-3">
-                                        @if (!empty($ctaData['primary']['label']))
-                                            <a href="{{ $ctaData['primary']['url'] ?? '#' }}" class="btn-primary">{{ $ctaData['primary']['label'] }}</a>
+                                        @if ($ctaPrimaryLabel !== '')
+                                            <a href="{{ $ctaPrimaryUrl }}" class="btn-primary">{{ $ctaPrimaryLabel }}</a>
                                         @endif
                                         @if (!empty($ctaData['secondary']['label']))
                                             <a href="{{ $ctaData['secondary']['url'] ?? '#' }}" class="btn-secondary border-white/30 text-white hover:bg-white/10">
@@ -790,6 +808,8 @@
                         @if (!$ctaRendered)
                             @php
                                 $data = $section['data'] ?? [];
+                                $ctaPrimaryLabel = trim((string) ($data['primary']['label'] ?? ''));
+                                $ctaPrimaryUrl = $resolveContactCtaUrl($ctaPrimaryLabel, $data['primary']['url'] ?? '#');
                                 $ctaRendered = true;
                             @endphp
                             <section class="mx-auto max-w-6xl px-4 pb-12">
@@ -800,8 +820,8 @@
                                         {{ $data['body'] ?? '' }}
                                     </p>
                                     <div class="mt-6 flex flex-wrap gap-3">
-                                        @if (!empty($data['primary']['label']))
-                                            <a href="{{ $data['primary']['url'] ?? '#' }}" class="btn-primary">{{ $data['primary']['label'] }}</a>
+                                        @if ($ctaPrimaryLabel !== '')
+                                            <a href="{{ $ctaPrimaryUrl }}" class="btn-primary">{{ $ctaPrimaryLabel }}</a>
                                         @endif
                                         @if (!empty($data['secondary']['label']))
                                             <a href="{{ $data['secondary']['url'] ?? '#' }}" class="btn-secondary border-white/30 text-white hover:bg-white/10">

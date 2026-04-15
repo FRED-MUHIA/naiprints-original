@@ -40,7 +40,25 @@
                     $portfolio = $data['portfolio'] ?? ($defaults['portfolio'] ?? []);
                     $portfolioItems = $portfolio['items'] ?? ($defaults['portfolio']['items'] ?? []);
 
+                    $resolveContactCtaUrl = static function ($label, $url = '#') {
+                        $normalizedLabel = strtolower(trim((string) $label));
+                        $resolvedUrl = trim((string) $url);
+                        if (
+                            in_array($normalizedLabel, ['start your order', 'request a quote'], true)
+                            && ($resolvedUrl === '' || $resolvedUrl === '#' || $resolvedUrl === '/shop')
+                        ) {
+                            return route('contact.show');
+                        }
+
+                        return $resolvedUrl !== '' ? $resolvedUrl : '#';
+                    };
+
+                    $heroPrimaryLabel = trim((string) ($hero['primary']['label'] ?? ''));
+                    $heroPrimaryUrl = $resolveContactCtaUrl($heroPrimaryLabel, $hero['primary']['url'] ?? '#');
+
                     $cta = $data['cta'] ?? ($defaults['cta'] ?? []);
+                    $ctaPrimaryLabel = trim((string) ($cta['primary']['label'] ?? ''));
+                    $ctaPrimaryUrl = $resolveContactCtaUrl($ctaPrimaryLabel, $cta['primary']['url'] ?? '#');
                 @endphp
 
                 <section class="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
@@ -60,8 +78,8 @@
                             </p>
                         @endif
                         <div class="mt-8 flex flex-wrap items-center gap-4">
-                            @if (!empty($hero['primary']['label']))
-                                <a href="{{ $hero['primary']['url'] ?? '#' }}" class="btn-primary">{{ $hero['primary']['label'] }}</a>
+                            @if ($heroPrimaryLabel !== '')
+                                <a href="{{ $heroPrimaryUrl }}" class="btn-primary">{{ $heroPrimaryLabel }}</a>
                             @endif
                             @if (!empty($hero['secondary']['label']))
                                 <a href="{{ $hero['secondary']['url'] ?? '#' }}" class="btn-secondary">{{ $hero['secondary']['label'] }}</a>
@@ -213,8 +231,8 @@
                             @endif
                         </div>
                         <div class="mt-6 flex flex-wrap gap-3">
-                            @if (!empty($cta['primary']['label']))
-                                <a href="{{ $cta['primary']['url'] ?? '#' }}" class="btn-primary">{{ $cta['primary']['label'] }}</a>
+                            @if ($ctaPrimaryLabel !== '')
+                                <a href="{{ $ctaPrimaryUrl }}" class="btn-primary">{{ $ctaPrimaryLabel }}</a>
                             @endif
                             @if (!empty($cta['secondary']['label']))
                                 <a href="{{ $cta['secondary']['url'] ?? '#' }}" class="btn-secondary">{{ $cta['secondary']['label'] }}</a>

@@ -35,7 +35,24 @@
                     $processSteps = $process['steps'] ?? ($defaults['process']['steps'] ?? []);
                     $logos = $data['logos'] ?? ($defaults['logos'] ?? []);
                     $logoItems = $logos['items'] ?? ($defaults['logos']['items'] ?? []);
+                    $resolveContactCtaUrl = static function ($label, $url = '#') {
+                        $normalizedLabel = strtolower(trim((string) $label));
+                        $resolvedUrl = trim((string) $url);
+                        if (
+                            in_array($normalizedLabel, ['request a quote', 'start your order'], true)
+                            && ($resolvedUrl === '' || $resolvedUrl === '#' || $resolvedUrl === '/shop')
+                        ) {
+                            return route('contact.show');
+                        }
+
+                        return $resolvedUrl !== '' ? $resolvedUrl : '#';
+                    };
+
+                    $heroPrimaryLabel = trim((string) ($hero['primary']['label'] ?? ''));
+                    $heroPrimaryUrl = $resolveContactCtaUrl($heroPrimaryLabel, $hero['primary']['url'] ?? '#');
                     $cta = $data['cta'] ?? ($defaults['cta'] ?? []);
+                    $ctaPrimaryLabel = trim((string) ($cta['primary']['label'] ?? ''));
+                    $ctaPrimaryUrl = $resolveContactCtaUrl($ctaPrimaryLabel, $cta['primary']['url'] ?? '#');
                 @endphp
 
                 <section class="corporate-hero-grid">
@@ -67,8 +84,8 @@
                             </p>
                         @endif
                         <div class="corporate-hero-actions">
-                            @if (!empty($hero['primary']['label']))
-                                <a href="{{ $hero['primary']['url'] ?? '#' }}" class="btn-primary">{{ $hero['primary']['label'] }}</a>
+                            @if ($heroPrimaryLabel !== '')
+                                <a href="{{ $heroPrimaryUrl }}" class="btn-primary">{{ $heroPrimaryLabel }}</a>
                             @endif
                             @if (!empty($hero['secondary']['label']))
                                 <a href="{{ $hero['secondary']['url'] ?? '#' }}" class="btn-secondary">{{ $hero['secondary']['label'] }}</a>
@@ -286,8 +303,8 @@
                         <p class="mt-3 text-sm text-white/80 md:text-base">{{ $cta['body'] }}</p>
                     @endif
                     <div class="corporate-cta-actions">
-                        @if (!empty($cta['primary']['label']))
-                            <a href="{{ $cta['primary']['url'] ?? '#' }}" class="btn-primary">{{ $cta['primary']['label'] }}</a>
+                        @if ($ctaPrimaryLabel !== '')
+                            <a href="{{ $ctaPrimaryUrl }}" class="btn-primary">{{ $ctaPrimaryLabel }}</a>
                         @endif
                         @if (!empty($cta['secondary']['label']))
                             <a href="{{ $cta['secondary']['url'] ?? '#' }}" class="btn-secondary">{{ $cta['secondary']['label'] }}</a>
