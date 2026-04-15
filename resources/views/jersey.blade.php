@@ -39,10 +39,7 @@
                     $catalogKicker = trim((string) ($hero['kicker'] ?? ''));
                     $catalogTitle = trim((string) (($designs['title'] ?? '') ?: ($hero['title'] ?? 'Jersey Katalog')));
                     $catalogIntro = trim((string) (($hero['body'] ?? '') ?: 'Switch to realistic 3D jersey mockups so your audience can view each design clearly from multiple angles.'));
-                    $catalogBuyUrl = trim((string) ($cta['primary']['url'] ?? '/contact'));
-                    if ($catalogBuyUrl === '') {
-                        $catalogBuyUrl = '/contact';
-                    }
+                    $catalogBuyUrl = route('designer.3d');
                     $catalogItems = collect($designItems)
                         ->filter(fn ($item) => is_array($item))
                         ->map(function ($item) {
