@@ -860,7 +860,7 @@
                                         </p>
                                     </div>
                                     @if (!empty($data['button']['label']))
-                                        <a href="{{ $data['button']['url'] ?? '#' }}" class="btn-primary">{{ $data['button']['label'] }}</a>
+                                        <a href="{{ $data['button']['url'] ?? '#' }}" class="btn-brand">{{ $data['button']['label'] }}</a>
                                     @endif
                                 </div>
                             </div>

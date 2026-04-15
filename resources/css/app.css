@@ -6294,6 +6294,8 @@
         line-height: 1.5;
         letter-spacing: -0.01em;
         color: inherit;
+        text-align: justify;
+        text-justify: inter-word;
         text-wrap: pretty;
         word-break: break-word;
         overflow-wrap: anywhere;
