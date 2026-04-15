@@ -415,7 +415,7 @@ Route::get('/shop', function () {
 })->name('shop');
 
 Route::get('/blogs', [BlogController::class, 'index'])->name('blogs.index');
-Route::get('/blogs/{blog:slug}', [BlogController::class, 'show'])->name('blogs.show');
+Route::get('/blogs/{slug}', [BlogController::class, 'show'])->name('blogs.show');
 
 Route::get('/checkout', function () {
     $page = Page::ensure('checkout', 'Checkout', PageDefaults::checkout());
