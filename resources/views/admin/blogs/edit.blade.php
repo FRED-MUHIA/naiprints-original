@@ -70,36 +70,6 @@
                                         </button>
                                     </div>
                                 </div>
-                                <div data-blog-editor-toolbar class="hidden border-b border-slate-200 bg-white px-2 py-2">
-                                    <span class="ql-formats">
-                                        <select class="ql-header">
-                                            <option value="1">Heading 1</option>
-                                            <option value="2">Heading 2</option>
-                                            <option value="3">Heading 3</option>
-                                            <option selected>Paragraph</option>
-                                        </select>
-                                    </span>
-                                    <span class="ql-formats">
-                                        <button type="button" class="ql-bold"></button>
-                                        <button type="button" class="ql-italic"></button>
-                                        <button type="button" class="ql-underline"></button>
-                                        <button type="button" class="ql-blockquote"></button>
-                                    </span>
-                                    <span class="ql-formats">
-                                        <button type="button" class="ql-list" value="ordered"></button>
-                                        <button type="button" class="ql-list" value="bullet"></button>
-                                        <button type="button" class="ql-align" value=""></button>
-                                        <button type="button" class="ql-align" value="center"></button>
-                                        <button type="button" class="ql-align" value="right"></button>
-                                    </span>
-                                    <span class="ql-formats">
-                                        <button type="button" class="ql-link"></button>
-                                        <button type="button" class="ql-image"></button>
-                                        <button type="button" class="ql-code-block"></button>
-                                        <button type="button" class="ql-clean"></button>
-                                    </span>
-                                </div>
-                                <div data-blog-editor-visual class="hidden"></div>
                                 <textarea data-blog-editor-textarea name="content" rows="16" class="w-full px-4 py-3 text-sm leading-7 focus:outline-none" required>{{ old('content', $blog->content) }}</textarea>
                             </div>
                             <p class="mt-2 text-xs text-slate-500">Use rich formatting, links, media, and tables. Switch to Code for raw HTML editing.</p>
