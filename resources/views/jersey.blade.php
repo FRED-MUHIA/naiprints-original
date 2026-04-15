@@ -13,6 +13,11 @@
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+        <style>
+            .jersey-slider-track::-webkit-scrollbar {
+                display: none;
+            }
+        </style>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="bg-black text-white">
@@ -79,37 +84,58 @@
                             <p class="text-sm text-zinc-300">No jersey mockups added yet. Add images in the admin page builder to populate this catalog.</p>
                         </div>
                     @else
-                        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
-                            @foreach ($catalogItems as $item)
-                                <article class="overflow-hidden rounded-lg border border-white/10 bg-[#111317] shadow-[0_10px_30px_rgba(0,0,0,0.45)]">
-                                    <a href="{{ $catalogBuyUrl }}" class="block">
-                                        @if ($item['image'] !== '')
-                                            <img
-                                                src="{{ $item['image'] }}"
-                                                alt="{{ $item['alt'] }}"
-                                                loading="lazy"
-                                                class="h-44 w-full object-cover sm:h-52">
-                                        @else
-                                            <div class="flex h-44 w-full items-center justify-center bg-gradient-to-br from-zinc-700 to-zinc-900 text-xs uppercase tracking-[0.25em] text-zinc-300 sm:h-52">
-                                                No Image
+                        <div class="relative" data-jersey-slider>
+                            <button
+                                type="button"
+                                data-slider-prev
+                                class="absolute left-0 top-[38%] z-20 hidden h-11 w-11 -translate-x-1/2 items-center justify-center rounded-full border border-white/20 bg-black/75 text-2xl text-white backdrop-blur sm:flex"
+                                aria-label="Previous slide">
+                                ‹
+                            </button>
+                            <button
+                                type="button"
+                                data-slider-next
+                                class="absolute right-0 top-[38%] z-20 hidden h-11 w-11 translate-x-1/2 items-center justify-center rounded-full border border-white/20 bg-black/75 text-2xl text-white backdrop-blur sm:flex"
+                                aria-label="Next slide">
+                                ›
+                            </button>
+
+                            <div
+                                data-slider-track
+                                class="jersey-slider-track overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2 [scrollbar-width:none] [-ms-overflow-style:none]">
+                                <div class="flex w-max gap-3 sm:gap-4">
+                                    @foreach ($catalogItems as $item)
+                                        <article class="w-[230px] shrink-0 snap-start overflow-hidden rounded-lg border border-white/10 bg-[#111317] shadow-[0_10px_30px_rgba(0,0,0,0.45)] sm:w-[238px] lg:w-[214px]">
+                                            <a href="{{ $catalogBuyUrl }}" class="block">
+                                                @if ($item['image'] !== '')
+                                                    <img
+                                                        src="{{ $item['image'] }}"
+                                                        alt="{{ $item['alt'] }}"
+                                                        loading="lazy"
+                                                        class="h-44 w-full object-cover sm:h-52">
+                                                @else
+                                                    <div class="flex h-44 w-full items-center justify-center bg-gradient-to-br from-zinc-700 to-zinc-900 text-xs uppercase tracking-[0.25em] text-zinc-300 sm:h-52">
+                                                        No Image
+                                                    </div>
+                                                @endif
+                                                <div class="px-3 pb-2 pt-2">
+                                                    <h3 class="text-[15px] font-semibold leading-tight text-white" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+                                                        {{ $item['title'] }}
+                                                    </h3>
+                                                    <p class="mt-1 text-sm text-zinc-300">{{ $item['price'] }}</p>
+                                                </div>
+                                            </a>
+                                            <div class="px-3 pb-3">
+                                                <a
+                                                    href="{{ $catalogBuyUrl }}"
+                                                    class="block w-full rounded bg-red-600 px-3 py-2 text-center text-sm font-semibold text-white transition hover:bg-red-500">
+                                                    Beli Ini
+                                                </a>
                                             </div>
-                                        @endif
-                                        <div class="px-3 pb-2 pt-2">
-                                            <h3 class="text-[15px] font-semibold leading-tight text-white" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
-                                                {{ $item['title'] }}
-                                            </h3>
-                                            <p class="mt-1 text-sm text-zinc-300">{{ $item['price'] }}</p>
-                                        </div>
-                                    </a>
-                                    <div class="px-3 pb-3">
-                                        <a
-                                            href="{{ $catalogBuyUrl }}"
-                                            class="block w-full rounded bg-red-600 px-3 py-2 text-center text-sm font-semibold text-white transition hover:bg-red-500">
-                                            Beli Ini
-                                        </a>
-                                    </div>
-                                </article>
-                            @endforeach
+                                        </article>
+                                    @endforeach
+                                </div>
+                            </div>
                         </div>
                     @endif
                 </section>
@@ -117,5 +143,30 @@
 
             @include('partials.site-footer', ['globalFooter' => $globalFooter ?? []])
         </div>
+        <script>
+            (() => {
+                const sliders = document.querySelectorAll('[data-jersey-slider]');
+                sliders.forEach((slider) => {
+                    const track = slider.querySelector('[data-slider-track]');
+                    const prev = slider.querySelector('[data-slider-prev]');
+                    const next = slider.querySelector('[data-slider-next]');
+                    if (!track || !prev || !next) return;
+
+                    const getStep = () => {
+                        const firstCard = track.querySelector('article');
+                        if (!firstCard) return Math.max(track.clientWidth * 0.8, 260);
+                        const gap = Number.parseFloat(getComputedStyle(track.firstElementChild).columnGap || '0') || 0;
+                        return firstCard.getBoundingClientRect().width + gap;
+                    };
+
+                    prev.addEventListener('click', () => {
+                        track.scrollBy({ left: -getStep(), behavior: 'smooth' });
+                    });
+                    next.addEventListener('click', () => {
+                        track.scrollBy({ left: getStep(), behavior: 'smooth' });
+                    });
+                });
+            })();
+        </script>
     </body>
 </html>
