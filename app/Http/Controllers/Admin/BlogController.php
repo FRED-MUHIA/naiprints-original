@@ -44,9 +44,12 @@ class BlogController extends Controller
         ]);
     }
 
-    public function create(): View
+    public function create(): View|RedirectResponse
     {
-        abort_unless(Schema::hasTable('blogs'), 404);
+        if (!Schema::hasTable('blogs')) {
+            return redirect()->route('admin.blogs.index')
+                ->withErrors(['blog_tables' => 'Blog tables are missing. Run migrations first.']);
+        }
         $categories = Schema::hasTable('blog_categories')
             ? BlogCategory::orderBy('name')->get()
             : collect();

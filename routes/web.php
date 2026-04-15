@@ -613,7 +613,6 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
     })->name('dashboard');
 
     Route::resource('products', ProductController::class)->except(['show']);
-    Route::get('blogs/{blog}', [AdminBlogController::class, 'edit'])->name('blogs.edit.quick');
     Route::post('blogs/{blog}/publish', [AdminBlogController::class, 'publish'])->name('blogs.publish');
     Route::resource('blogs', AdminBlogController::class)->except(['show']);
     Route::resource('blog-categories', BlogCategoryController::class)->except(['show']);
