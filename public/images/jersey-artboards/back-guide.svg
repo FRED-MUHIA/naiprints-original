@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <pattern id="mesh-back" width="30" height="30" patternUnits="userSpaceOnUse">
+      <path d="M0 0H30M0 0V30" stroke="#ffb3b3" stroke-opacity=".34" stroke-width="1"/>
+    </pattern>
+    <linearGradient id="shirtRedBack" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#cf1d2a"/>
+      <stop offset="1" stop-color="#b91a23"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1024" height="1024" fill="#ff212d"/>
+
+  <path
+    d="M170 242 L304 178 C360 160 432 148 512 148 C592 148 664 160 720 178 L854 242 L810 346 L746 330 L706 470 Q684 600 662 810 L362 810 Q340 600 318 470 L278 330 L214 346 Z"
+    fill="url(#shirtRedBack)"
+    stroke="#f3b6b6"
+    stroke-width="3"/>
+  <path
+    d="M170 242 L304 178 C360 160 432 148 512 148 C592 148 664 160 720 178 L854 242 L810 346 L746 330 L706 470 Q684 600 662 810 L362 810 Q340 600 318 470 L278 330 L214 346 Z"
+    fill="url(#mesh-back)"
+    opacity=".9"/>
+
+  <path d="M430 150 C448 120 576 120 594 150 L570 204 H454 Z" fill="#f5f5f5" opacity=".9"/>
+  <rect x="278" y="238" width="128" height="20" rx="8" fill="#f5f5f5" opacity=".88" transform="rotate(-20 342 248)"/>
+  <rect x="618" y="238" width="128" height="20" rx="8" fill="#f5f5f5" opacity=".88" transform="rotate(20 682 248)"/>
+
+  <text x="512" y="64" text-anchor="middle" fill="#ffffff" opacity=".82" font-size="28" font-family="Arial, sans-serif" letter-spacing="2">BACK PATTERN BOARD</text>
+</svg>

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <pattern id="mesh-sleeve" width="26" height="26" patternUnits="userSpaceOnUse">
+      <path d="M0 0H26M0 0V26" stroke="#ffb3b3" stroke-opacity=".32" stroke-width="1"/>
+    </pattern>
+    <linearGradient id="pieceRed" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ce1d29"/>
+      <stop offset="1" stop-color="#b71922"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1024" height="1024" fill="#ff212d"/>
+
+  <path d="M250 300 C330 210 430 180 512 180 C594 180 694 210 774 300 L714 396 C662 350 596 328 512 328 C428 328 362 350 310 396 Z" fill="#efefef" opacity=".96" stroke="#f4baba" stroke-width="3"/>
+  <path d="M250 300 C330 210 430 180 512 180 C594 180 694 210 774 300 L714 396 C662 350 596 328 512 328 C428 328 362 350 310 396 Z" fill="url(#mesh-sleeve)" opacity=".5"/>
+
+  <path d="M118 468 C210 434 320 446 400 502 L366 656 C282 652 204 676 124 742 L74 610 Z" fill="url(#pieceRed)" stroke="#f3b6b6" stroke-width="3"/>
+  <path d="M118 468 C210 434 320 446 400 502 L366 656 C282 652 204 676 124 742 L74 610 Z" fill="url(#mesh-sleeve)" opacity=".9"/>
+  <rect x="128" y="456" width="148" height="20" rx="8" fill="#f5f5f5" opacity=".88" transform="rotate(-18 202 466)"/>
+
+  <path d="M906 468 C814 434 704 446 624 502 L658 656 C742 652 820 676 900 742 L950 610 Z" fill="url(#pieceRed)" stroke="#f3b6b6" stroke-width="3"/>
+  <path d="M906 468 C814 434 704 446 624 502 L658 656 C742 652 820 676 900 742 L950 610 Z" fill="url(#mesh-sleeve)" opacity=".9"/>
+  <rect x="746" y="456" width="148" height="20" rx="8" fill="#f5f5f5" opacity=".88" transform="rotate(18 820 466)"/>
+
+  <text x="512" y="64" text-anchor="middle" fill="#ffffff" opacity=".82" font-size="28" font-family="Arial, sans-serif" letter-spacing="2">SLEEVE + COLLAR BOARD</text>
+</svg>

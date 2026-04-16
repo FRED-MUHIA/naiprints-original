@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <pattern id="mesh-front" width="30" height="30" patternUnits="userSpaceOnUse">
+      <path d="M0 0H30M0 0V30" stroke="#ffb3b3" stroke-opacity=".34" stroke-width="1"/>
+    </pattern>
+    <linearGradient id="shirtRedFront" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d31f2c"/>
+      <stop offset="1" stop-color="#bc1a24"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1024" height="1024" fill="#ff212d"/>
+
+  <path
+    d="M175 244 L308 178 C366 158 426 146 512 146 C598 146 658 158 716 178 L849 244 L811 340 L748 325 L714 470 Q690 595 670 805 L354 805 Q334 595 310 470 L276 325 L213 340 Z"
+    fill="url(#shirtRedFront)"
+    stroke="#f3b6b6"
+    stroke-width="3"/>
+  <path
+    d="M175 244 L308 178 C366 158 426 146 512 146 C598 146 658 158 716 178 L849 244 L811 340 L748 325 L714 470 Q690 595 670 805 L354 805 Q334 595 310 470 L276 325 L213 340 Z"
+    fill="url(#mesh-front)"
+    opacity=".9"/>
+
+  <path d="M438 148 C456 128 568 128 586 148 L568 186 H456 Z" fill="#f5f5f5" opacity=".92"/>
+  <rect x="284" y="235" width="120" height="20" rx="8" fill="#f5f5f5" opacity=".88" transform="rotate(-20 344 245)"/>
+  <rect x="620" y="235" width="120" height="20" rx="8" fill="#f5f5f5" opacity=".88" transform="rotate(20 680 245)"/>
+
+  <text x="512" y="64" text-anchor="middle" fill="#ffffff" opacity=".82" font-size="28" font-family="Arial, sans-serif" letter-spacing="2">FRONT PATTERN BOARD</text>
+</svg>

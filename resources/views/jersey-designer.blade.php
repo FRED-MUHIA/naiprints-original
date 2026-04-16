@@ -103,6 +103,9 @@
                             <button type="button" class="jersey-chip" @click="focusView('front')">Front</button>
                             <button type="button" class="jersey-chip" @click="focusView('back')">Back</button>
                             <button v-if="supportsSleeves" type="button" class="jersey-chip" @click="focusView('sleeve_left')">Sleeve</button>
+                            <button type="button" class="jersey-chip" :class="{ 'is-active': renderStyle === 'wireframe' }" @click="toggleRenderStyle">
+                                Render: @{{ renderStyleLabel }}
+                            </button>
                             <button type="button" class="jersey-chip" @click="toggleLightingMode">
                                 Mode: @{{ lightingModeLabel }}
                             </button>
@@ -215,13 +218,13 @@
                     <button class="jersey-topbar-btn" type="button" @click="clearActiveArtboard">Clear @{{ prettyArea(activeArtboard) }}</button>
                 </div>
                 <div class="jersey-artboard-canvases">
-                    <div class="jersey-artboard-wrap" :class="{ 'is-active': activeArtboard === 'front' }">
+                    <div class="jersey-artboard-wrap" data-area="front" :class="{ 'is-active': activeArtboard === 'front' }">
                         <canvas ref="frontCanvasRef" width="1024" height="1024"></canvas>
                     </div>
-                    <div class="jersey-artboard-wrap" :class="{ 'is-active': activeArtboard === 'back' }">
+                    <div class="jersey-artboard-wrap" data-area="back" :class="{ 'is-active': activeArtboard === 'back' }">
                         <canvas ref="backCanvasRef" width="1024" height="1024"></canvas>
                     </div>
-                    <div class="jersey-artboard-wrap" :class="{ 'is-active': activeArtboard === 'sleeve' }">
+                    <div class="jersey-artboard-wrap" data-area="sleeve" :class="{ 'is-active': activeArtboard === 'sleeve' }">
                         <canvas ref="sleeveCanvasRef" width="1024" height="1024"></canvas>
                     </div>
                 </div>

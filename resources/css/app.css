@@ -6702,11 +6702,39 @@
 }
 
 .jersey-artboard-wrap {
+    position: relative;
     border: 1px solid rgba(148, 163, 184, 0.2);
     border-radius: 0.75rem;
     background: rgba(15, 23, 42, 0.35);
     padding: 0.45rem;
     display: none;
+    overflow: hidden;
+}
+
+.jersey-artboard-wrap::before {
+    content: '';
+    position: absolute;
+    left: 0.45rem;
+    top: 0.45rem;
+    right: 0.45rem;
+    bottom: 0.45rem;
+    border-radius: 0.55rem;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    pointer-events: none;
+}
+
+.jersey-artboard-wrap[data-area='front']::before {
+    background-image: url('/images/jersey-artboards/front-guide.svg');
+}
+
+.jersey-artboard-wrap[data-area='back']::before {
+    background-image: url('/images/jersey-artboards/back-guide.svg');
+}
+
+.jersey-artboard-wrap[data-area='sleeve']::before {
+    background-image: url('/images/jersey-artboards/sleeve-guide.svg');
 }
 
 .jersey-artboard-wrap.is-active {
@@ -6714,11 +6742,13 @@
 }
 
 .jersey-artboard-wrap canvas {
+    position: relative;
+    z-index: 1;
     width: 100%;
     height: auto;
     aspect-ratio: 1 / 1;
     border-radius: 0.55rem;
-    border: 1px dashed rgba(148, 163, 184, 0.4);
+    border: 1px dashed rgba(248, 250, 252, 0.32);
 }
 
 .jersey-preview-section {
