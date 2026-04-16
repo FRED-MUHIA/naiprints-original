@@ -31,6 +31,8 @@
                     </a>
                 </div>
                 <div class="jersey-topbar-center">
+                    <button class="jersey-topbar-btn" type="button" :class="{ 'is-primary': activeWorkspace === 'editor' }" @click="setWorkspace('editor')">Editor</button>
+                    <button class="jersey-topbar-btn" type="button" :class="{ 'is-primary': activeWorkspace === 'preview' }" @click="setWorkspace('preview')">Preview Design</button>
                     <button class="jersey-topbar-btn" type="button" @click="undo" :disabled="!canUndo">Undo</button>
                     <button class="jersey-topbar-btn" type="button" @click="redo" :disabled="!canRedo">Redo</button>
                     <button class="jersey-topbar-btn" type="button" @click="saveDesign(false)">Save</button>
@@ -47,7 +49,7 @@
                 </div>
             </header>
 
-            <main class="jersey-workspace">
+            <main class="jersey-workspace" v-show="activeWorkspace === 'editor'">
                 <aside class="jersey-panel jersey-panel-left">
                     <section class="jersey-card">
                         <p class="jersey-kicker">Jersey Type</p>
@@ -207,7 +209,7 @@
                 </aside>
             </main>
 
-            <section class="jersey-artboard-section">
+            <section class="jersey-artboard-section" v-show="activeWorkspace === 'editor'">
                 <div class="jersey-artboard-toolbar">
                     <strong>2D Artboard + 3D Sync</strong>
                     <button class="jersey-topbar-btn" type="button" @click="clearActiveArtboard">Clear @{{ prettyArea(activeArtboard) }}</button>
@@ -223,6 +225,34 @@
                         <canvas ref="sleeveCanvasRef" width="1024" height="1024"></canvas>
                     </div>
                 </div>
+            </section>
+
+            <section class="jersey-preview-section" v-show="activeWorkspace === 'preview'">
+                <article class="jersey-preview-card">
+                    <div class="jersey-preview-pill">POLA</div>
+                    <div class="jersey-preview-pattern-grid">
+                        <div class="jersey-preview-pattern-slot">
+                            <img v-if="previewImages.front" :src="previewImages.front" alt="Front pattern preview">
+                            <span v-else>Front pattern</span>
+                        </div>
+                        <div class="jersey-preview-pattern-slot">
+                            <img v-if="previewImages.back" :src="previewImages.back" alt="Back pattern preview">
+                            <span v-else>Back pattern</span>
+                        </div>
+                        <div class="jersey-preview-pattern-slot" v-if="supportsSleeves">
+                            <img v-if="previewImages.sleeve" :src="previewImages.sleeve" alt="Sleeve pattern preview">
+                            <span v-else>Sleeve pattern</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="jersey-preview-card">
+                    <div class="jersey-preview-pill">3D PREVIEW</div>
+                    <div class="jersey-preview-render">
+                        <img v-if="previewImages.three" :src="previewImages.three" alt="3D jersey preview">
+                        <span v-else>3D preview</span>
+                    </div>
+                </article>
             </section>
         </div>
     </body>

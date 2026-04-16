@@ -1,4 +1,4 @@
-import { createApp, computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue/dist/vue.esm-bundler.js';
+import { createApp, computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue/dist/vue.esm-bundler.js';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -283,6 +283,64 @@ const sculptSleeveGeometry = (geometry) => {
     return geometry;
 };
 
+const createMannequinModel = () => {
+    const group = new THREE.Group();
+    const mat = new THREE.MeshPhysicalMaterial({
+        color: '#090b10',
+        roughness: 0.28,
+        metalness: 0.62,
+        clearcoat: 0.22,
+        clearcoatRoughness: 0.24,
+        envMapIntensity: 1.45,
+    });
+
+    const addPart = (mesh) => {
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        group.add(mesh);
+        return mesh;
+    };
+
+    const head = addPart(new THREE.Mesh(new THREE.SphereGeometry(0.28, 32, 24), mat));
+    head.position.set(0, 1.88, 0.06);
+    head.scale.set(0.9, 1.08, 0.9);
+
+    const neck = addPart(new THREE.Mesh(new THREE.CylinderGeometry(0.115, 0.13, 0.23, 24), mat));
+    neck.position.set(0, 1.58, 0.04);
+
+    const torso = addPart(new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.78, 2.14, 36, 20), mat));
+    torso.position.set(0, 0.2, 0.04);
+
+    const pelvis = addPart(new THREE.Mesh(new THREE.SphereGeometry(0.48, 28, 18), mat));
+    pelvis.position.set(0, -0.94, 0.05);
+    pelvis.scale.set(1.04, 0.72, 0.85);
+
+    const upperLegGeometry = new THREE.CylinderGeometry(0.18, 0.19, 0.95, 22, 12);
+    const lowerLegGeometry = new THREE.CylinderGeometry(0.13, 0.15, 0.98, 22, 12);
+    const footGeometry = new THREE.SphereGeometry(0.16, 18, 12);
+
+    const leftUpper = addPart(new THREE.Mesh(upperLegGeometry, mat));
+    leftUpper.position.set(-0.25, -1.42, 0.04);
+    leftUpper.rotation.x = 0.03;
+    const rightUpper = addPart(new THREE.Mesh(upperLegGeometry, mat));
+    rightUpper.position.set(0.25, -1.42, 0.04);
+    rightUpper.rotation.x = 0.03;
+
+    const leftLower = addPart(new THREE.Mesh(lowerLegGeometry, mat));
+    leftLower.position.set(-0.25, -2.26, 0.04);
+    const rightLower = addPart(new THREE.Mesh(lowerLegGeometry, mat));
+    rightLower.position.set(0.25, -2.26, 0.04);
+
+    const leftFoot = addPart(new THREE.Mesh(footGeometry, mat));
+    leftFoot.position.set(-0.25, -2.84, 0.18);
+    leftFoot.scale.set(1.4, 0.72, 2.2);
+    const rightFoot = addPart(new THREE.Mesh(footGeometry, mat));
+    rightFoot.position.set(0.25, -2.84, 0.18);
+    rightFoot.scale.set(1.4, 0.72, 2.2);
+
+    return group;
+};
+
 const curvedPanelGeometry = (width, height, curvature = 0.08, segments = 36) => {
     const geometry = new THREE.PlaneGeometry(width, height, segments, 1);
     const position = geometry.attributes.position;
@@ -312,6 +370,7 @@ export const mountJerseyDesigner = () => {
             const selectedTemplate = ref('solid');
             const activeView = ref('front');
             const activeArtboard = ref('front');
+            const activeWorkspace = ref('editor');
             const loadDesignId = ref('');
             const saveStatus = ref('Ready');
             const mockupStatus = ref('');
@@ -325,9 +384,10 @@ export const mountJerseyDesigner = () => {
             const player = reactive({ name: '', number: '', fontFamily: 'Nunito Sans', size: 118, spacing: 90, color: '#ffffff', outline: '#111827' });
             const fabrics = reactive({ front: null, back: null, sleeve: null });
             const history = reactive({ front: { stack: [], index: -1 }, back: { stack: [], index: -1 }, sleeve: { stack: [], index: -1 } });
+            const previewImages = reactive({ front: '', back: '', sleeve: '', three: '' });
 
             let scene, camera, renderer, controls, stadiumLight, keyLight, fillLight, rimLight, floorMesh, floorGlow, jerseyGroup;
-            let bodyMat, sleeveMat, collarMat, collarInnerMat, cuffMat, sidePanelMat, seamMat, frontTex, backTex, sleeveTex, activePatternTex, frameId, autosaveId;
+            let bodyMat, sleeveMat, collarMat, collarInnerMat, cuffMat, sidePanelMat, seamMat, raglanMat, chevronMat, frontTex, backTex, sleeveTex, activePatternTex, frameId, autosaveId;
             let targetY = 0;
             const selectedJersey = computed(() => jerseys.value.find((j) => String(j.id) === String(selectedJerseyId.value)) || jerseys.value[0]);
             const supportsSleeves = computed(() => Boolean(selectedJersey.value?.supports_sleeves));
@@ -346,6 +406,39 @@ export const mountJerseyDesigner = () => {
             const lightingModeLabel = computed(() => (lightingMode.value === 'studio' ? 'Studio' : 'Stadium'));
             const prettyArea = (a) => ({ front: 'Front', back: 'Back', sleeve: 'Sleeve', sleeve_left: 'Sleeve Left', sleeve_right: 'Sleeve Right' }[a] || 'Sleeve');
             const activeCanvas = () => fabrics[activeArtboard.value];
+            const refreshPreviewTab = () => {
+                const toPreview = (canvas) => {
+                    if (!canvas) return '';
+                    try {
+                        return canvas.toDataURL({ format: 'png', multiplier: 0.35, enableRetinaScaling: false });
+                    } catch {
+                        return '';
+                    }
+                };
+
+                previewImages.front = toPreview(fabrics.front);
+                previewImages.back = toPreview(fabrics.back);
+                previewImages.sleeve = toPreview(fabrics.sleeve);
+
+                if (renderer && scene && camera) {
+                    try {
+                        renderer.render(scene, camera);
+                        previewImages.three = renderer.domElement.toDataURL('image/png');
+                    } catch {
+                        previewImages.three = '';
+                    }
+                }
+            };
+            const setWorkspace = (workspace) => {
+                const nextSpace = workspace === 'preview' ? 'preview' : 'editor';
+                if (nextSpace === 'preview') {
+                    refreshPreviewTab();
+                }
+                activeWorkspace.value = nextSpace;
+                if (nextSpace === 'editor') {
+                    nextTick(() => onResize());
+                }
+            };
             const modelCandidates = (jersey) => {
                 const seen = new Set();
                 const urls = [];
@@ -454,6 +547,9 @@ export const mountJerseyDesigner = () => {
                 if (frontTex) frontTex.needsUpdate = true;
                 if (backTex) backTex.needsUpdate = true;
                 if (sleeveTex) sleeveTex.needsUpdate = true;
+                if (activeWorkspace.value === 'preview') {
+                    refreshPreviewTab();
+                }
             };
             const applyMaterials = () => {
                 if (!bodyMat || !sleeveMat || !collarMat) return;
@@ -464,6 +560,8 @@ export const mountJerseyDesigner = () => {
                 if (cuffMat) cuffMat.color = new THREE.Color(darken(colors.sleeve, 0.16));
                 if (sidePanelMat) sidePanelMat.color = new THREE.Color(darken(colors.body, 0.18));
                 if (seamMat) seamMat.color = new THREE.Color(lighten(colors.body, 0.2));
+                if (raglanMat) raglanMat.color = new THREE.Color(lighten(colors.sleeve, 0.08));
+                if (chevronMat) chevronMat.color = new THREE.Color(lighten(colors.collar, 0.06));
                 if (selectedTemplate.value === 'solid') {
                     bodyMat.map = null;
                 } else {
@@ -477,6 +575,9 @@ export const mountJerseyDesigner = () => {
                 bodyMat.needsUpdate = true;
                 sleeveMat.needsUpdate = true;
                 collarMat.needsUpdate = true;
+                if (activeWorkspace.value === 'preview') {
+                    refreshPreviewTab();
+                }
             };
             const createDecalMaterial = (map) =>
                 new THREE.MeshStandardMaterial({
@@ -574,17 +675,45 @@ export const mountJerseyDesigner = () => {
                 cuffMat.clearcoat = 0.08;
                 cuffMat.clearcoatRoughness = 0.74;
                 cuffMat.sheen = 0.38;
+                raglanMat = new THREE.MeshPhysicalMaterial({
+                    color: lighten(colors.sleeve, 0.08),
+                    roughness: 0.64,
+                    metalness: 0.03,
+                    bumpMap: weave || null,
+                    bumpScale: 0.012,
+                    clearcoat: 0.08,
+                    clearcoatRoughness: 0.7,
+                    sheen: 0.45,
+                    sheenColor: new THREE.Color(lighten(colors.sleeve, 0.24)),
+                });
+                chevronMat = new THREE.MeshStandardMaterial({
+                    color: lighten(colors.collar, 0.06),
+                    roughness: 0.4,
+                    metalness: 0.14,
+                    transparent: true,
+                    opacity: 0.88,
+                });
 
+                const rootGroup = new THREE.Group();
+                const mannequin = createMannequinModel();
+                mannequin.position.y = -0.03;
+                rootGroup.add(mannequin);
                 const g = new THREE.Group();
 
+                const addJerseyPart = (mesh) => {
+                    mesh.castShadow = true;
+                    mesh.receiveShadow = true;
+                    g.add(mesh);
+                    return mesh;
+                };
+
                 const torsoGeometry = sculptTorsoGeometry(new THREE.CylinderGeometry(0.84, 1.18, 2.6, 72, 34, true));
-                const torso = new THREE.Mesh(torsoGeometry, bodyMat);
+                const torso = addJerseyPart(new THREE.Mesh(torsoGeometry, bodyMat));
                 torso.position.y = 0.08;
-                g.add(torso);
 
                 if (supportsSleeves.value) {
                     const sleeveGeometry = sculptSleeveGeometry(new THREE.CylinderGeometry(0.24, 0.44, 1.1, 40, 16, true));
-                    const l = new THREE.Mesh(sleeveGeometry, sleeveMat);
+                    const l = addJerseyPart(new THREE.Mesh(sleeveGeometry, sleeveMat));
                     l.position.set(-1.06, 0.82, -0.04);
                     l.rotation.z = Math.PI / 2.22;
                     l.rotation.y = 0.14;
@@ -593,27 +722,24 @@ export const mountJerseyDesigner = () => {
                     r.position.x = 1.06;
                     r.rotation.z = -Math.PI / 2.22;
                     r.rotation.y = -0.14;
+                    addJerseyPart(r);
 
                     const cuffGeometry = new THREE.TorusGeometry(0.235, 0.042, 16, 46);
-                    const cuffLeft = new THREE.Mesh(cuffGeometry, cuffMat);
+                    const cuffLeft = addJerseyPart(new THREE.Mesh(cuffGeometry, cuffMat));
                     cuffLeft.position.copy(l.position);
                     cuffLeft.rotation.set(Math.PI / 2, 0.28, Math.PI / 2.2);
 
                     const cuffRight = cuffLeft.clone();
                     cuffRight.position.copy(r.position);
                     cuffRight.rotation.set(Math.PI / 2, -0.28, -Math.PI / 2.2);
-
-                    g.add(l);
-                    g.add(r);
-                    g.add(cuffLeft);
-                    g.add(cuffRight);
+                    addJerseyPart(cuffRight);
                 }
 
-                const collarOuter = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.09, 24, 60, Math.PI * 2), collarMat);
+                const collarOuter = addJerseyPart(new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.09, 24, 60, Math.PI * 2), collarMat));
                 collarOuter.position.set(0, 1.38, 0.03);
                 collarOuter.rotation.x = Math.PI / 2;
 
-                const collarInner = new THREE.Mesh(
+                const collarInner = addJerseyPart(new THREE.Mesh(
                     new THREE.TorusGeometry(0.18, 0.03, 16, 48, Math.PI * 2),
                     (collarInnerMat = new THREE.MeshStandardMaterial({
                         color: darken(colors.collar, 0.22),
@@ -622,11 +748,11 @@ export const mountJerseyDesigner = () => {
                         bumpMap: weave || null,
                         bumpScale: 0.008,
                     }))
-                );
+                ));
                 collarInner.position.set(0, 1.35, 0.024);
                 collarInner.rotation.x = Math.PI / 2;
 
-                const hemBand = new THREE.Mesh(new THREE.TorusGeometry(1.04, 0.047, 16, 72), cuffMat);
+                const hemBand = addJerseyPart(new THREE.Mesh(new THREE.TorusGeometry(1.04, 0.047, 16, 72), cuffMat));
                 hemBand.position.set(0, -1.18, 0.01);
                 hemBand.rotation.x = Math.PI / 2;
 
@@ -640,12 +766,13 @@ export const mountJerseyDesigner = () => {
                     opacity: 0.88,
                 });
                 const sidePanelGeom = new THREE.PlaneGeometry(0.22, 2.1, 16, 28);
-                const sideLeft = new THREE.Mesh(sidePanelGeom, sidePanelMat);
+                const sideLeft = addJerseyPart(new THREE.Mesh(sidePanelGeom, sidePanelMat));
                 sideLeft.position.set(-0.93, -0.02, 0);
                 sideLeft.rotation.y = Math.PI / 2.25;
                 const sideRight = sideLeft.clone();
                 sideRight.position.x = 0.93;
                 sideRight.rotation.y = -Math.PI / 2.25;
+                addJerseyPart(sideRight);
 
                 seamMat = new THREE.MeshStandardMaterial({
                     color: lighten(colors.body, 0.2),
@@ -654,26 +781,48 @@ export const mountJerseyDesigner = () => {
                     transparent: true,
                     opacity: 0.46,
                 });
-                const seamLeft = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.012, 8, 36, Math.PI), seamMat);
+                const seamLeft = addJerseyPart(new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.012, 8, 36, Math.PI), seamMat));
                 seamLeft.position.set(-0.91, 1.0, 0.03);
                 seamLeft.rotation.set(Math.PI / 2.0, Math.PI / 2.12, 0.2);
                 const seamRight = seamLeft.clone();
                 seamRight.position.x = 0.91;
                 seamRight.rotation.y = -Math.PI / 2.12;
                 seamRight.rotation.z = -0.2;
+                addJerseyPart(seamRight);
 
-                const col = collarOuter;
-                col.rotation.x = Math.PI / 2;
-                g.add(col);
-                g.add(collarInner);
-                g.add(hemBand);
-                g.add(sideLeft);
-                g.add(sideRight);
-                g.add(seamLeft);
-                g.add(seamRight);
+                if (supportsSleeves.value) {
+                    const raglanGeom = new THREE.PlaneGeometry(0.5, 0.84, 1, 1);
+                    const raglanLeftFront = addJerseyPart(new THREE.Mesh(raglanGeom, raglanMat));
+                    raglanLeftFront.position.set(-0.42, 0.97, 0.58);
+                    raglanLeftFront.rotation.set(0.06, 0.42, -0.66);
+                    const raglanRightFront = raglanLeftFront.clone();
+                    raglanRightFront.position.set(0.42, 0.97, 0.58);
+                    raglanRightFront.rotation.set(0.06, -0.42, 0.66);
+                    addJerseyPart(raglanRightFront);
+
+                    const raglanLeftBack = raglanLeftFront.clone();
+                    raglanLeftBack.position.set(-0.42, 0.97, -0.58);
+                    raglanLeftBack.rotation.set(-0.06, Math.PI - 0.42, 0.66);
+                    addJerseyPart(raglanLeftBack);
+                    const raglanRightBack = raglanLeftFront.clone();
+                    raglanRightBack.position.set(0.42, 0.97, -0.58);
+                    raglanRightBack.rotation.set(-0.06, -Math.PI + 0.42, -0.66);
+                    addJerseyPart(raglanRightBack);
+                }
+
+                const chevronGeom = new THREE.BoxGeometry(0.36, 0.048, 0.018);
+                const chevLeftFront = addJerseyPart(new THREE.Mesh(chevronGeom, chevronMat));
+                chevLeftFront.position.set(-0.18, 1.03, 0.61);
+                chevLeftFront.rotation.z = 0.72;
+                const chevRightFront = chevLeftFront.clone();
+                chevRightFront.position.x = 0.18;
+                chevRightFront.rotation.z = -0.72;
+                addJerseyPart(chevRightFront);
 
                 mountDecals(g, new THREE.Box3().setFromObject(g));
-                return g;
+                rootGroup.add(g);
+                rootGroup.position.y = 0.02;
+                return rootGroup;
             };
             const loadModel = async (jersey) => {
                 if (jerseyGroup && scene) scene.remove(jerseyGroup);
@@ -692,6 +841,8 @@ export const mountJerseyDesigner = () => {
                         cuffMat = null;
                         sidePanelMat = null;
                         seamMat = null;
+                        raglanMat = null;
+                        chevronMat = null;
                         g.scale.setScalar(1.4);
                         g.position.y = -0.25;
                         g.traverse((n) => {
@@ -725,17 +876,17 @@ export const mountJerseyDesigner = () => {
             const setLightMode = () => {
                 if (!keyLight || !fillLight || !rimLight || !stadiumLight || !floorMesh) return;
                 if (lightingMode.value === 'studio') {
-                    keyLight.intensity = 1.35;
-                    fillLight.intensity = 0.95;
-                    rimLight.intensity = 0.72;
-                    stadiumLight.intensity = 0.32;
+                    keyLight.intensity = 1.55;
+                    fillLight.intensity = 1.02;
+                    rimLight.intensity = 1.08;
+                    stadiumLight.intensity = 0.28;
                     floorMesh.material.opacity = 0.32;
                     if (floorGlow) floorGlow.material.opacity = 0.34;
                 } else {
-                    keyLight.intensity = 2.18;
-                    fillLight.intensity = 1.36;
-                    rimLight.intensity = 1.15;
-                    stadiumLight.intensity = 1.04;
+                    keyLight.intensity = 2.28;
+                    fillLight.intensity = 1.46;
+                    rimLight.intensity = 1.34;
+                    stadiumLight.intensity = 0.96;
                     floorMesh.material.opacity = 0.65;
                     if (floorGlow) floorGlow.material.opacity = 0.58;
                 }
@@ -750,6 +901,9 @@ export const mountJerseyDesigner = () => {
                 activeView.value = view;
                 activeArtboard.value = view === 'front' || view === 'back' ? view : 'sleeve';
                 focusView(view);
+                if (activeWorkspace.value === 'preview') {
+                    refreshPreviewTab();
+                }
             };
             const onResize = () => {
                 if (!renderer || !camera || !threeMountRef.value) return;
@@ -765,8 +919,8 @@ export const mountJerseyDesigner = () => {
                 scene = new THREE.Scene();
                 const bgTexture = studioBackgroundTexture();
                 scene.background = bgTexture || new THREE.Color('#0b1026');
-                camera = new THREE.PerspectiveCamera(40, m.clientWidth / m.clientHeight, 0.1, 100);
-                camera.position.set(0, 1.35, 5.2);
+                camera = new THREE.PerspectiveCamera(42, m.clientWidth / m.clientHeight, 0.1, 100);
+                camera.position.set(0, 0.58, 6.35);
                 renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
                 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
                 renderer.setSize(m.clientWidth, m.clientHeight);
@@ -782,10 +936,11 @@ export const mountJerseyDesigner = () => {
                 controls = new OrbitControls(camera, renderer.domElement);
                 controls.enableDamping = true;
                 controls.enablePan = false;
-                controls.maxDistance = 9.5;
-                controls.minDistance = 2.3;
-                controls.minPolarAngle = 0.35;
-                controls.maxPolarAngle = Math.PI / 1.58;
+                controls.maxDistance = 11.5;
+                controls.minDistance = 2.6;
+                controls.minPolarAngle = 0.24;
+                controls.maxPolarAngle = Math.PI / 1.37;
+                controls.target.set(0, 0.18, 0);
                 keyLight = new THREE.DirectionalLight('#fff', 1.2);
                 keyLight.position.set(3.4, 4.8, 4.2);
                 keyLight.castShadow = true;
@@ -800,13 +955,13 @@ export const mountJerseyDesigner = () => {
                 scene.add(rimLight);
                 stadiumLight = new THREE.HemisphereLight('#b5d0ff', '#24344b', 0.35);
                 scene.add(stadiumLight);
-                floorMesh = new THREE.Mesh(new THREE.CircleGeometry(6.8, 64), new THREE.MeshStandardMaterial({ color: '#1f2937', transparent: true, opacity: 0.32, roughness: 0.75, metalness: 0.1 }));
+                floorMesh = new THREE.Mesh(new THREE.CircleGeometry(8.4, 64), new THREE.MeshStandardMaterial({ color: '#1f2937', transparent: true, opacity: 0.32, roughness: 0.75, metalness: 0.1 }));
                 floorMesh.rotation.x = -Math.PI / 2;
-                floorMesh.position.y = -1.8;
+                floorMesh.position.y = -2.95;
                 floorMesh.receiveShadow = true;
                 scene.add(floorMesh);
                 floorGlow = new THREE.Mesh(
-                    new THREE.CircleGeometry(4.9, 64),
+                    new THREE.CircleGeometry(6.2, 64),
                     new THREE.MeshBasicMaterial({
                         map: floorShadowTexture(),
                         transparent: true,
@@ -815,7 +970,7 @@ export const mountJerseyDesigner = () => {
                     })
                 );
                 floorGlow.rotation.x = -Math.PI / 2;
-                floorGlow.position.y = -1.76;
+                floorGlow.position.y = -2.91;
                 scene.add(floorGlow);
                 await loadModel(selectedJersey.value);
                 setLightMode();
@@ -1040,6 +1195,7 @@ export const mountJerseyDesigner = () => {
                 await initThree();
                 applyMaterials();
                 setView('front');
+                refreshPreviewTab();
                 const cached = restoreLocal();
                 if (cached) {
                     applyPayload(cached);
@@ -1068,9 +1224,11 @@ export const mountJerseyDesigner = () => {
                 selectedTemplate,
                 activeView,
                 activeArtboard,
+                activeWorkspace,
                 loadDesignId,
                 saveStatus,
                 mockupStatus,
+                previewImages,
                 colors,
                 player,
                 sportsFonts,
@@ -1089,6 +1247,7 @@ export const mountJerseyDesigner = () => {
                 lightingModeLabel,
                 prettyArea,
                 selectJersey,
+                setWorkspace,
                 setView,
                 setArtboard,
                 focusView,
