@@ -8,7 +8,7 @@
             $faviconUrl = $faviconUrl ?: '/images/logo.svg';
         @endphp
         <link rel="icon" href="{{ $faviconUrl }}">
-        <title>Jersey Sales & Branding Kenya | Nai Prints</title>
+        <title>Jersey Catalogues | Nai Prints</title>
         <meta name="description" content="Jersey sales and custom jersey branding/printing in Kenya for teams, schools, and football academies.">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -39,12 +39,17 @@
                     $audienceItems = $audiences['items'] ?? ($defaults['audiences']['items'] ?? []);
                     $designs = $data['designs'] ?? ($defaults['designs'] ?? []);
                     $designItems = $designs['items'] ?? ($defaults['designs']['items'] ?? []);
+                    $video = $data['video'] ?? ($defaults['video'] ?? []);
                     $cta = $data['cta'] ?? ($defaults['cta'] ?? []);
 
                     $catalogKicker = trim((string) ($hero['kicker'] ?? ''));
                     $catalogTitle = trim((string) (($designs['title'] ?? '') ?: ($hero['title'] ?? 'Jersey Katalog')));
                     $catalogIntro = trim((string) (($hero['body'] ?? '') ?: 'Switch to realistic 3D jersey mockups so your audience can view each design clearly from multiple angles.'));
                     $catalogBuyUrl = route('designer.3d');
+                    $videoKicker = trim((string) ($video['kicker'] ?? ''));
+                    $videoTitle = trim((string) ($video['title'] ?? 'Jersey Preview Video'));
+                    $videoEmbedUrl = trim((string) ($video['embed_url'] ?? ''));
+                    $videoMp4Url = trim((string) ($video['video_url'] ?? ''));
                     $catalogItems = collect($designItems)
                         ->filter(fn ($item) => is_array($item))
                         ->map(function ($item) {
@@ -70,7 +75,7 @@
                         </p>
                         <h1 class="mt-2 text-[68px] leading-[0.78] text-red-600 sm:text-[84px]" style="font-family: 'Bebas Neue', sans-serif;">
                             JERSEY
-                            <span class="block text-[32px] tracking-[0.08em] text-white sm:text-[38px]">KATALOG</span>
+                            <span class="block text-[32px] tracking-[0.08em] text-white sm:text-[38px]">CATALOGUES</span>
                         </h1>
                         <p class="mx-auto mt-7 max-w-2xl text-base leading-relaxed text-zinc-400 sm:text-2xl">
                             {{ $catalogIntro }}
@@ -138,6 +143,100 @@
                             </div>
                         </div>
                     @endif
+                </section>
+
+                <section class="mt-12 rounded-2xl border border-white/10 bg-[#0b0d11] px-5 py-6 sm:px-8 sm:py-8">
+                    <div class="mb-5">
+                        @if ($videoKicker !== '')
+                            <p class="text-xs uppercase tracking-[0.3em] text-zinc-400">{{ $videoKicker }}</p>
+                        @endif
+                        <h2 class="mt-2 text-xl font-semibold text-white sm:text-2xl">{{ $videoTitle !== '' ? $videoTitle : 'Jersey Preview Video' }}</h2>
+                    </div>
+                    @if ($videoMp4Url !== '')
+                        <div class="overflow-hidden rounded-xl border border-white/10 bg-black">
+                            <video class="aspect-video w-full" controls preload="metadata" playsinline>
+                                <source src="{{ $videoMp4Url }}" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                        </div>
+                    @elseif ($videoEmbedUrl !== '')
+                        <div class="overflow-hidden rounded-xl border border-white/10 bg-black">
+                            <div class="aspect-video w-full">
+                                <iframe
+                                    class="h-full w-full"
+                                    src="{{ $videoEmbedUrl }}"
+                                    title="{{ $videoTitle !== '' ? $videoTitle : 'Jersey Video' }}"
+                                    loading="lazy"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                    referrerpolicy="strict-origin-when-cross-origin"
+                                    allowfullscreen>
+                                </iframe>
+                            </div>
+                        </div>
+                    @else
+                        <div class="rounded-xl border border-white/10 bg-black/40 px-4 py-6 text-sm text-zinc-300">
+                            Add a video URL in the Jersey page builder to display it here.
+                        </div>
+                    @endif
+                </section>
+
+                <section class="mt-14 rounded-2xl border border-white/10 bg-[#0b0d11] px-5 py-8 sm:px-8">
+                    <h2 class="text-2xl font-semibold text-white sm:text-3xl">Kenya-Based Custom Jersey Printing & Branding</h2>
+                    <p class="mt-4 text-sm leading-relaxed text-zinc-300 sm:text-base">
+                        Nai Prints provides Kenya-based jersey branding solutions for football clubs, school teams, academies, church leagues,
+                        corporates, and tournaments. We handle full kit customization including player names, numbers, sponsor logos, and color
+                        matching so your team looks professional on and off the pitch.
+                    </p>
+
+                    <div class="mt-7 grid gap-4 md:grid-cols-2">
+                        <article class="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                            <h3 class="text-base font-semibold text-white">Fast Production & Nationwide Delivery</h3>
+                            <p class="mt-2 text-sm leading-relaxed text-zinc-300">
+                                We support urgent and scheduled jersey orders from Nairobi and deliver across Kenya including Mombasa, Kisumu,
+                                Nakuru, Eldoret, Thika, and surrounding towns. Typical production windows depend on quantity, design complexity,
+                                and kit type.
+                            </p>
+                        </article>
+                        <article class="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                            <h3 class="text-base font-semibold text-white">Built for Teams, Schools & Academies</h3>
+                            <p class="mt-2 text-sm leading-relaxed text-zinc-300">
+                                From 10-piece team sets to larger club and school batches, we provide consistent sizing, readable numbering, and
+                                durable print quality for training and match-day use.
+                            </p>
+                        </article>
+                        <article class="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                            <h3 class="text-base font-semibold text-white">Durable Fabrics for Kenyan Conditions</h3>
+                            <p class="mt-2 text-sm leading-relaxed text-zinc-300">
+                                Our sportswear options are selected for comfort, breathability, and repeat use. We focus on color retention and
+                                print durability to keep kits sharp through regular washing and competitive seasons.
+                            </p>
+                        </article>
+                        <article class="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                            <h3 class="text-base font-semibold text-white">3D Preview Before You Order</h3>
+                            <p class="mt-2 text-sm leading-relaxed text-zinc-300">
+                                Use our 3D designer to preview front, back, and sleeve details before confirming your order. This helps reduce
+                                approval delays and ensures your final jersey design matches team expectations.
+                            </p>
+                        </article>
+                    </div>
+
+                    <div class="mt-8">
+                        <h3 class="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-400">Popular Service Areas In Kenya</h3>
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            @foreach (['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Eldoret', 'Thika', 'Kiambu', 'Machakos', 'Meru', 'Nyeri'] as $town)
+                                <span class="rounded-full border border-white/15 bg-white/[0.03] px-3 py-1 text-xs text-zinc-200">{{ $town }}</span>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <div class="mt-8 flex flex-wrap gap-3">
+                        <a href="{{ route('designer.3d') }}" class="rounded bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-500">
+                            Open 3D Designer
+                        </a>
+                        <a href="/contact" class="rounded border border-white/25 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10">
+                            Request Team Quote
+                        </a>
+                    </div>
                 </section>
             </main>
 
