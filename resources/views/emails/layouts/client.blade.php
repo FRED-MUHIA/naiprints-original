@@ -24,18 +24,13 @@
                     font-size: 15px !important;
                     max-width: none !important;
                 }
-                .stack-mobile {
-                    display: block !important;
-                    width: 100% !important;
-                    text-align: left !important;
-                    padding-top: 10px !important;
-                }
             }
         </style>
     </head>
     <body style="margin:0;padding:0;background:#f1f3f5;font-family:Arial,Helvetica,sans-serif;color:#111827;">
         @php
             $brandName = $brandName ?? config('mail.from.name', config('app.name', 'Nai Prints'));
+            $logoUrl = trim((string) ($logoUrl ?? url('/images/logo.svg')));
             $supportEmail = $supportEmail ?? config('mail.support.address', config('mail.from.address', ''));
             $supportPhone = $supportPhone ?? '';
             $supportWebsite = $supportWebsite ?? config('app.url');
@@ -63,17 +58,24 @@
                                         <td style="vertical-align:middle;">
                                             <table role="presentation" cellspacing="0" cellpadding="0">
                                                 <tr>
-                                                    <td style="width:30px;height:30px;border-radius:8px;background:#111111;color:#ffffff;text-align:center;font-size:12px;font-weight:700;vertical-align:middle;">
-                                                        NP
+                                                    <td style="width:50px;height:50px;vertical-align:middle;">
+                                                        @if ($logoUrl !== '')
+                                                            <img src="{{ $logoUrl }}"
+                                                                 alt="{{ $brandName }} logo"
+                                                                 width="50"
+                                                                 height="50"
+                                                                 style="display:block;width:50px;height:50px;border-radius:12px;border:1px solid #e5e7eb;background:#ffffff;object-fit:contain;padding:4px;">
+                                                        @else
+                                                            <div style="width:50px;height:50px;border-radius:12px;background:#111111;color:#ffffff;text-align:center;font-size:18px;font-weight:700;line-height:50px;">
+                                                                NP
+                                                            </div>
+                                                        @endif
                                                     </td>
                                                     <td style="padding-left:10px;font-size:24px;font-weight:700;color:#111827;vertical-align:middle;">
                                                         {{ $brandName }}
                                                     </td>
                                                 </tr>
                                             </table>
-                                        </td>
-                                        <td align="right" class="stack-mobile" style="font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#e11d2e;vertical-align:middle;">
-                                            {{ $heroEyebrow !== '' ? $heroEyebrow : 'Client Update' }}
                                         </td>
                                     </tr>
                                 </table>

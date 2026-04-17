@@ -47,4 +47,19 @@ return [
         'image_model' => env('GEMINI_IMAGE_MODEL', 'gemini-2.5-flash-image'),
     ],
 
+    'mpesa' => [
+        'environment' => env('MPESA_ENVIRONMENT'),
+        'consumer_key' => env('MPESA_CONSUMER_KEY'),
+        'consumer_secret' => env('MPESA_CONSUMER_SECRET'),
+        'shortcode' => env('MPESA_SHORTCODE'),
+        'passkey' => env('MPESA_PASSKEY'),
+        'transaction_type' => env('MPESA_TRANSACTION_TYPE'),
+        'party_b' => env('MPESA_PARTY_B'),
+        'callback_url' => env('MPESA_CALLBACK_URL'),
+        'confirmation_url' => env('MPESA_CONFIRMATION_URL'),
+        'validation_url' => env('MPESA_VALIDATION_URL'),
+        'initiator_name' => env('MPESA_INITIATOR_NAME'),
+        'security_credential' => env('MPESA_SECURITY_CREDENTIAL'),
+    ],
+
 ];

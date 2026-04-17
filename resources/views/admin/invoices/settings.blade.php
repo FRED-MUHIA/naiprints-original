@@ -64,6 +64,10 @@
             <h2 class="text-lg font-semibold">M-Pesa API</h2>
             @php
                 $mpesa = $settings->mpesa_config ?? [];
+                $passkeyValue = old('mpesa.passkey', $mpesa['passkey'] ?? '');
+                if (in_array(strtolower(trim((string) $passkeyValue)), ['undefined', 'null', 'nil', 'none', 'n/a', 'na'], true)) {
+                    $passkeyValue = '';
+                }
             @endphp
             <div class="grid gap-4 md:grid-cols-2">
                 <label class="space-y-2 text-sm font-semibold text-slate-600">
@@ -88,8 +92,12 @@
                 </label>
                 <label class="space-y-2 text-sm font-semibold text-slate-600">
                     Passkey
-                    <input type="password" name="mpesa[passkey]" value="{{ old('mpesa.passkey', $mpesa['passkey'] ?? '') }}" class="admin-input border border-slate-200 rounded-xl px-4 py-2">
+                    <input type="password" name="mpesa[passkey]" value="{{ $passkeyValue }}" class="admin-input border border-slate-200 rounded-xl px-4 py-2">
                 </label>
+                <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600 md:col-span-2">
+                    Secret integration is supported: if <code>MPESA_CONSUMER_SECRET</code> and <code>MPESA_PASSKEY</code>
+                    are set in server <code>.env</code>, those backend values override what is saved here.
+                </div>
                 <label class="space-y-2 text-sm font-semibold text-slate-600">
                     STK Transaction Type
                     <select name="mpesa[transaction_type]" class="admin-input border border-slate-200 rounded-xl px-4 py-2">

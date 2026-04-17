@@ -1,6 +1,7 @@
 @php
     $orderNumber = $order['number'] ?? '';
     $brandName = $support['brand'] ?? config('mail.from.name', config('app.name', 'Nai Prints'));
+    $logoUrl = $support['logo_url'] ?? url('/images/logo.svg');
     $supportEmail = $support['email'] ?? config('mail.support.address', config('mail.from.address', ''));
     $supportPhone = $support['phone'] ?? '';
     $supportWebsite = config('app.url');

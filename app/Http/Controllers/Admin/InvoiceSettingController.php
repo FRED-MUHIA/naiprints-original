@@ -77,6 +77,10 @@ class InvoiceSettingController extends Controller
         foreach (($data['mpesa'] ?? []) as $key => $value) {
             if (is_string($value)) {
                 $value = trim($value);
+                $placeholder = strtolower($value);
+                if (in_array($placeholder, ['undefined', 'null', 'nil', 'none', 'n/a', 'na'], true)) {
+                    $value = '';
+                }
             }
             if ($value === null || $value === '') {
                 unset($mpesaConfig[$key]);

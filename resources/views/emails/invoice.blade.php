@@ -2,6 +2,9 @@
     $invoiceLink = route('invoice.public', $invoice->public_id);
     $settings = \App\Models\InvoiceSetting::query()->first();
     $brandName = $settings?->business_name ?: config('mail.from.name', config('app.name', 'Nai Prints'));
+    $logoUrl = $settings?->logo_path
+        ? url(\Illuminate\Support\Facades\Storage::url($settings->logo_path))
+        : url('/images/logo.svg');
     $supportEmail = $settings?->email ?: config('mail.support.address', config('mail.from.address', ''));
     $supportPhone = $settings?->phone ?: '';
     $supportWebsite = $settings?->website ?: config('app.url');

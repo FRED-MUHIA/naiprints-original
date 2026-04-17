@@ -18,16 +18,22 @@ class MpesaService
     public function config(): array
     {
         $settings = $this->settings ?: InvoiceSetting::first();
-        $raw = $settings?->mpesa_config ?? [];
-        if (!is_array($raw)) {
-            return [];
+        $raw = is_array($settings?->mpesa_config) ? $settings->mpesa_config : [];
+        $envOverrides = config('services.mpesa', []);
+
+        if (is_array($envOverrides)) {
+            foreach ($envOverrides as $key => $value) {
+                $value = $this->normalizeConfigValue($value);
+                if ($value === null || $value === '') {
+                    continue;
+                }
+                $raw[$key] = $value;
+            }
         }
 
         $normalized = [];
         foreach ($raw as $key => $value) {
-            if (is_string($value)) {
-                $value = trim($value);
-            }
+            $value = $this->normalizeConfigValue($value);
             $normalized[$key] = $value;
         }
 
@@ -42,6 +48,25 @@ class MpesaService
         }
 
         return $normalized;
+    }
+
+    private function normalizeConfigValue(mixed $value): mixed
+    {
+        if (!is_string($value)) {
+            return $value;
+        }
+
+        $value = trim($value);
+        if ($value === '') {
+            return '';
+        }
+
+        $placeholder = strtolower($value);
+        if (in_array($placeholder, ['undefined', 'null', 'nil', 'none', 'n/a', 'na'], true)) {
+            return '';
+        }
+
+        return $value;
     }
 
     private function tokenCacheKey(): string
