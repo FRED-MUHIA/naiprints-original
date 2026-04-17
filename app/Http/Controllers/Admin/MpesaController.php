@@ -14,7 +14,10 @@ class MpesaController extends Controller
 {
     public function testCredentials(Request $request)
     {
-        $settings = InvoiceSetting::first() ?? InvoiceSetting::create(InvoiceSetting::defaults());
+        $settings = $this->resolveSettings();
+        $this->persistMpesaSettingsFromRequest($request, $settings);
+        $settings->refresh();
+
         $service = new MpesaService($settings);
         $config = $service->config();
 
@@ -48,14 +51,17 @@ class MpesaController extends Controller
 
     public function registerC2b(Request $request)
     {
-        $settings = InvoiceSetting::first() ?? InvoiceSetting::create(InvoiceSetting::defaults());
+        $settings = $this->resolveSettings();
+        $this->persistMpesaSettingsFromRequest($request, $settings);
+        $settings->refresh();
+
         $service = new MpesaService($settings);
 
         if (!$service->isConfigured()) {
             return back()->withErrors(['mpesa' => 'Please save your M-Pesa keys and shortcode first.']);
         }
 
-        $config = $settings->mpesa_config ?? [];
+        $config = $service->config();
         $confirmationUrl = $config['confirmation_url'] ?? route('mpesa.c2b.confirmation');
         $validationUrl = $config['validation_url'] ?? route('mpesa.c2b.validation');
         $responseType = $config['response_type'] ?? 'Completed';
@@ -173,5 +179,56 @@ class MpesaController extends Controller
         ]);
 
         return back()->with('success', 'STK push sent to the customer.');
+    }
+
+    private function resolveSettings(): InvoiceSetting
+    {
+        return InvoiceSetting::first() ?? InvoiceSetting::create(InvoiceSetting::defaults());
+    }
+
+    private function persistMpesaSettingsFromRequest(Request $request, InvoiceSetting $settings): void
+    {
+        $mpesa = $request->input('mpesa');
+        if (!is_array($mpesa)) {
+            return;
+        }
+
+        $config = is_array($settings->mpesa_config) ? $settings->mpesa_config : [];
+        $sensitiveKeys = ['consumer_secret', 'passkey', 'security_credential'];
+
+        foreach ($mpesa as $key => $value) {
+            if (!is_string($key)) {
+                continue;
+            }
+
+            if (is_string($value)) {
+                $value = trim($value);
+                $placeholder = strtolower($value);
+                if (in_array($placeholder, ['undefined', 'null', 'nil', 'none', 'n/a', 'na'], true)) {
+                    $value = '';
+                }
+            }
+
+            if ($value === null || $value === '') {
+                if (in_array($key, $sensitiveKeys, true)) {
+                    continue;
+                }
+
+                unset($config[$key]);
+                continue;
+            }
+
+            if (in_array($key, ['shortcode', 'party_b', 'till_number'], true) && is_string($value)) {
+                $value = preg_replace('/\D+/', '', $value);
+            }
+
+            $config[$key] = $value;
+        }
+
+        $settings->mpesa_config = $config;
+        $settings->save();
+
+        Cache::forget('mpesa_token_sandbox');
+        Cache::forget('mpesa_token_live');
     }
 }
