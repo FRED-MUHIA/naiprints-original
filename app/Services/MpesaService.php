@@ -18,8 +18,9 @@ class MpesaService
     public function config(): array
     {
         $settings = $this->settings ?: InvoiceSetting::first();
-        $raw = is_array($settings?->mpesa_config) ? $settings->mpesa_config : [];
         $envOverrides = config('services.mpesa', []);
+        $dbConfig = is_array($settings?->mpesa_config) ? $settings->mpesa_config : [];
+        $raw = [];
 
         if (is_array($envOverrides)) {
             foreach ($envOverrides as $key => $value) {
@@ -29,6 +30,15 @@ class MpesaService
                 }
                 $raw[$key] = $value;
             }
+        }
+
+        // Dashboard settings take priority; env is fallback.
+        foreach ($dbConfig as $key => $value) {
+            $value = $this->normalizeConfigValue($value);
+            if ($value === null || $value === '') {
+                continue;
+            }
+            $raw[$key] = $value;
         }
 
         $normalized = [];
@@ -330,7 +340,7 @@ class MpesaService
         $passkey = $config['passkey'] ?? null;
 
         if (!$shortcode || !$passkey) {
-            throw new \RuntimeException('M-Pesa shortcode/passkey are missing.');
+            throw new \RuntimeException('M-Pesa shortcode/passkey are missing or invalid. Set the real Daraja passkey (not "undefined") in server .env (MPESA_PASSKEY) or admin settings.');
         }
 
         $transactionType = $config['transaction_type'] ?? 'CustomerPayBillOnline';

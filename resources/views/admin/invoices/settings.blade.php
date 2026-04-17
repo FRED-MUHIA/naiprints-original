@@ -95,8 +95,8 @@
                     <input type="password" name="mpesa[passkey]" value="{{ $passkeyValue }}" class="admin-input border border-slate-200 rounded-xl px-4 py-2">
                 </label>
                 <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600 md:col-span-2">
-                    Secret integration is supported: if <code>MPESA_CONSUMER_SECRET</code> and <code>MPESA_PASSKEY</code>
-                    are set in server <code>.env</code>, those backend values override what is saved here.
+                    You can set passkey directly here in Dashboard settings.
+                    Server <code>.env</code> values are used only as fallback when a field is blank here.
                 </div>
                 <label class="space-y-2 text-sm font-semibold text-slate-600">
                     STK Transaction Type
