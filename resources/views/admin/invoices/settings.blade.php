@@ -98,14 +98,10 @@
                         <option value="CustomerBuyGoodsOnline" @selected(old('mpesa.transaction_type', $mpesa['transaction_type'] ?? '') === 'CustomerBuyGoodsOnline')>Customer BuyGoods</option>
                     </select>
                 </label>
-                <label class="space-y-2 text-sm font-semibold text-slate-600">
-                    Initiator Name
-                    <input type="text" name="mpesa[initiator_name]" value="{{ old('mpesa.initiator_name', $mpesa['initiator_name'] ?? '') }}" class="admin-input border border-slate-200 rounded-xl px-4 py-2">
-                </label>
-                <label class="space-y-2 text-sm font-semibold text-slate-600">
-                    Security Credential
-                    <input type="password" name="mpesa[security_credential]" value="{{ old('mpesa.security_credential', $mpesa['security_credential'] ?? '') }}" class="admin-input border border-slate-200 rounded-xl px-4 py-2">
-                </label>
+                <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600 md:col-span-2">
+                    Security Credential and Initiator are not required for STK Push/C2B in this system.
+                    They are backend-only for advanced APIs (for example B2C) and are intentionally hidden.
+                </div>
                 <label class="space-y-2 text-sm font-semibold text-slate-600 md:col-span-2">
                     STK Callback URL
                     <input type="text" name="mpesa[callback_url]" value="{{ old('mpesa.callback_url', $mpesa['callback_url'] ?? '') }}" class="admin-input border border-slate-200 rounded-xl px-4 py-2" placeholder="{{ $callbackUrls['stk'] ?? '' }}">

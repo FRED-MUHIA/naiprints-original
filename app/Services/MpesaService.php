@@ -100,24 +100,45 @@ class MpesaService
 
     public function normalizePhone(string $phone): string
     {
-        $digits = preg_replace('/\D+/', '', $phone);
-        if (!$digits) {
-            return $phone;
+        $value = trim($phone);
+        if ($value === '') {
+            return '';
         }
 
-        if (Str::startsWith($digits, '0')) {
-            return '254' . substr($digits, 1);
+        if (preg_match('/(?:\+|00)?254\s*[-\s()]?0?([17]\d{8})\b/u', $value, $matches)) {
+            return '254' . $matches[1];
         }
 
-        if (Str::startsWith($digits, '7') && strlen($digits) === 9) {
-            return '254' . $digits;
+        if (preg_match('/\b0([17]\d{8})\b/u', $value, $matches)) {
+            return '254' . $matches[1];
         }
 
-        if (Str::startsWith($digits, '1') && strlen($digits) === 9) {
-            return '254' . $digits;
+        if (preg_match('/\b([17]\d{8})\b/u', $value, $matches)) {
+            return '254' . $matches[1];
         }
 
-        if (Str::startsWith($digits, '254')) {
+        $digits = preg_replace('/\D+/', '', $value) ?? '';
+        if ($digits === '') {
+            return '';
+        }
+
+        if (Str::startsWith($digits, '00254')) {
+            $digits = substr($digits, 2);
+        }
+
+        if (preg_match('/^2540([17]\d{8})$/', $digits, $matches)) {
+            return '254' . $matches[1];
+        }
+
+        if (preg_match('/^0([17]\d{8})$/', $digits, $matches)) {
+            return '254' . $matches[1];
+        }
+
+        if (preg_match('/^([17]\d{8})$/', $digits, $matches)) {
+            return '254' . $matches[1];
+        }
+
+        if (preg_match('/^254[17]\d{8}$/', $digits)) {
             return $digits;
         }
 
@@ -128,7 +149,7 @@ class MpesaService
     {
         $normalized = $this->normalizePhone($phone);
         if (!preg_match('/^254[17]\d{8}$/', $normalized)) {
-            throw new RuntimeException('Invalid M-Pesa phone format. Use 07XXXXXXXX/01XXXXXXXX or 2547XXXXXXXX/2541XXXXXXXX.');
+            throw new RuntimeException('Invalid M-Pesa phone format. Use 07XXXXXXXX/01XXXXXXXX, +2547XXXXXXXX/+2541XXXXXXXX, or 2547XXXXXXXX/2541XXXXXXXX.');
         }
 
         return $normalized;

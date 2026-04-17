@@ -53,9 +53,6 @@ class PublicMpesaController extends Controller
         } catch (\Throwable $exception) {
             return back()->withErrors(['phone' => $exception->getMessage()]);
         }
-        if (!preg_match('/^254[17]\d{8}$/', $phone)) {
-            return back()->withErrors(['phone' => 'Invalid M-Pesa phone format. Use 07XXXXXXXX/01XXXXXXXX.']);
-        }
 
         $amount = method_exists($service, 'normalizeAmount')
             ? $service->normalizeAmount((float) $data['amount'])

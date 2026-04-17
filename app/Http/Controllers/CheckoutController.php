@@ -192,12 +192,6 @@ class CheckoutController extends Controller
                     ->withErrors(['payment' => $exception->getMessage()]);
             }
 
-            if (!preg_match('/^254[17]\d{8}$/', (string) $phone)) {
-                return redirect()
-                    ->route('invoice.public', $invoice->public_id)
-                    ->withErrors(['payment' => 'Invalid M-Pesa phone format. Use 07XXXXXXXX/01XXXXXXXX.']);
-            }
-
             $rawCallbackUrl = (string) (($settings->mpesa_config['callback_url'] ?? null) ?: secure_url('/mpesa/stk/callback'));
             $callbackUrl = method_exists($mpesa, 'sanitizeCallbackUrl')
                 ? $mpesa->sanitizeCallbackUrl($rawCallbackUrl)

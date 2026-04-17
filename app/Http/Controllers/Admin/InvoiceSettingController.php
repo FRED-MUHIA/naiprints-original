@@ -50,8 +50,6 @@ class InvoiceSettingController extends Controller
             'mpesa.consumer_secret' => ['nullable', 'string', 'max:255'],
             'mpesa.shortcode' => ['nullable', 'string', 'max:255'],
             'mpesa.passkey' => ['nullable', 'string', 'max:255'],
-            'mpesa.initiator_name' => ['nullable', 'string', 'max:255'],
-            'mpesa.security_credential' => ['nullable', 'string', 'max:255'],
             'mpesa.callback_url' => ['nullable', 'string', 'max:255'],
             'mpesa.confirmation_url' => ['nullable', 'string', 'max:255'],
             'mpesa.validation_url' => ['nullable', 'string', 'max:255'],
@@ -75,12 +73,13 @@ class InvoiceSettingController extends Controller
         }
 
         $data['payment_methods'] = array_values(array_filter($data['payment_methods'] ?? []));
-        $mpesaConfig = [];
+        $mpesaConfig = is_array($settings->mpesa_config) ? $settings->mpesa_config : [];
         foreach (($data['mpesa'] ?? []) as $key => $value) {
             if (is_string($value)) {
                 $value = trim($value);
             }
             if ($value === null || $value === '') {
+                unset($mpesaConfig[$key]);
                 continue;
             }
             if (in_array($key, ['shortcode', 'party_b', 'till_number'], true) && is_string($value)) {
