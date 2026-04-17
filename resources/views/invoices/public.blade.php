@@ -248,7 +248,11 @@
                     @csrf
                     <label class="space-y-2 text-sm font-semibold text-slate-600">
                         M-Pesa Phone Number
-                        <input type="text" name="phone" value="{{ old('phone', $invoice->client?->phone) }}" class="w-full rounded-xl border border-slate-200 px-4 py-2">
+                        <input type="text"
+                               name="phone"
+                               placeholder="07XXXXXXXX or 2547XXXXXXXX"
+                               value="{{ old('phone', $mpesaPrefillPhone ?? $invoice->client?->phone) }}"
+                               class="w-full rounded-xl border border-slate-200 px-4 py-2">
                     </label>
                     <label class="space-y-2 text-sm font-semibold text-slate-600">
                         Amount (KES)

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Invoice;
 use App\Models\InvoiceSetting;
+use App\Services\MpesaService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\URL;
 
@@ -13,10 +14,15 @@ class PublicInvoiceController extends Controller
     {
         $invoice->load(['client', 'items', 'payments', 'mpesaTransactions']);
         $settings = InvoiceSetting::first() ?? new InvoiceSetting(InvoiceSetting::defaults());
+        $mpesaPrefillPhone = (string) ($invoice->client?->phone ?? '');
+        $normalizedPhone = (new MpesaService($settings))->normalizePhone($mpesaPrefillPhone);
+        if (preg_match('/^254[17]\d{8}$/', $normalizedPhone)) {
+            $mpesaPrefillPhone = $normalizedPhone;
+        }
         $verificationUrl = URL::signedRoute('invoice.verify', $invoice->public_id);
         $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' . urlencode($verificationUrl);
 
-        return view('invoices.public', compact('invoice', 'settings', 'verificationUrl', 'qrUrl'));
+        return view('invoices.public', compact('invoice', 'settings', 'verificationUrl', 'qrUrl', 'mpesaPrefillPhone'));
     }
 
     public function pdf(Invoice $invoice)

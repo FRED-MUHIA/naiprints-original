@@ -26,7 +26,7 @@
     </p>
 
     <p style="margin:0 0 22px;">
-        <a href="{{ $receiptLink }}" style="display:inline-block;padding:12px 18px;border-radius:999px;background:#0f766e;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;">
+        <a href="{{ $receiptLink }}" style="display:inline-block;padding:12px 18px;border-radius:999px;background:#e11d2e;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;">
             View Receipt
         </a>
     </p>
