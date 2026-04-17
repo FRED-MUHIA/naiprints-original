@@ -74,6 +74,8 @@ class InvoiceSettingController extends Controller
 
         $data['payment_methods'] = array_values(array_filter($data['payment_methods'] ?? []));
         $mpesaConfig = is_array($settings->mpesa_config) ? $settings->mpesa_config : [];
+        $sensitiveKeys = ['consumer_secret', 'passkey', 'security_credential'];
+
         foreach (($data['mpesa'] ?? []) as $key => $value) {
             if (is_string($value)) {
                 $value = trim($value);
@@ -83,6 +85,10 @@ class InvoiceSettingController extends Controller
                 }
             }
             if ($value === null || $value === '') {
+                if (in_array($key, $sensitiveKeys, true)) {
+                    // Keep existing secret values when the form is submitted blank.
+                    continue;
+                }
                 unset($mpesaConfig[$key]);
                 continue;
             }

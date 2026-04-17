@@ -64,10 +64,11 @@
             <h2 class="text-lg font-semibold">M-Pesa API</h2>
             @php
                 $mpesa = $settings->mpesa_config ?? [];
-                $passkeyValue = old('mpesa.passkey', $mpesa['passkey'] ?? '');
-                if (in_array(strtolower(trim((string) $passkeyValue)), ['undefined', 'null', 'nil', 'none', 'n/a', 'na'], true)) {
-                    $passkeyValue = '';
-                }
+                $invalidPlaceholders = ['undefined', 'null', 'nil', 'none', 'n/a', 'na'];
+                $storedPasskey = trim((string) ($mpesa['passkey'] ?? ''));
+                $storedConsumerSecret = trim((string) ($mpesa['consumer_secret'] ?? ''));
+                $hasSavedPasskey = $storedPasskey !== '' && !in_array(strtolower($storedPasskey), $invalidPlaceholders, true);
+                $hasSavedConsumerSecret = $storedConsumerSecret !== '' && !in_array(strtolower($storedConsumerSecret), $invalidPlaceholders, true);
             @endphp
             <div class="grid gap-4 md:grid-cols-2">
                 <label class="space-y-2 text-sm font-semibold text-slate-600">
@@ -88,14 +89,29 @@
                 </label>
                 <label class="space-y-2 text-sm font-semibold text-slate-600">
                     Consumer Secret
-                    <input type="password" name="mpesa[consumer_secret]" value="{{ old('mpesa.consumer_secret', $mpesa['consumer_secret'] ?? '') }}" class="admin-input border border-slate-200 rounded-xl px-4 py-2">
+                    <input type="password"
+                           name="mpesa[consumer_secret]"
+                           value="{{ old('mpesa.consumer_secret', '') }}"
+                           placeholder="{{ $hasSavedConsumerSecret ? 'Saved (leave blank to keep)' : '' }}"
+                           class="admin-input border border-slate-200 rounded-xl px-4 py-2">
+                    @if ($hasSavedConsumerSecret)
+                        <span class="block text-xs text-emerald-600">Consumer secret is saved.</span>
+                    @endif
                 </label>
                 <label class="space-y-2 text-sm font-semibold text-slate-600">
                     Passkey
-                    <input type="password" name="mpesa[passkey]" value="{{ $passkeyValue }}" class="admin-input border border-slate-200 rounded-xl px-4 py-2">
+                    <input type="password"
+                           name="mpesa[passkey]"
+                           value="{{ old('mpesa.passkey', '') }}"
+                           placeholder="{{ $hasSavedPasskey ? 'Saved (leave blank to keep)' : '' }}"
+                           class="admin-input border border-slate-200 rounded-xl px-4 py-2">
+                    @if ($hasSavedPasskey)
+                        <span class="block text-xs text-emerald-600">Passkey is saved.</span>
+                    @endif
                 </label>
                 <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600 md:col-span-2">
                     You can set passkey directly here in Dashboard settings.
+                    If you save this form with passkey blank, the existing saved passkey is kept.
                     Server <code>.env</code> values are used only as fallback when a field is blank here.
                 </div>
                 <label class="space-y-2 text-sm font-semibold text-slate-600">
