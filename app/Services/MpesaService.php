@@ -3,10 +3,11 @@
 namespace App\Services;
 
 use App\Models\InvoiceSetting;
+use App\Models\MpesaTransaction;
+use App\Support\MpesaPhone;
+use GuzzleHttp\Client;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
 use RuntimeException;
 
 class MpesaService
@@ -18,71 +19,23 @@ class MpesaService
     public function config(): array
     {
         $settings = $this->settings ?: InvoiceSetting::first();
-        $envOverrides = config('services.mpesa', []);
-        $dbConfig = is_array($settings?->mpesa_config) ? $settings->mpesa_config : [];
         $raw = [];
 
-        if (is_array($envOverrides)) {
-            foreach ($envOverrides as $key => $value) {
-                $value = $this->normalizeConfigValue($value);
-                if ($value === null || $value === '') {
-                    continue;
-                }
-                $raw[$key] = $value;
-            }
-        }
+        $this->mergeConfig($raw, config('services.mpesa', []));
+        $this->mergeConfig($raw, config('mpesa', []));
+        $this->mergeConfig($raw, is_array($settings?->mpesa_config) ? $settings->mpesa_config : []);
 
-        // Dashboard settings take priority; env is fallback.
-        foreach ($dbConfig as $key => $value) {
-            $value = $this->normalizeConfigValue($value);
-            if ($value === null || $value === '') {
-                continue;
-            }
-            $raw[$key] = $value;
-        }
-
-        $normalized = [];
-        foreach ($raw as $key => $value) {
-            $value = $this->normalizeConfigValue($value);
-            $normalized[$key] = $value;
-        }
-
-        if (!empty($normalized['environment']) && is_string($normalized['environment'])) {
-            $normalized['environment'] = strtolower($normalized['environment']);
+        if (!empty($raw['environment']) && is_string($raw['environment'])) {
+            $raw['environment'] = strtolower($raw['environment']);
         }
 
         foreach (['shortcode', 'party_b', 'till_number'] as $numericKey) {
-            if (!empty($normalized[$numericKey]) && is_string($normalized[$numericKey])) {
-                $normalized[$numericKey] = preg_replace('/\D+/', '', $normalized[$numericKey]);
+            if (!empty($raw[$numericKey]) && is_string($raw[$numericKey])) {
+                $raw[$numericKey] = preg_replace('/\D+/', '', $raw[$numericKey]);
             }
         }
 
-        return $normalized;
-    }
-
-    private function normalizeConfigValue(mixed $value): mixed
-    {
-        if (!is_string($value)) {
-            return $value;
-        }
-
-        $value = trim($value);
-        if ($value === '') {
-            return '';
-        }
-
-        $placeholder = strtolower($value);
-        if (in_array($placeholder, ['undefined', 'null', 'nil', 'none', 'n/a', 'na'], true)) {
-            return '';
-        }
-
-        return $value;
-    }
-
-    private function tokenCacheKey(): string
-    {
-        $config = $this->config();
-        return 'mpesa_token_' . ($config['environment'] ?? 'sandbox');
+        return $raw;
     }
 
     public function isConfigured(): bool
@@ -103,81 +56,68 @@ class MpesaService
             : 'https://sandbox.safaricom.co.ke';
     }
 
-    public function accessToken(): string
+    public function generateAccessToken(bool $forceRefresh = false): string
     {
         $config = $this->config();
         $key = $config['consumer_key'] ?? null;
         $secret = $config['consumer_secret'] ?? null;
 
         if (!$key || !$secret) {
-            throw new \RuntimeException('M-Pesa consumer key/secret are missing.');
+            throw new RuntimeException('M-Pesa consumer key/secret are missing.');
         }
 
-        $cacheKey = $this->tokenCacheKey();
+        if ($forceRefresh) {
+            Cache::forget($this->tokenCacheKey());
+        }
 
-        return Cache::remember($cacheKey, now()->addMinutes(55), function () use ($key, $secret) {
-            $response = Http::timeout(30)
-                ->withBasicAuth($key, $secret)
-                ->get($this->baseUrl() . '/oauth/v1/generate', [
-                    'grant_type' => 'client_credentials',
-                ])
-                ->throw()
-                ->json();
+        return Cache::remember(
+            $this->tokenCacheKey(),
+            now()->addMinutes((int) ($config['cache_ttl_minutes'] ?? 55)),
+            function () use ($key, $secret) {
+                try {
+                    $response = $this->httpClient()->request('GET', '/oauth/v1/generate', [
+                        'auth' => [$key, $secret],
+                        'query' => ['grant_type' => 'client_credentials'],
+                    ]);
+                } catch (\Throwable $exception) {
+                    throw new RuntimeException($this->formatHttpException($exception), previous: $exception);
+                }
 
-            $token = $response['access_token'] ?? null;
-            if (!$token) {
-                throw new \RuntimeException('Failed to obtain M-Pesa access token.');
+                $payload = $this->decodeResponseBody((string) $response->getBody());
+                $token = $payload['access_token'] ?? null;
+
+                if (!$token || !is_string($token)) {
+                    throw new RuntimeException('Failed to obtain M-Pesa access token.');
+                }
+
+                return $token;
             }
+        );
+    }
 
-            return $token;
-        });
+    public function accessToken(): string
+    {
+        return $this->generateAccessToken();
+    }
+
+    public function generatePassword(?string $timestamp = null): string
+    {
+        $config = $this->config();
+        $shortcode = $config['shortcode'] ?? null;
+        $passkey = $config['passkey'] ?? null;
+
+        if (!$shortcode || !$passkey) {
+            throw new RuntimeException('M-Pesa shortcode/passkey are missing or invalid. Set the real Daraja passkey (not "undefined") in server .env (MPESA_PASSKEY) or admin settings.');
+        }
+
+        $timestamp = $timestamp ?: Carbon::now()->format('YmdHis');
+
+        return base64_encode($shortcode . $passkey . $timestamp);
     }
 
     public function normalizePhone(string $phone): string
     {
-        $value = trim($phone);
-        if ($value === '') {
-            return '';
-        }
-
-        if (preg_match('/(?:\+|00)?254\s*[-\s()]?0?([17]\d{8})\b/u', $value, $matches)) {
-            return '254' . $matches[1];
-        }
-
-        if (preg_match('/\b0([17]\d{8})\b/u', $value, $matches)) {
-            return '254' . $matches[1];
-        }
-
-        if (preg_match('/\b([17]\d{8})\b/u', $value, $matches)) {
-            return '254' . $matches[1];
-        }
-
-        $digits = preg_replace('/\D+/', '', $value) ?? '';
-        if ($digits === '') {
-            return '';
-        }
-
-        if (Str::startsWith($digits, '00254')) {
-            $digits = substr($digits, 2);
-        }
-
-        if (preg_match('/^2540([17]\d{8})$/', $digits, $matches)) {
-            return '254' . $matches[1];
-        }
-
-        if (preg_match('/^0([17]\d{8})$/', $digits, $matches)) {
-            return '254' . $matches[1];
-        }
-
-        if (preg_match('/^([17]\d{8})$/', $digits, $matches)) {
-            return '254' . $matches[1];
-        }
-
-        if (preg_match('/^254[17]\d{8}$/', $digits)) {
-            return $digits;
-        }
-
-        return $digits;
+        return MpesaPhone::format($phone) ?? trim($phone);
     }
 
     public function validatePhone(string $phone): string
@@ -232,6 +172,293 @@ class MpesaService
         return $callbackUrl;
     }
 
+    public function stkPush(array $payload): array
+    {
+        $config = $this->config();
+        $shortcode = $config['shortcode'] ?? null;
+
+        if (!$shortcode) {
+            throw new RuntimeException('M-Pesa shortcode is missing.');
+        }
+
+        $transactionType = $config['transaction_type'] ?? 'CustomerPayBillOnline';
+        $partyB = $config['party_b'] ?? $config['till_number'] ?? $shortcode;
+        $phone = $this->validatePhone((string) ($payload['PhoneNumber'] ?? $payload['PartyA'] ?? ''));
+        $amount = $this->normalizeAmount($payload['Amount'] ?? 1);
+        $callbackUrl = $this->sanitizeCallbackUrl((string) ($payload['CallBackURL'] ?? ($config['callback_url'] ?? '')));
+        $accountReference = substr(trim((string) ($payload['AccountReference'] ?? 'NaiPrints')), 0, 12);
+        $transactionDesc = substr(trim((string) ($payload['TransactionDesc'] ?? 'Payment')), 0, 13);
+
+        $timestamp = Carbon::now()->format('YmdHis');
+        $password = $this->generatePassword($timestamp);
+
+        $body = [
+            'BusinessShortCode' => $shortcode,
+            'Password' => $password,
+            'Timestamp' => $timestamp,
+            'TransactionType' => $transactionType,
+            'Amount' => $amount,
+            'PartyA' => $phone,
+            'PartyB' => (string) $partyB,
+            'PhoneNumber' => $phone,
+            'CallBackURL' => $callbackUrl,
+            'AccountReference' => $accountReference !== '' ? $accountReference : 'NaiPrints',
+            'TransactionDesc' => $transactionDesc !== '' ? $transactionDesc : 'Payment',
+        ];
+
+        try {
+            return $this->sendStkPushRequest($body);
+        } catch (\Throwable $exception) {
+            if ($this->isWrongCredentialsError($exception)) {
+                Cache::forget($this->tokenCacheKey());
+
+                try {
+                    return $this->sendStkPushRequest($body);
+                } catch (\Throwable $retryException) {
+                    throw new RuntimeException($this->formatHttpException($retryException), previous: $retryException);
+                }
+            }
+
+            throw new RuntimeException($this->formatHttpException($exception), previous: $exception);
+        }
+    }
+
+    public function handleCallback(array $payload): MpesaTransaction
+    {
+        $callback = data_get($payload, 'Body.stkCallback');
+
+        if (!is_array($callback)) {
+            throw new RuntimeException('Invalid callback payload.');
+        }
+
+        $checkoutId = (string) ($callback['CheckoutRequestID'] ?? '');
+        $transaction = $checkoutId !== ''
+            ? MpesaTransaction::firstOrNew(['checkout_request_id' => $checkoutId])
+            : new MpesaTransaction();
+
+        $metadata = collect($callback['CallbackMetadata']['Item'] ?? [])->mapWithKeys(function ($item) {
+            return [(string) ($item['Name'] ?? '') => $item['Value'] ?? null];
+        });
+
+        $resultCode = (string) ($callback['ResultCode'] ?? '');
+        $resultDesc = (string) ($callback['ResultDesc'] ?? '');
+        $status = $this->mapResultCodeToStatus($resultCode);
+
+        $transactionDate = $metadata->get('TransactionDate');
+        $occurredAt = null;
+        if ($transactionDate) {
+            try {
+                $occurredAt = Carbon::createFromFormat('YmdHis', (string) $transactionDate);
+            } catch (\Throwable $exception) {
+                $occurredAt = now();
+            }
+        }
+
+        $transaction->fill([
+            'merchant_request_id' => (string) ($callback['MerchantRequestID'] ?? $transaction->merchant_request_id),
+            'result_code' => $resultCode,
+            'result_desc' => $resultDesc,
+            'status' => $status,
+            'phone' => $metadata->get('PhoneNumber') ?: $transaction->phone,
+            'receipt_number' => $metadata->get('MpesaReceiptNumber') ?: $transaction->receipt_number,
+            'reference' => $metadata->get('AccountReference') ?: $transaction->reference,
+            'raw_callback' => $payload,
+        ]);
+
+        $amount = $metadata->get('Amount');
+        if (is_numeric($amount)) {
+            $transaction->amount = (float) $amount;
+        }
+
+        if ($occurredAt) {
+            $transaction->occurred_at = $occurredAt;
+        }
+
+        if ($transaction->type === null || $transaction->type === '') {
+            $transaction->type = 'stk';
+        }
+
+        $transaction->save();
+
+        return $transaction->fresh();
+    }
+
+    public function validateTransaction(string $checkoutRequestId): array
+    {
+        $checkoutRequestId = trim($checkoutRequestId);
+        if ($checkoutRequestId === '') {
+            throw new RuntimeException('CheckoutRequestID is required.');
+        }
+
+        $config = $this->config();
+        $shortcode = $config['shortcode'] ?? null;
+
+        if (!$shortcode) {
+            throw new RuntimeException('M-Pesa shortcode is missing.');
+        }
+
+        $timestamp = Carbon::now()->format('YmdHis');
+        $body = [
+            'BusinessShortCode' => $shortcode,
+            'Password' => $this->generatePassword($timestamp),
+            'Timestamp' => $timestamp,
+            'CheckoutRequestID' => $checkoutRequestId,
+        ];
+
+        try {
+            $response = $this->httpClient()->request('POST', '/mpesa/stkpushquery/v1/query', [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $this->generateAccessToken(),
+                    'Accept' => 'application/json',
+                ],
+                'json' => $body,
+            ]);
+            $payload = $this->decodeResponseBody((string) $response->getBody());
+        } catch (\Throwable $exception) {
+            throw new RuntimeException($this->formatHttpException($exception), previous: $exception);
+        }
+
+        $resultCode = isset($payload['ResultCode']) ? (string) $payload['ResultCode'] : null;
+        $status = $this->mapResultCodeToStatus($resultCode);
+
+        $transaction = MpesaTransaction::where('checkout_request_id', $checkoutRequestId)->latest('id')->first();
+        if ($transaction) {
+            $transaction->status = $status;
+            $transaction->result_code = $resultCode;
+            $transaction->result_desc = (string) ($payload['ResultDesc'] ?? $payload['ResponseDescription'] ?? $transaction->result_desc);
+            $transaction->raw_callback = array_merge((array) $transaction->raw_callback, [
+                'query' => $payload,
+            ]);
+            $transaction->save();
+        }
+
+        return [
+            'checkout_request_id' => $checkoutRequestId,
+            'status' => $status,
+            'result_code' => $resultCode,
+            'result_desc' => (string) ($payload['ResultDesc'] ?? $payload['ResponseDescription'] ?? ''),
+            'raw' => $payload,
+        ];
+    }
+
+    public function registerC2B(string $confirmationUrl, string $validationUrl, string $responseType = 'Completed'): array
+    {
+        $config = $this->config();
+        $shortcode = $config['shortcode'] ?? null;
+
+        if (!$shortcode) {
+            throw new RuntimeException('M-Pesa shortcode is missing.');
+        }
+
+        $body = [
+            'ShortCode' => $shortcode,
+            'ResponseType' => $responseType,
+            'ConfirmationURL' => $confirmationUrl,
+            'ValidationURL' => $validationUrl,
+        ];
+
+        try {
+            $response = $this->httpClient()->request('POST', '/mpesa/c2b/v1/registerurl', [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $this->generateAccessToken(),
+                    'Accept' => 'application/json',
+                ],
+                'json' => $body,
+            ]);
+
+            return $this->decodeResponseBody((string) $response->getBody());
+        } catch (\Throwable $exception) {
+            throw new RuntimeException($this->formatHttpException($exception), previous: $exception);
+        }
+    }
+
+    private function mergeConfig(array &$target, mixed $source): void
+    {
+        if (!is_array($source)) {
+            return;
+        }
+
+        foreach ($source as $key => $value) {
+            $value = $this->normalizeConfigValue($value);
+            if ($value === null || $value === '') {
+                continue;
+            }
+            $target[(string) $key] = $value;
+        }
+    }
+
+    private function normalizeConfigValue(mixed $value): mixed
+    {
+        if (!is_string($value)) {
+            return $value;
+        }
+
+        $value = trim($value);
+        if ($value === '') {
+            return '';
+        }
+
+        $placeholder = strtolower($value);
+        if (in_array($placeholder, ['undefined', 'null', 'nil', 'none', 'n/a', 'na'], true)) {
+            return '';
+        }
+
+        return $value;
+    }
+
+    private function tokenCacheKey(): string
+    {
+        $config = $this->config();
+
+        return 'mpesa_token_' . ($config['environment'] ?? 'sandbox');
+    }
+
+    private function timeoutSeconds(): int
+    {
+        $config = $this->config();
+
+        return max(5, (int) ($config['request_timeout'] ?? 30));
+    }
+
+    private function httpClient(): Client
+    {
+        return new Client([
+            'base_uri' => $this->baseUrl(),
+            'timeout' => $this->timeoutSeconds(),
+        ]);
+    }
+
+    private function decodeResponseBody(string $raw): array
+    {
+        $decoded = json_decode($raw, true);
+
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    private function sendStkPushRequest(array $body): array
+    {
+        $response = $this->httpClient()->request('POST', '/mpesa/stkpush/v1/processrequest', [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $this->generateAccessToken(),
+                'Accept' => 'application/json',
+            ],
+            'json' => $body,
+        ]);
+
+        return $this->decodeResponseBody((string) $response->getBody());
+    }
+
+    private function mapResultCodeToStatus(?string $resultCode): string
+    {
+        if ($resultCode === null || $resultCode === '') {
+            return MpesaTransaction::STATUS_PENDING;
+        }
+
+        return $resultCode === '0'
+            ? MpesaTransaction::STATUS_SUCCESS
+            : MpesaTransaction::STATUS_FAILED;
+    }
+
     private function formatHttpException(\Throwable $exception): string
     {
         $message = $exception->getMessage();
@@ -263,11 +490,6 @@ class MpesaService
                     $transactionType = $config['transaction_type'] ?? 'CustomerPayBillOnline';
                     $message .= " | Confirm environment ({$environment}), transaction type ({$transactionType}), shortcode ({$shortcode}), and passkey belong to the same Daraja app. If a recent STK prompt is still pending on this phone, wait 2 minutes and retry.";
                 }
-            } else {
-                $status = method_exists($response, 'status') ? $response->status() : null;
-                if ($status) {
-                    $message = "M-Pesa API error (HTTP {$status}).";
-                }
             }
         }
 
@@ -276,9 +498,14 @@ class MpesaService
 
     private function extractHttpResponse(\Throwable $exception): mixed
     {
+        if (method_exists($exception, 'getResponse')) {
+            return $exception->getResponse();
+        }
+
         if (method_exists($exception, 'response')) {
             return $exception->response();
         }
+
         if (property_exists($exception, 'response')) {
             return $exception->response;
         }
@@ -292,6 +519,7 @@ class MpesaService
         if (!$response) {
             return false;
         }
+
         $body = $this->extractHttpBody($response);
 
         return (string) ($body['errorCode'] ?? '') === '500.001.1001';
@@ -299,19 +527,31 @@ class MpesaService
 
     private function extractHttpBody(mixed $response): array
     {
-        try {
-            $body = $response->json();
-            if (is_array($body) && $body !== []) {
-                return $body;
+        if (is_object($response) && method_exists($response, 'json')) {
+            try {
+                $body = $response->json();
+                if (is_array($body) && $body !== []) {
+                    return $body;
+                }
+            } catch (\Throwable $exception) {
+                // Fall through to raw body decoding.
             }
-        } catch (\Throwable $exception) {
-            // Fall through to raw body decoding.
         }
 
-        try {
-            $raw = (string) $response->body();
-        } catch (\Throwable $exception) {
-            return [];
+        $raw = '';
+
+        if (is_object($response) && method_exists($response, 'getBody')) {
+            try {
+                $raw = (string) $response->getBody();
+            } catch (\Throwable $exception) {
+                $raw = '';
+            }
+        } elseif (is_object($response) && method_exists($response, 'body')) {
+            try {
+                $raw = (string) $response->body();
+            } catch (\Throwable $exception) {
+                $raw = '';
+            }
         }
 
         if ($raw === '') {
@@ -319,91 +559,7 @@ class MpesaService
         }
 
         $decoded = json_decode($raw, true);
+
         return is_array($decoded) ? $decoded : [];
-    }
-
-    private function sendStkPushRequest(array $body): array
-    {
-        return Http::timeout(30)
-            ->withToken($this->accessToken())
-            ->asJson()
-            ->acceptJson()
-            ->post($this->baseUrl() . '/mpesa/stkpush/v1/processrequest', $body)
-            ->throw()
-            ->json();
-    }
-
-    public function stkPush(array $payload): array
-    {
-        $config = $this->config();
-        $shortcode = $config['shortcode'] ?? null;
-        $passkey = $config['passkey'] ?? null;
-
-        if (!$shortcode || !$passkey) {
-            throw new \RuntimeException('M-Pesa shortcode/passkey are missing or invalid. Set the real Daraja passkey (not "undefined") in server .env (MPESA_PASSKEY) or admin settings.');
-        }
-
-        $transactionType = $config['transaction_type'] ?? 'CustomerPayBillOnline';
-        $partyB = $config['party_b'] ?? $config['till_number'] ?? $shortcode;
-        $phone = $this->validatePhone((string) ($payload['PhoneNumber'] ?? $payload['PartyA'] ?? ''));
-        $amount = $this->normalizeAmount($payload['Amount'] ?? 1);
-        $callbackUrl = $this->sanitizeCallbackUrl((string) ($payload['CallBackURL'] ?? ($config['callback_url'] ?? '')));
-        $accountReference = substr(trim((string) ($payload['AccountReference'] ?? 'NaiPrints')), 0, 12);
-        $transactionDesc = substr(trim((string) ($payload['TransactionDesc'] ?? 'Payment')), 0, 13);
-
-        $timestamp = Carbon::now()->format('YmdHis');
-        $password = base64_encode($shortcode . $passkey . $timestamp);
-
-        $body = [
-            'BusinessShortCode' => $shortcode,
-            'Password' => $password,
-            'Timestamp' => $timestamp,
-            'TransactionType' => $transactionType,
-            'Amount' => $amount,
-            'PartyA' => $phone,
-            'PartyB' => (string) $partyB,
-            'PhoneNumber' => $phone,
-            'CallBackURL' => $callbackUrl,
-            'AccountReference' => $accountReference !== '' ? $accountReference : 'NaiPrints',
-            'TransactionDesc' => $transactionDesc !== '' ? $transactionDesc : 'Payment',
-        ];
-
-        try {
-            return $this->sendStkPushRequest($body);
-        } catch (\Throwable $exception) {
-            if ($this->isWrongCredentialsError($exception)) {
-                Cache::forget($this->tokenCacheKey());
-                try {
-                    return $this->sendStkPushRequest($body);
-                } catch (\Throwable $retryException) {
-                    throw new RuntimeException($this->formatHttpException($retryException), previous: $retryException);
-                }
-            }
-
-            throw new RuntimeException($this->formatHttpException($exception), previous: $exception);
-        }
-    }
-
-    public function registerC2B(string $confirmationUrl, string $validationUrl, string $responseType = 'Completed'): array
-    {
-        $config = $this->config();
-        $shortcode = $config['shortcode'] ?? null;
-
-        if (!$shortcode) {
-            throw new \RuntimeException('M-Pesa shortcode is missing.');
-        }
-
-        $body = [
-            'ShortCode' => $shortcode,
-            'ResponseType' => $responseType,
-            'ConfirmationURL' => $confirmationUrl,
-            'ValidationURL' => $validationUrl,
-        ];
-
-        return Http::timeout(30)
-            ->withToken($this->accessToken())
-            ->post($this->baseUrl() . '/mpesa/c2b/v1/registerurl', $body)
-            ->throw()
-            ->json();
     }
 }
