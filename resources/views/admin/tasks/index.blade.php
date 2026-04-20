@@ -47,17 +47,17 @@
         </p>
     </div>
 
-    <div class="admin-panel overflow-hidden p-2">
-        <table class="admin-table">
+    <div class="admin-panel overflow-x-auto p-2">
+        <table class="admin-table min-w-[1280px]">
             <thead>
                 <tr>
-                    <th>Task</th>
-                    <th>Client</th>
-                    <th>Assigned To</th>
-                    <th>Assigned Time</th>
-                    <th>Progress</th>
-                    <th>Status</th>
-                    <th></th>
+                    <th class="whitespace-nowrap">Task</th>
+                    <th class="whitespace-nowrap">Client</th>
+                    <th class="whitespace-nowrap">Assigned To</th>
+                    <th class="whitespace-nowrap">Assigned Time</th>
+                    <th class="whitespace-nowrap">Progress</th>
+                    <th class="whitespace-nowrap">Status</th>
+                    <th class="whitespace-nowrap text-right">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -73,8 +73,8 @@
                     <tr>
                         <td class="font-semibold text-slate-700">{{ $task->reference }} - {{ $task->title }}</td>
                         <td>{{ $task->client?->display_name ?? '-' }}</td>
-                        <td>{{ $task->assigned_to ?? '-' }}</td>
-                        <td>{{ optional($task->assigned_at)->format('M d, Y h:i A') }}</td>
+                        <td class="whitespace-nowrap">{{ $task->assigned_to ?? '-' }}</td>
+                        <td class="whitespace-nowrap">{{ optional($task->assigned_at)->format('M d, Y h:i A') }}</td>
                         <td>
                             <div class="min-w-[220px] space-y-2">
                                 <div class="flex items-center justify-between text-xs text-slate-600">
@@ -89,7 +89,7 @@
                                 @endif
                             </div>
                         </td>
-                        <td>
+                        <td class="whitespace-nowrap">
                             <span class="admin-status {{ $statusClass }}">{{ $task->status_label }}</span>
                         </td>
                         <td class="text-right">
@@ -103,18 +103,22 @@
                                     @csrf
                                     <button
                                         type="submit"
-                                        class="admin-btn-primary"
+                                        class="inline-flex items-center rounded-lg bg-brand px-3 py-2 text-xs font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                                         @disabled($task->status === 'delivered')
                                     >
                                         {{ $nextActionText }}
                                     </button>
                                 </form>
-                                <a href="{{ route('admin.tasks.edit', $task) }}" class="admin-btn-outline">Edit</a>
-                                <a href="{{ route('admin.tasks.work-note', $task) }}" class="admin-btn-outline">Work Note PDF</a>
+                                <a href="{{ route('admin.tasks.edit', $task) }}" class="inline-flex items-center rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-400">
+                                    Edit
+                                </a>
+                                <a href="{{ route('admin.tasks.work-note', $task) }}" class="inline-flex items-center rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-400">
+                                    Work Note PDF
+                                </a>
                                 <form method="POST" action="{{ route('admin.tasks.destroy', $task) }}" onsubmit="return confirm('Delete this task?');">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="admin-btn-outline border-rose-200 text-rose-600 hover:border-rose-400 hover:text-rose-700">
+                                    <button type="submit" class="inline-flex items-center rounded-lg border border-rose-300 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:border-rose-400">
                                         Delete
                                     </button>
                                 </form>

@@ -8,6 +8,7 @@
     $totalStagesPreview = max(1, min(20, $totalStagesPreview));
     $currentStagePreview = (int) old('current_stage', $task->current_stage ?? 1);
     $currentStagePreview = max(1, min($totalStagesPreview, $currentStagePreview));
+    $statusPreview = old('status', $task->status ?? 'assigned');
 @endphp
 
 <div class="admin-card space-y-5">
@@ -76,13 +77,27 @@
                         $stateClass = $stageNo < $currentStagePreview
                             ? 'bg-emerald-100 text-emerald-700'
                             : ($stageNo === $currentStagePreview ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700');
+
+                        if ($stageNo < $currentStagePreview) {
+                            $stageProgress = 100;
+                        } elseif ($stageNo === $currentStagePreview) {
+                            if (in_array($statusPreview, ['finished', 'delivered'], true)) {
+                                $stageProgress = 100;
+                            } elseif ($statusPreview === 'in_progress') {
+                                $stageProgress = 50;
+                            } else {
+                                $stageProgress = 0;
+                            }
+                        } else {
+                            $stageProgress = 0;
+                        }
                     @endphp
                     <tr>
                         <td>Stage {{ $stageNo }}</td>
                         <td>
                             <span class="admin-status {{ $stateClass }}">{{ $state }}</span>
                         </td>
-                        <td>{{ (int) round(($stageNo / $totalStagesPreview) * 100) }}%</td>
+                        <td>{{ $stageProgress }}%</td>
                     </tr>
                 @endfor
             </tbody>
