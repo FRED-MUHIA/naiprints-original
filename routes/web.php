@@ -36,6 +36,7 @@ use App\Models\Page;
 use App\Support\PageDefaults;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
@@ -617,19 +618,31 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
         $featuredProduct = $products->first();
         $categories = Category::orderBy('name')->get();
         $brands = Brand::orderBy('name')->get();
+        $isTaskModuleReady = Schema::hasTable('tasks');
         $taskStats = [
-            'total' => Task::count(),
-            'assigned' => Task::where('status', 'assigned')->count(),
-            'in_progress' => Task::where('status', 'in_progress')->count(),
-            'finished' => Task::where('status', 'finished')->count(),
-            'delivered' => Task::where('status', 'delivered')->count(),
+            'total' => 0,
+            'assigned' => 0,
+            'in_progress' => 0,
+            'finished' => 0,
+            'delivered' => 0,
         ];
-        $recentTasks = Task::with('client')
-            ->orderByDesc('updated_at')
-            ->take(6)
-            ->get();
+        $recentTasks = collect();
 
-        return view('admin.dashboard', compact('products', 'featuredProduct', 'categories', 'brands', 'taskStats', 'recentTasks'));
+        if ($isTaskModuleReady) {
+            $taskStats = [
+                'total' => Task::count(),
+                'assigned' => Task::where('status', 'assigned')->count(),
+                'in_progress' => Task::where('status', 'in_progress')->count(),
+                'finished' => Task::where('status', 'finished')->count(),
+                'delivered' => Task::where('status', 'delivered')->count(),
+            ];
+            $recentTasks = Task::with('client')
+                ->orderByDesc('updated_at')
+                ->take(6)
+                ->get();
+        }
+
+        return view('admin.dashboard', compact('products', 'featuredProduct', 'categories', 'brands', 'taskStats', 'recentTasks', 'isTaskModuleReady'));
     })->name('dashboard');
 
     Route::resource('products', ProductController::class)->except(['show']);
@@ -651,6 +664,7 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
 
     Route::resource('clients', ClientController::class)->except(['show']);
     Route::get('tasks/{task}/work-note', [TaskController::class, 'downloadWorkNote'])->name('tasks.work-note');
+    Route::post('tasks/{task}/next-stage', [TaskController::class, 'nextStage'])->name('tasks.next-stage');
     Route::resource('tasks', TaskController::class)->except(['show']);
     Route::get('invoices/export', [InvoiceController::class, 'export'])->name('invoices.export');
     Route::get('invoices/trash', [InvoiceController::class, 'trash'])->name('invoices.trash');

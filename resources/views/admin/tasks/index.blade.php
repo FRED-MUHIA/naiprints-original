@@ -42,6 +42,9 @@
             </form>
             <a href="{{ route('admin.tasks.create') }}" class="admin-btn-primary">Assign Task</a>
         </div>
+        <p class="mt-3 text-xs text-slate-500">
+            `Next Stage` behavior: moves task to the next stage, marks final stage as `Finished`, and a final click marks it `Delivered`.
+        </p>
     </div>
 
     <div class="admin-panel overflow-hidden p-2">
@@ -73,17 +76,39 @@
                         <td>{{ $task->assigned_to ?? '-' }}</td>
                         <td>{{ optional($task->assigned_at)->format('M d, Y h:i A') }}</td>
                         <td>
-                            Stage {{ $task->current_stage }}/{{ $task->total_stages }}
-                            <span class="text-xs text-slate-500">({{ $task->progress_percent }}%)</span>
-                            @if ($task->stage_label)
-                                <div class="text-xs text-slate-500">{{ $task->stage_label }}</div>
-                            @endif
+                            <div class="min-w-[220px] space-y-2">
+                                <div class="flex items-center justify-between text-xs text-slate-600">
+                                    <span>Stage {{ $task->current_stage }}/{{ $task->total_stages }}</span>
+                                    <span>{{ $task->progress_percent }}%</span>
+                                </div>
+                                <div class="h-2 w-full rounded-full bg-slate-200">
+                                    <div class="h-2 rounded-full bg-brand" style="width: {{ $task->progress_percent }}%;"></div>
+                                </div>
+                                @if ($task->stage_label)
+                                    <div class="text-xs text-slate-500">{{ $task->stage_label }}</div>
+                                @endif
+                            </div>
                         </td>
                         <td>
                             <span class="admin-status {{ $statusClass }}">{{ $task->status_label }}</span>
                         </td>
                         <td class="text-right">
                             <div class="flex justify-end gap-2">
+                                @php
+                                    $nextActionText = $task->current_stage < $task->total_stages
+                                        ? 'Next Stage'
+                                        : ($task->status === 'finished' ? 'Mark Delivered' : ($task->status === 'delivered' ? 'Delivered' : 'Mark Finished'));
+                                @endphp
+                                <form method="POST" action="{{ route('admin.tasks.next-stage', $task) }}">
+                                    @csrf
+                                    <button
+                                        type="submit"
+                                        class="admin-btn-primary"
+                                        @disabled($task->status === 'delivered')
+                                    >
+                                        {{ $nextActionText }}
+                                    </button>
+                                </form>
                                 <a href="{{ route('admin.tasks.edit', $task) }}" class="admin-btn-outline">Edit</a>
                                 <a href="{{ route('admin.tasks.work-note', $task) }}" class="admin-btn-outline">Work Note PDF</a>
                                 <form method="POST" action="{{ route('admin.tasks.destroy', $task) }}" onsubmit="return confirm('Delete this task?');">

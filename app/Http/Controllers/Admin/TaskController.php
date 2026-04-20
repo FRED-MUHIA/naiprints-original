@@ -7,6 +7,7 @@ use App\Models\Client;
 use App\Models\Task;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -14,6 +15,10 @@ class TaskController extends Controller
 {
     public function index(Request $request)
     {
+        if (!$this->isTaskModuleReady()) {
+            return $this->missingTaskTableRedirect();
+        }
+
         $search = $request->string('search')->toString();
         $status = $request->string('status')->toString();
 
@@ -49,6 +54,10 @@ class TaskController extends Controller
 
     public function create()
     {
+        if (!$this->isTaskModuleReady()) {
+            return $this->missingTaskTableRedirect();
+        }
+
         $task = new Task([
             'assigned_at' => now(),
             'status' => 'assigned',
@@ -63,6 +72,10 @@ class TaskController extends Controller
 
     public function store(Request $request)
     {
+        if (!$this->isTaskModuleReady()) {
+            return $this->missingTaskTableRedirect();
+        }
+
         $data = $this->validateTask($request);
         $data = $this->normalizeTaskPayload($data);
 
@@ -72,16 +85,26 @@ class TaskController extends Controller
             ->with('success', 'Task created successfully.');
     }
 
-    public function edit(Task $task)
+    public function edit($task)
     {
+        if (!$this->isTaskModuleReady()) {
+            return $this->missingTaskTableRedirect();
+        }
+
+        $task = Task::findOrFail($task);
         $clients = Client::orderBy('name')->get();
         $statusOptions = $this->statusOptions();
 
         return view('admin.tasks.edit', compact('task', 'clients', 'statusOptions'));
     }
 
-    public function update(Request $request, Task $task)
+    public function update(Request $request, $task)
     {
+        if (!$this->isTaskModuleReady()) {
+            return $this->missingTaskTableRedirect();
+        }
+
+        $task = Task::findOrFail($task);
         $data = $this->validateTask($request);
         $data = $this->normalizeTaskPayload($data, $task);
 
@@ -91,21 +114,81 @@ class TaskController extends Controller
             ->with('success', 'Task updated successfully.');
     }
 
-    public function destroy(Task $task)
+    public function destroy($task)
     {
+        if (!$this->isTaskModuleReady()) {
+            return $this->missingTaskTableRedirect();
+        }
+
+        $task = Task::findOrFail($task);
         $task->delete();
 
         return redirect()->route('admin.tasks.index')
             ->with('success', 'Task deleted successfully.');
     }
 
-    public function downloadWorkNote(Task $task)
+    public function downloadWorkNote($task)
     {
+        if (!$this->isTaskModuleReady()) {
+            return $this->missingTaskTableRedirect();
+        }
+
+        $task = Task::findOrFail($task);
         $task->load('client');
         $pdf = Pdf::loadView('tasks.work-note', compact('task'))
             ->setOption('isRemoteEnabled', true);
 
         return $pdf->download("{$task->reference}-work-note.pdf");
+    }
+
+    public function nextStage($task)
+    {
+        if (!$this->isTaskModuleReady()) {
+            return $this->missingTaskTableRedirect();
+        }
+
+        $task = Task::findOrFail($task);
+        $now = now();
+        $totalStages = max(1, (int) $task->total_stages);
+        $currentStage = max(1, min($totalStages, (int) $task->current_stage));
+
+        if ($task->status === 'delivered') {
+            return back()->with('success', 'Task is already delivered.');
+        }
+
+        if ($currentStage < $totalStages) {
+            $nextStage = $currentStage + 1;
+            $task->update([
+                'current_stage' => $nextStage,
+                'status' => $nextStage >= $totalStages ? 'finished' : 'in_progress',
+                'finished_at' => $nextStage >= $totalStages ? ($task->finished_at ?: $now) : null,
+                'delivered_at' => null,
+            ]);
+
+            if ($nextStage >= $totalStages) {
+                return back()->with('success', 'Task moved to final stage and marked as finished.');
+            }
+
+            return back()->with('success', "Task moved to stage {$nextStage}.");
+        }
+
+        if ($task->status === 'finished') {
+            $task->update([
+                'status' => 'delivered',
+                'finished_at' => $task->finished_at ?: $now,
+                'delivered_at' => $task->delivered_at ?: $now,
+            ]);
+
+            return back()->with('success', 'Task marked as delivered to the client.');
+        }
+
+        $task->update([
+            'status' => 'finished',
+            'finished_at' => $task->finished_at ?: $now,
+            'delivered_at' => null,
+        ]);
+
+        return back()->with('success', 'Task marked as finished. Click Next Stage again to mark delivered.');
     }
 
     private function validateTask(Request $request): array
@@ -171,5 +254,17 @@ class TaskController extends Controller
             'finished' => 'Finished',
             'delivered' => 'Delivered',
         ];
+    }
+
+    private function isTaskModuleReady(): bool
+    {
+        return Schema::hasTable('tasks');
+    }
+
+    private function missingTaskTableRedirect()
+    {
+        return redirect()->route('admin.dashboard')->withErrors([
+            'tasks' => 'Task module is not ready yet. Run: php artisan migrate',
+        ]);
     }
 }

@@ -3,6 +3,12 @@
 @section('title', 'Dashboard')
 
 @section('content')
+    @if (isset($isTaskModuleReady) && !$isTaskModuleReady)
+        <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Task module requires migration on this server. Run <code>php artisan migrate</code> in the project directory.
+        </div>
+    @endif
+
     <div class="admin-card">
         <div class="flex flex-wrap items-center justify-between gap-4">
             <div>

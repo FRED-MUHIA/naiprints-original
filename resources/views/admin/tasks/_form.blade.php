@@ -3,6 +3,11 @@
     if ($assignedAtValue === null) {
         $assignedAtValue = optional($task->assigned_at)->format('Y-m-d\TH:i');
     }
+
+    $totalStagesPreview = (int) old('total_stages', $task->total_stages ?? 3);
+    $totalStagesPreview = max(1, min(20, $totalStagesPreview));
+    $currentStagePreview = (int) old('current_stage', $task->current_stage ?? 1);
+    $currentStagePreview = max(1, min($totalStagesPreview, $currentStagePreview));
 @endphp
 
 <div class="admin-card space-y-5">
@@ -53,6 +58,35 @@
             Current Stage Label
             <input type="text" name="stage_label" value="{{ old('stage_label', $task->stage_label ?? '') }}" class="admin-input border border-slate-200 rounded-xl px-4 py-2" placeholder="Stage 1 - Design">
         </label>
+    </div>
+
+    <div class="overflow-hidden rounded-2xl border border-slate-200">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Stage</th>
+                    <th>State</th>
+                    <th>Progress</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for ($stageNo = 1; $stageNo <= $totalStagesPreview; $stageNo++)
+                    @php
+                        $state = $stageNo < $currentStagePreview ? 'Completed' : ($stageNo === $currentStagePreview ? 'Current' : 'Pending');
+                        $stateClass = $stageNo < $currentStagePreview
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : ($stageNo === $currentStagePreview ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700');
+                    @endphp
+                    <tr>
+                        <td>Stage {{ $stageNo }}</td>
+                        <td>
+                            <span class="admin-status {{ $stateClass }}">{{ $state }}</span>
+                        </td>
+                        <td>{{ (int) round(($stageNo / $totalStagesPreview) * 100) }}%</td>
+                    </tr>
+                @endfor
+            </tbody>
+        </table>
     </div>
 
     <label class="space-y-2 text-sm font-semibold text-slate-600">
