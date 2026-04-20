@@ -63,6 +63,7 @@ class TaskController extends Controller
             'status' => 'assigned',
             'total_stages' => 3,
             'current_stage' => 1,
+            'current_stage_progress' => 0,
         ]);
         $clients = Client::orderBy('name')->get();
         $statusOptions = $this->statusOptions();
@@ -160,14 +161,11 @@ class TaskController extends Controller
             $nextStage = $currentStage + 1;
             $task->update([
                 'current_stage' => $nextStage,
-                'status' => $nextStage >= $totalStages ? 'finished' : 'in_progress',
-                'finished_at' => $nextStage >= $totalStages ? ($task->finished_at ?: $now) : null,
+                'current_stage_progress' => 0,
+                'status' => 'in_progress',
+                'finished_at' => null,
                 'delivered_at' => null,
             ]);
-
-            if ($nextStage >= $totalStages) {
-                return back()->with('success', 'Task moved to final stage and marked as finished.');
-            }
 
             return back()->with('success', "Task moved to stage {$nextStage}.");
         }
@@ -175,6 +173,7 @@ class TaskController extends Controller
         if ($task->status === 'finished') {
             $task->update([
                 'status' => 'delivered',
+                'current_stage_progress' => 100,
                 'finished_at' => $task->finished_at ?: $now,
                 'delivered_at' => $task->delivered_at ?: $now,
             ]);
@@ -184,6 +183,7 @@ class TaskController extends Controller
 
         $task->update([
             'status' => 'finished',
+            'current_stage_progress' => 100,
             'finished_at' => $task->finished_at ?: $now,
             'delivered_at' => null,
         ]);
@@ -203,6 +203,7 @@ class TaskController extends Controller
             'status' => ['required', Rule::in(array_keys($this->statusOptions()))],
             'total_stages' => ['required', 'integer', 'min:1', 'max:20'],
             'current_stage' => ['required', 'integer', 'min:1', 'max:20'],
+            'current_stage_progress' => ['nullable', 'integer', 'min:0', 'max:100'],
             'stage_label' => ['nullable', 'string', 'max:255'],
         ]);
     }
@@ -211,6 +212,8 @@ class TaskController extends Controller
     {
         $totalStages = (int) $data['total_stages'];
         $currentStage = (int) $data['current_stage'];
+        $currentStageProgress = max(0, min(100, (int) ($data['current_stage_progress'] ?? 0)));
+        $data['current_stage_progress'] = $currentStageProgress;
 
         if ($currentStage > $totalStages) {
             throw ValidationException::withMessages([
@@ -218,7 +221,7 @@ class TaskController extends Controller
             ]);
         }
 
-        if ($data['status'] === 'assigned' && $currentStage > 1) {
+        if ($data['status'] === 'assigned' && ($currentStage > 1 || $currentStageProgress > 0)) {
             $data['status'] = 'in_progress';
         }
 
@@ -228,6 +231,7 @@ class TaskController extends Controller
 
         if ($data['status'] === 'delivered') {
             $data['current_stage'] = $totalStages;
+            $data['current_stage_progress'] = 100;
             $data['finished_at'] = $existingFinishedAt ?: $now;
             $data['delivered_at'] = $existingDeliveredAt ?: $now;
             return $data;
@@ -235,9 +239,22 @@ class TaskController extends Controller
 
         if ($data['status'] === 'finished') {
             $data['current_stage'] = $totalStages;
+            $data['current_stage_progress'] = 100;
             $data['finished_at'] = $existingFinishedAt ?: $now;
             $data['delivered_at'] = null;
             return $data;
+        }
+
+        if ($data['status'] === 'in_progress' && $currentStage === $totalStages && $currentStageProgress >= 100) {
+            $data['status'] = 'finished';
+            $data['current_stage_progress'] = 100;
+            $data['finished_at'] = $existingFinishedAt ?: $now;
+            $data['delivered_at'] = null;
+            return $data;
+        }
+
+        if ($data['status'] === 'assigned') {
+            $data['current_stage_progress'] = 0;
         }
 
         $data['finished_at'] = null;
@@ -258,7 +275,7 @@ class TaskController extends Controller
 
     private function isTaskModuleReady(): bool
     {
-        return Schema::hasTable('tasks');
+        return Schema::hasTable('tasks') && Schema::hasColumn('tasks', 'current_stage_progress');
     }
 
     private function missingTaskTableRedirect()

@@ -77,6 +77,7 @@
             <div class="section-title">Progress</div>
             <p>
 Stage {{ $task->current_stage }}/{{ $task->total_stages }} ({{ $task->progress_percent }}%)
+Current stage progress: {{ (int) $task->current_stage_progress }}%
 {{ $task->stage_label ? "Current stage detail: {$task->stage_label}" : '' }}
             </p>
         </div>

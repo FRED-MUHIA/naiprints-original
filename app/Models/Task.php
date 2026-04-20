@@ -16,6 +16,7 @@ class Task extends Model
         'status',
         'total_stages',
         'current_stage',
+        'current_stage_progress',
         'stage_label',
         'finished_at',
         'delivered_at',
@@ -23,6 +24,7 @@ class Task extends Model
 
     protected $casts = [
         'assigned_at' => 'datetime',
+        'current_stage_progress' => 'integer',
         'finished_at' => 'datetime',
         'delivered_at' => 'datetime',
     ];
@@ -41,19 +43,11 @@ class Task extends Model
     {
         $total = max(1, (int) $this->total_stages);
         $current = min($total, max(1, (int) $this->current_stage));
+        $stageProgress = max(0, min(100, (int) $this->current_stage_progress));
+        $completedStages = max(0, $current - 1);
+        $overall = (($completedStages + ($stageProgress / 100)) / $total) * 100;
 
-        if (in_array($this->status, ['finished', 'delivered'], true)) {
-            return 100;
-        }
-
-        if ($this->status === 'assigned') {
-            return 0;
-        }
-
-        // In progress: show partial completion of the current stage, but never 100%.
-        $raw = (($current - 0.5) / $total) * 100;
-
-        return (int) max(1, min(99, round($raw)));
+        return (int) max(0, min(100, round($overall)));
     }
 
     public function getStatusLabelAttribute(): string

@@ -79,11 +79,12 @@
                             <div class="w-[190px] space-y-1.5">
                                 <div class="flex items-center gap-2 text-sm text-slate-700">
                                     <span class="font-medium">Stage {{ $task->current_stage }}/{{ $task->total_stages }}</span>
-                                    <span class="text-xs text-slate-500">{{ $task->progress_percent }}%</span>
+                                    <span class="text-xs text-slate-500">{{ $task->progress_percent }}% total</span>
                                 </div>
                                 <div class="h-2 w-full rounded-full bg-slate-200">
                                     <div class="h-2 rounded-full bg-brand" style="width: {{ $task->progress_percent }}%;"></div>
                                 </div>
+                                <div class="text-xs text-slate-500">Current stage: {{ (int) $task->current_stage_progress }}%</div>
                                 @if ($task->stage_label)
                                     <div class="text-xs text-slate-500 truncate">{{ $task->stage_label }}</div>
                                 @endif
