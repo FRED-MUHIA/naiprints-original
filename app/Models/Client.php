@@ -25,6 +25,11 @@ class Client extends Model
         return $this->hasMany(Quotation::class);
     }
 
+    public function tasks()
+    {
+        return $this->hasMany(Task::class);
+    }
+
     public function getDisplayNameAttribute(): string
     {
         if ($this->company_name) {

@@ -3,6 +3,93 @@
 @section('title', 'Dashboard')
 
 @section('content')
+    <div class="admin-card">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Task management</p>
+                <h2 class="mt-2 text-2xl font-semibold">Production Tasks</h2>
+            </div>
+            <div class="flex flex-wrap items-center gap-3">
+                <a href="{{ route('admin.tasks.index') }}" class="admin-btn-outline">Open Task Board</a>
+                <a href="{{ route('admin.tasks.create') }}" class="admin-btn-primary">Assign New Task</a>
+            </div>
+        </div>
+
+        <div class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Total</p>
+                <p class="mt-2 text-2xl font-semibold">{{ $taskStats['total'] ?? 0 }}</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Assigned</p>
+                <p class="mt-2 text-2xl font-semibold">{{ $taskStats['assigned'] ?? 0 }}</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">In Progress</p>
+                <p class="mt-2 text-2xl font-semibold text-blue-700">{{ $taskStats['in_progress'] ?? 0 }}</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Finished</p>
+                <p class="mt-2 text-2xl font-semibold text-emerald-700">{{ $taskStats['finished'] ?? 0 }}</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Delivered</p>
+                <p class="mt-2 text-2xl font-semibold text-emerald-600">{{ $taskStats['delivered'] ?? 0 }}</p>
+            </div>
+        </div>
+
+        <div class="mt-6 overflow-hidden rounded-2xl border border-slate-200">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Task</th>
+                        <th>Client</th>
+                        <th>Assigned Time</th>
+                        <th>Progress</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse (($recentTasks ?? collect()) as $task)
+                        @php
+                            $statusClass = match ($task->status) {
+                                'delivered' => 'bg-emerald-100 text-emerald-700',
+                                'finished' => 'bg-teal-100 text-teal-700',
+                                'in_progress' => 'bg-blue-100 text-blue-700',
+                                default => 'bg-amber-100 text-amber-700',
+                            };
+                        @endphp
+                        <tr>
+                            <td class="font-semibold text-slate-700">{{ $task->reference }} - {{ $task->title }}</td>
+                            <td>{{ $task->client?->display_name ?? '-' }}</td>
+                            <td>{{ optional($task->assigned_at)->format('M d, Y h:i A') }}</td>
+                            <td>
+                                Stage {{ $task->current_stage }}/{{ $task->total_stages }}
+                                <span class="text-xs text-slate-500">({{ $task->progress_percent }}%)</span>
+                            </td>
+                            <td>
+                                <span class="admin-status {{ $statusClass }}">{{ $task->status_label }}</span>
+                            </td>
+                            <td class="text-right">
+                                <div class="flex justify-end gap-2">
+                                    <a href="{{ route('admin.tasks.edit', $task) }}" class="admin-btn-outline">Update</a>
+                                    <a href="{{ route('admin.tasks.work-note', $task) }}" class="admin-btn-outline">PDF</a>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6">
+                                <div class="admin-empty">No tasks assigned yet.</div>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <div class="grid gap-6 xl:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)]">
         <div class="admin-panel p-6">
             <div class="flex flex-wrap items-center justify-between gap-4">

@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\QuotationController;
 use App\Http\Controllers\Admin\ReceiptController;
 use App\Http\Controllers\Admin\SizeController;
+use App\Http\Controllers\Admin\TaskController;
 use App\Http\Controllers\Admin\TagController;
 use App\Http\Controllers\MpesaCallbackController;
 use App\Http\Controllers\MockupAiController;
@@ -30,6 +31,7 @@ use App\Models\GlobalSection;
 use App\Models\Product;
 use App\Models\Size;
 use App\Models\Tag;
+use App\Models\Task;
 use App\Models\Page;
 use App\Support\PageDefaults;
 use Illuminate\Support\Facades\Route;
@@ -615,8 +617,19 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
         $featuredProduct = $products->first();
         $categories = Category::orderBy('name')->get();
         $brands = Brand::orderBy('name')->get();
+        $taskStats = [
+            'total' => Task::count(),
+            'assigned' => Task::where('status', 'assigned')->count(),
+            'in_progress' => Task::where('status', 'in_progress')->count(),
+            'finished' => Task::where('status', 'finished')->count(),
+            'delivered' => Task::where('status', 'delivered')->count(),
+        ];
+        $recentTasks = Task::with('client')
+            ->orderByDesc('updated_at')
+            ->take(6)
+            ->get();
 
-        return view('admin.dashboard', compact('products', 'featuredProduct', 'categories', 'brands'));
+        return view('admin.dashboard', compact('products', 'featuredProduct', 'categories', 'brands', 'taskStats', 'recentTasks'));
     })->name('dashboard');
 
     Route::resource('products', ProductController::class)->except(['show']);
@@ -637,6 +650,8 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
     Route::resource('media', MediaAssetController::class)->only(['index', 'store', 'update', 'destroy']);
 
     Route::resource('clients', ClientController::class)->except(['show']);
+    Route::get('tasks/{task}/work-note', [TaskController::class, 'downloadWorkNote'])->name('tasks.work-note');
+    Route::resource('tasks', TaskController::class)->except(['show']);
     Route::get('invoices/export', [InvoiceController::class, 'export'])->name('invoices.export');
     Route::get('invoices/trash', [InvoiceController::class, 'trash'])->name('invoices.trash');
     Route::post('invoices/{invoice}/restore', [InvoiceController::class, 'restore'])->name('invoices.restore');

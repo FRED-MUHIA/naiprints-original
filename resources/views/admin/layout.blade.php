@@ -85,6 +85,10 @@
                                class="block rounded-2xl px-4 py-3 transition {{ request()->routeIs('admin.clients.*') ? 'bg-brand text-white shadow-md' : 'text-slate-600 hover:bg-slate-100' }}">
                                 Clients
                             </a>
+                            <a href="{{ route('admin.tasks.index') }}"
+                               class="block rounded-2xl px-4 py-3 transition {{ request()->routeIs('admin.tasks.*') ? 'bg-brand text-white shadow-md' : 'text-slate-600 hover:bg-slate-100' }}">
+                                Tasks
+                            </a>
                             <a href="{{ route('admin.invoices.index') }}"
                                class="block rounded-2xl px-4 py-3 transition {{ request()->routeIs('admin.invoices.*') && !request()->routeIs('admin.invoices.index') && !request()->routeIs('admin.invoices.settings') ? 'bg-brand text-white shadow-md' : 'text-slate-600 hover:bg-slate-100' }}">
                                 Invoices

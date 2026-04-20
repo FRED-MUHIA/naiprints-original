@@ -1,0 +1,111 @@
+@extends('admin.layout')
+
+@section('title', 'Task Manager')
+
+@section('content')
+    <div class="grid gap-4 md:grid-cols-5">
+        <div class="admin-card">
+            <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Total</p>
+            <p class="mt-2 text-3xl font-semibold">{{ $stats['total'] }}</p>
+        </div>
+        <div class="admin-card">
+            <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Assigned</p>
+            <p class="mt-2 text-3xl font-semibold text-amber-700">{{ $stats['assigned'] }}</p>
+        </div>
+        <div class="admin-card">
+            <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">In Progress</p>
+            <p class="mt-2 text-3xl font-semibold text-blue-700">{{ $stats['in_progress'] }}</p>
+        </div>
+        <div class="admin-card">
+            <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Finished</p>
+            <p class="mt-2 text-3xl font-semibold text-teal-700">{{ $stats['finished'] }}</p>
+        </div>
+        <div class="admin-card">
+            <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Delivered</p>
+            <p class="mt-2 text-3xl font-semibold text-emerald-600">{{ $stats['delivered'] }}</p>
+        </div>
+    </div>
+
+    <div class="admin-card">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <form method="GET" class="flex flex-wrap items-center gap-3">
+                <div class="admin-search">
+                    <input type="text" name="search" value="{{ $search }}" placeholder="Search tasks..." class="admin-input">
+                </div>
+                <select name="status" class="admin-input border border-slate-200 rounded-xl px-3 py-2">
+                    <option value="">All statuses</option>
+                    @foreach ($statusOptions as $value => $label)
+                        <option value="{{ $value }}" @selected($status === $value)>{{ $label }}</option>
+                    @endforeach
+                </select>
+                <button type="submit" class="admin-btn-outline">Filter</button>
+            </form>
+            <a href="{{ route('admin.tasks.create') }}" class="admin-btn-primary">Assign Task</a>
+        </div>
+    </div>
+
+    <div class="admin-panel overflow-hidden p-2">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Task</th>
+                    <th>Client</th>
+                    <th>Assigned To</th>
+                    <th>Assigned Time</th>
+                    <th>Progress</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($tasks as $task)
+                    @php
+                        $statusClass = match ($task->status) {
+                            'delivered' => 'bg-emerald-100 text-emerald-700',
+                            'finished' => 'bg-teal-100 text-teal-700',
+                            'in_progress' => 'bg-blue-100 text-blue-700',
+                            default => 'bg-amber-100 text-amber-700',
+                        };
+                    @endphp
+                    <tr>
+                        <td class="font-semibold text-slate-700">{{ $task->reference }} - {{ $task->title }}</td>
+                        <td>{{ $task->client?->display_name ?? '-' }}</td>
+                        <td>{{ $task->assigned_to ?? '-' }}</td>
+                        <td>{{ optional($task->assigned_at)->format('M d, Y h:i A') }}</td>
+                        <td>
+                            Stage {{ $task->current_stage }}/{{ $task->total_stages }}
+                            <span class="text-xs text-slate-500">({{ $task->progress_percent }}%)</span>
+                            @if ($task->stage_label)
+                                <div class="text-xs text-slate-500">{{ $task->stage_label }}</div>
+                            @endif
+                        </td>
+                        <td>
+                            <span class="admin-status {{ $statusClass }}">{{ $task->status_label }}</span>
+                        </td>
+                        <td class="text-right">
+                            <div class="flex justify-end gap-2">
+                                <a href="{{ route('admin.tasks.edit', $task) }}" class="admin-btn-outline">Edit</a>
+                                <a href="{{ route('admin.tasks.work-note', $task) }}" class="admin-btn-outline">Work Note PDF</a>
+                                <form method="POST" action="{{ route('admin.tasks.destroy', $task) }}" onsubmit="return confirm('Delete this task?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="admin-btn-outline border-rose-200 text-rose-600 hover:border-rose-400 hover:text-rose-700">
+                                        Delete
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="7">
+                            <div class="admin-empty">No tasks yet. Assign your first task.</div>
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
+    {{ $tasks->links() }}
+@endsection
