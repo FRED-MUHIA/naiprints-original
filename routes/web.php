@@ -109,6 +109,12 @@ if (!function_exists('resolvePurchasePopupProducts')) {
     }
 }
 
+Route::get('/favicon.ico', function () {
+    return response()
+        ->file(public_path('images/logo.svg'), ['Content-Type' => 'image/svg+xml'])
+        ->header('Cache-Control', 'public, max-age=604800');
+});
+
 Route::get('/', function () {
     $page = Page::ensure('home', 'Home', PageDefaults::home());
     $header = GlobalSection::ensure('header', PageDefaults::header());

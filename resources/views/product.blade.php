@@ -4,8 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         @php
-            $faviconUrl = $globalHeader['favicon_url'] ?? '';
-            $faviconUrl = $faviconUrl ?: '/images/logo.svg';
+            $faviconUrl = '/images/logo.svg';
         @endphp
         <link rel="icon" href="{{ $faviconUrl }}">
         <title>{{ $product->name }} | Nai Prints</title>

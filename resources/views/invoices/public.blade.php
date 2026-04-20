@@ -8,6 +8,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/svg+xml" href="/images/logo.svg">
+    <link rel="shortcut icon" href="/images/logo.svg">
     <title>{{ $invoice->number }} - Nai Prints</title>
     @vite(['resources/css/app.css'])
 </head>
