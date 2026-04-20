@@ -48,25 +48,25 @@
     </div>
 
     <div class="admin-panel overflow-x-auto p-2">
-        <table class="admin-table min-w-[1380px] table-fixed">
+        <table class="admin-table min-w-[1220px] table-fixed">
             <colgroup>
-                <col class="w-[220px]">
-                <col class="w-[200px]">
+                <col class="w-[190px]">
+                <col class="w-[180px]">
                 <col class="w-[120px]">
+                <col class="w-[190px]">
                 <col class="w-[200px]">
-                <col class="w-[220px]">
-                <col class="w-[140px]">
-                <col class="w-[280px]">
+                <col class="w-[130px]">
+                <col class="w-[210px]">
             </colgroup>
             <thead>
                 <tr>
-                    <th class="px-4 py-3 whitespace-nowrap">Task</th>
-                    <th class="px-4 py-3 whitespace-nowrap">Client</th>
-                    <th class="px-4 py-3 whitespace-nowrap">Assigned To</th>
-                    <th class="px-4 py-3 whitespace-nowrap">Assigned Time</th>
-                    <th class="px-4 py-3 whitespace-nowrap">Progress</th>
-                    <th class="px-4 py-3 whitespace-nowrap">Status</th>
-                    <th class="px-4 py-3 whitespace-nowrap text-right">Actions</th>
+                    <th class="px-3 py-3 whitespace-nowrap">Task</th>
+                    <th class="px-3 py-3 whitespace-nowrap">Client</th>
+                    <th class="px-3 py-3 whitespace-nowrap">Assigned To</th>
+                    <th class="px-3 py-3 whitespace-nowrap">Assigned Time</th>
+                    <th class="px-3 py-3 whitespace-nowrap">Progress</th>
+                    <th class="px-3 py-3 whitespace-nowrap">Status</th>
+                    <th class="px-3 py-3 whitespace-nowrap text-right">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -80,12 +80,12 @@
                         };
                     @endphp
                     <tr>
-                        <td class="px-4 py-4 align-top font-semibold text-slate-700 break-words">{{ $task->reference }} - {{ $task->title }}</td>
-                        <td class="px-4 py-4 align-top break-words">{{ $task->client?->display_name ?? '-' }}</td>
-                        <td class="px-4 py-4 align-top whitespace-nowrap">{{ $task->assigned_to ?? '-' }}</td>
-                        <td class="px-4 py-4 align-top whitespace-nowrap">{{ optional($task->assigned_at)->format('M d, Y h:i A') }}</td>
-                        <td class="px-4 py-4 align-top">
-                            <div class="min-w-[220px] space-y-2">
+                        <td class="px-3 py-3 align-top font-semibold text-slate-700 break-words">{{ $task->reference }} - {{ $task->title }}</td>
+                        <td class="px-3 py-3 align-top break-words">{{ $task->client?->display_name ?? '-' }}</td>
+                        <td class="px-3 py-3 align-top whitespace-nowrap">{{ $task->assigned_to ?? '-' }}</td>
+                        <td class="px-3 py-3 align-top whitespace-nowrap">{{ optional($task->assigned_at)->format('M d, Y h:i A') }}</td>
+                        <td class="px-3 py-3 align-top">
+                            <div class="space-y-2">
                                 <div class="flex items-center justify-between text-xs text-slate-600">
                                     <span>Stage {{ $task->current_stage }}/{{ $task->total_stages }}</span>
                                     <span>{{ $task->progress_percent }}%</span>
@@ -98,11 +98,11 @@
                                 @endif
                             </div>
                         </td>
-                        <td class="px-4 py-4 align-top whitespace-nowrap">
+                        <td class="px-3 py-3 align-top whitespace-nowrap">
                             <span class="admin-status {{ $statusClass }}">{{ $task->status_label }}</span>
                         </td>
-                        <td class="px-4 py-4 align-top text-right">
-                            <div class="flex flex-wrap justify-end gap-2">
+                        <td class="px-3 py-3 align-top text-right">
+                            <div class="flex flex-wrap justify-end gap-1.5">
                                 @php
                                     $nextActionText = $task->current_stage < $task->total_stages
                                         ? 'Next Stage'
@@ -112,22 +112,22 @@
                                     @csrf
                                     <button
                                         type="submit"
-                                        class="inline-flex items-center rounded-lg bg-brand px-3 py-2 text-xs font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 whitespace-nowrap"
+                                        class="inline-flex items-center rounded-lg bg-brand px-2.5 py-1.5 text-[11px] font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 whitespace-nowrap"
                                         @disabled($task->status === 'delivered')
                                     >
                                         {{ $nextActionText }}
                                     </button>
                                 </form>
-                                <a href="{{ route('admin.tasks.edit', $task) }}" class="inline-flex items-center rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-400 whitespace-nowrap">
+                                <a href="{{ route('admin.tasks.edit', $task) }}" class="inline-flex items-center rounded-lg border border-slate-300 px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 transition hover:border-slate-400 whitespace-nowrap">
                                     Edit
                                 </a>
-                                <a href="{{ route('admin.tasks.work-note', $task) }}" class="inline-flex items-center rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-400">
+                                <a href="{{ route('admin.tasks.work-note', $task) }}" class="inline-flex items-center rounded-lg border border-slate-300 px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 transition hover:border-slate-400 whitespace-nowrap">
                                     Work Note PDF
                                 </a>
                                 <form method="POST" action="{{ route('admin.tasks.destroy', $task) }}" onsubmit="return confirm('Delete this task?');">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="inline-flex items-center rounded-lg border border-rose-300 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:border-rose-400 whitespace-nowrap">
+                                    <button type="submit" class="inline-flex items-center rounded-lg border border-rose-300 px-2.5 py-1.5 text-[11px] font-semibold text-rose-700 transition hover:border-rose-400 whitespace-nowrap">
                                         Delete
                                     </button>
                                 </form>
