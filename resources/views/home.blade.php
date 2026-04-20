@@ -119,7 +119,7 @@
                                 'author' => $author,
                                 'price' => $price,
                                 'image' => $imageUrl ?: '',
-                                'url' => route('products.show', $product),
+                                'url' => route('products.show', ['product' => ($product->slug ?: $product->id)]),
                             ];
                         })->filter(fn ($item) => !empty($item['title']))->values()->all();
                     } elseif (!empty($products)) {
@@ -470,7 +470,9 @@
                                         $badgeLabel = $discountLabel ?: ($isNew ? 'NEW' : '');
                                         $badgeClass = $discountLabel ? 'product-badge-sale' : ($isNew ? 'product-badge-new' : '');
                                         $imageUrl = $isModel ? ($product->image_url ?? null) : ($product['image_url'] ?? null);
-                                        $detailUrl = $isModel && isset($product->id) ? route('products.show', $product) : route('shop');
+                                        $detailUrl = $isModel && isset($product->id)
+                                            ? route('products.show', ['product' => ($product->slug ?: $product->id)])
+                                            : route('shop');
                                         $productId = $isModel && isset($product->id) ? $product->id : ('fallback-' . md5((string) $name));
                                         $hoverImage = null;
                                         if ($isModel) {

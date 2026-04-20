@@ -180,7 +180,9 @@
                                     $sold = $product['sold'] ?? rand(120, 3600);
                                     $imageUrl = $isModel ? ($product->image_url ?? null) : ($product['image_url'] ?? null);
                                     $rawPrice = is_numeric($price) ? (float) $price : (float) preg_replace('/[^\d.]/', '', (string) $price);
-                                    $detailUrl = $isModel && isset($product->id) ? route('products.show', $product) : null;
+                                    $detailUrl = $isModel && isset($product->id)
+                                        ? route('products.show', ['product' => ($product->slug ?: $product->id)])
+                                        : null;
                                     $productId = $isModel && isset($product->id) ? $product->id : ('fallback-' . md5($name));
                                     $brandName = $isModel ? ($product->brand?->name ?? 'Nai Prints') : 'Nai Prints';
                                     $categoryName = $isModel ? ($product->category?->name ?? 'Apparel') : 'Apparel';

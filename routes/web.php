@@ -25,6 +25,7 @@ use App\Http\Controllers\PublicInvoiceController;
 use App\Http\Controllers\PublicMpesaController;
 use App\Http\Controllers\PublicReceiptController;
 use App\Models\Attribute;
+use App\Models\Blog;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\GlobalSection;
@@ -95,7 +96,7 @@ if (!function_exists('resolvePurchasePopupProducts')) {
             $payload = [
                 'name' => $product->name,
                 'image' => $image ?? '',
-                'url' => route('products.show', $product),
+                'url' => route('products.show', ['product' => $product->slug ?: $product->getKey()]),
             ];
 
             $nameKey = Str::of($product->name)->lower()->trim()->toString();
@@ -424,6 +425,93 @@ Route::get('/blog-media/{path}', [BlogController::class, 'media'])
     ->where('path', '.*')
     ->name('blogs.media');
 
+Route::get('/sitemap.xml', function () {
+    $generatedAt = now()->toAtomString();
+    $pageDefinitions = collect([
+        ['slug' => 'home', 'path' => '/', 'changefreq' => 'daily', 'priority' => '1.0'],
+        ['slug' => 'shop', 'path' => '/shop', 'changefreq' => 'daily', 'priority' => '0.9'],
+        ['slug' => 'embroidery', 'path' => '/embroidery', 'changefreq' => 'weekly', 'priority' => '0.8'],
+        ['slug' => 'jersey', 'path' => '/jersey', 'changefreq' => 'weekly', 'priority' => '0.8'],
+        ['slug' => 'checkout', 'path' => '/checkout', 'changefreq' => 'weekly', 'priority' => '0.7'],
+        ['slug' => 'corporate', 'path' => '/corporate', 'changefreq' => 'weekly', 'priority' => '0.8'],
+        ['slug' => 'contact', 'path' => '/contact', 'changefreq' => 'monthly', 'priority' => '0.7'],
+        ['slug' => 'mockup', 'path' => '/mockup', 'changefreq' => 'weekly', 'priority' => '0.8'],
+        ['slug' => null, 'path' => '/blogs', 'changefreq' => 'daily', 'priority' => '0.8'],
+        ['slug' => null, 'path' => '/jerseys', 'changefreq' => 'weekly', 'priority' => '0.7'],
+        ['slug' => null, 'path' => '/3d-designer', 'changefreq' => 'weekly', 'priority' => '0.7'],
+    ]);
+
+    $pageUpdateMap = collect();
+    if (Schema::hasTable('pages')) {
+        $knownSlugs = $pageDefinitions
+            ->pluck('slug')
+            ->filter()
+            ->values();
+
+        $pageUpdateMap = Page::query()
+            ->whereIn('slug', $knownSlugs)
+            ->get(['slug', 'updated_at'])
+            ->keyBy('slug');
+    }
+
+    $entries = $pageDefinitions->map(function (array $definition) use ($pageUpdateMap, $generatedAt) {
+        $lastModified = $generatedAt;
+
+        if (!empty($definition['slug'])) {
+            $page = $pageUpdateMap->get($definition['slug']);
+            $lastModified = $page?->updated_at?->toAtomString() ?? $generatedAt;
+        }
+
+        return [
+            'loc' => url($definition['path']),
+            'lastmod' => $lastModified,
+            'changefreq' => $definition['changefreq'],
+            'priority' => $definition['priority'],
+        ];
+    })->values();
+
+    if (Schema::hasTable('products')) {
+        $productEntries = Product::query()
+            ->where('status', 'active')
+            ->orderByDesc('updated_at')
+            ->get(['id', 'slug', 'updated_at', 'created_at'])
+            ->map(function (Product $product) {
+                return [
+                    'loc' => route('products.show', ['product' => $product->slug ?: $product->getKey()]),
+                    'lastmod' => optional($product->updated_at ?? $product->created_at)->toAtomString(),
+                    'changefreq' => 'weekly',
+                    'priority' => '0.8',
+                ];
+            });
+
+        $entries = $entries->concat($productEntries)->values();
+    }
+
+    if (Schema::hasTable('blogs')) {
+        $blogEntries = Blog::query()
+            ->published()
+            ->orderByDesc('published_at')
+            ->orderByDesc('updated_at')
+            ->get(['slug', 'updated_at', 'published_at', 'created_at'])
+            ->map(function (Blog $blog) {
+                $lastModified = $blog->updated_at ?? $blog->published_at ?? $blog->created_at;
+
+                return [
+                    'loc' => route('blogs.show', $blog->slug),
+                    'lastmod' => optional($lastModified)->toAtomString(),
+                    'changefreq' => 'monthly',
+                    'priority' => '0.7',
+                ];
+            });
+
+        $entries = $entries->concat($blogEntries)->values();
+    }
+
+    return response()
+        ->view('sitemap.xml', ['entries' => $entries])
+        ->header('Content-Type', 'application/xml; charset=UTF-8');
+})->name('sitemap');
+
 Route::get('/checkout', function () {
     $page = Page::ensure('checkout', 'Checkout', PageDefaults::checkout());
     $header = GlobalSection::ensure('header', PageDefaults::header());
@@ -492,7 +580,12 @@ Route::get('/mockup', function () {
 Route::post('/mockup/ai/generate', [MockupAiController::class, 'generate'])
     ->name('mockup.ai.generate');
 
-Route::get('/products/{product}', function (Product $product) {
+Route::get('/products/{product}', function (string $productKey) {
+    $product = Product::query()
+        ->where('slug', $productKey)
+        ->when(ctype_digit($productKey), fn ($query) => $query->orWhere('id', (int) $productKey))
+        ->firstOrFail();
+
     $header = GlobalSection::ensure('header', PageDefaults::header());
     $footer = GlobalSection::ensure('footer', PageDefaults::footer());
     $purchasePopups = GlobalSection::ensure('purchase_popups', PageDefaults::purchasePopups());

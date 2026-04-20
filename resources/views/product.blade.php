@@ -54,6 +54,7 @@
                     }
                 }
                 $productId = $product->id;
+                $productUrl = route('products.show', ['product' => ($product->slug ?: $product->id)]);
                 $categoryNames = $product->categories->pluck('name')->filter()->values();
                 if ($categoryNames->isEmpty() && $product->category?->name) {
                     $categoryNames = collect([$product->category->name]);
@@ -137,7 +138,7 @@
                                                 data-product-name="{{ $name }}"
                                                 data-product-price="{{ $finalPrice }}"
                                                 data-product-image="{{ $imageUrl }}"
-                                                data-product-url="{{ route('products.show', $product) }}">
+                                                data-product-url="{{ $productUrl }}">
                                             <svg viewBox="0 0 24 24" aria-hidden="true">
                                                 <path d="M12 20.5s-7-4.35-9.33-8.04A5.5 5.5 0 0 1 12 5.2a5.5 5.5 0 0 1 9.33 7.26C19 16.15 12 20.5 12 20.5Z" fill="none" stroke="currentColor" stroke-width="1.5" />
                                             </svg>
@@ -238,7 +239,7 @@
                                         data-product-name="{{ $name }}"
                                         data-product-price="{{ $finalPrice }}"
                                         data-product-image="{{ $imageUrl }}"
-                                        data-product-url="{{ route('products.show', $product) }}">
+                                        data-product-url="{{ $productUrl }}">
                                     Add to cart - KSh {{ number_format($finalPrice, 2) }}
                                 </button>
 
@@ -251,7 +252,7 @@
                                             data-product-name="{{ $name }}"
                                             data-product-price="{{ $finalPrice }}"
                                             data-product-image="{{ $imageUrl }}"
-                                            data-product-url="{{ route('products.show', $product) }}">
+                                            data-product-url="{{ $productUrl }}">
                                         <svg viewBox="0 0 24 24" aria-hidden="true">
                                             <path d="M12 20.5s-7-4.35-9.33-8.04A5.5 5.5 0 0 1 12 5.2a5.5 5.5 0 0 1 9.33 7.26C19 16.15 12 20.5 12 20.5Z" fill="none" stroke="currentColor" stroke-width="1.5" />
                                         </svg>
@@ -368,13 +369,14 @@
                                         $relatedHover = $relatedAlt
                                             ? \Illuminate\Support\Facades\Storage::url($relatedAlt->image_path)
                                             : null;
+                                        $relatedUrl = route('products.show', ['product' => ($related->slug ?: $related->id)]);
                                         $safeRelated = e((string) $relatedName);
                                         $relatedFlame = preg_replace('/\\bT[-\\s]?shirt\\b/i', '<span class=\"flame-text\">$0</span><span class=\"flame-emoji\" aria-hidden=\"true\">🔥</span>', $safeRelated);
                                     @endphp
                                     <div class="related-slide" data-related-item>
                                         <article class="product-card product-card-compact" data-product-panel>
                                         <div class="product-media">
-                                            <a href="{{ route('products.show', $related) }}" class="product-media-link" aria-label="View {{ $relatedName }}"></a>
+                                            <a href="{{ $relatedUrl }}" class="product-media-link" aria-label="View {{ $relatedName }}"></a>
                                             @if ($relatedImage)
                                                 <img src="{{ $relatedImage }}" alt="{{ $relatedName }}" loading="lazy" class="product-media-img is-primary">
                                                 @if ($relatedHover)
@@ -396,7 +398,7 @@
                                                     data-product-name="{{ $relatedName }}"
                                                     data-product-price="{{ $relatedFinal }}"
                                                     data-product-image="{{ $relatedImage }}"
-                                                    data-product-url="{{ route('products.show', $related) }}">
+                                                    data-product-url="{{ $relatedUrl }}">
                                                 Quick Add
                                             </button>
                                         </div>
