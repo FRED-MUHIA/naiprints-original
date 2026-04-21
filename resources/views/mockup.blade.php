@@ -566,7 +566,7 @@
                     <div class="mockup-stage-toolbar">
                         <div class="mockup-stage-tabs">
                             <button class="mockup-stage-tab is-active" type="button" data-tools-toggle aria-expanded="false" aria-haspopup="menu" aria-controls="mockup-tools-menu">Tools</button>
-                            <button class="mockup-stage-tab" type="button" data-remove-bg>Remove BG</button>
+                            <button class="mockup-stage-tab" type="button" data-remove-bg>Remove Background</button>
                             <button class="mockup-stage-tab" type="button">Position</button>
                         </div>
                         <div class="mockup-stage-actions">
@@ -3272,20 +3272,20 @@
                         return;
                     }
                     removeBgBtn.disabled = busy;
-                    removeBgBtn.textContent = busy ? 'Removing...' : 'Remove BG';
+                    removeBgBtn.textContent = busy ? 'Removing...' : 'Remove Background';
                 };
 
                 const removeBackgroundFromActiveImage = async () => {
                     const active = canvas.getActiveObject();
                     if (!active || active?.data?.role !== 'design' || active.type !== 'image') {
-                        alert('Select a JPEG image layer first, then click Remove BG.');
+                        alert('Select a JPEG image layer first, then click Remove Background.');
                         return;
                     }
 
                     const source = getImageObjectSource(active);
                     const mimeType = active?.data?.sourceMime || inferMimeTypeFromSource(source);
                     if (!isJpegSource(source, mimeType)) {
-                        alert('Remove BG currently supports JPEG uploads. Select a JPG/JPEG layer and try again.');
+                        alert('Remove Background currently supports JPEG uploads. Select a JPG/JPEG layer and try again.');
                         return;
                     }
 
