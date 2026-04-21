@@ -90,6 +90,32 @@
     $announcementItems = array_values(array_filter($announcementItems, function ($item) {
         return !empty($item['text']);
     }));
+    $productSearchEntries = collect($headerSearchEntries ?? [])
+        ->map(function ($item) {
+            return [
+                'title' => trim((string) ($item['title'] ?? '')),
+                'subtitle' => trim((string) ($item['subtitle'] ?? '')),
+                'url' => trim((string) ($item['url'] ?? '')),
+                'type' => trim((string) ($item['type'] ?? 'Product')),
+            ];
+        })
+        ->filter(fn ($item) => $item['title'] !== '' && $item['url'] !== '');
+    $pageSearchEntries = collect($menu)
+        ->map(function ($item) {
+            return [
+                'title' => trim((string) ($item['label'] ?? '')),
+                'subtitle' => 'Website Page',
+                'url' => trim((string) ($item['url'] ?? '')),
+                'type' => 'Page',
+            ];
+        })
+        ->filter(fn ($item) => $item['title'] !== '' && $item['url'] !== '');
+    $searchEntries = $productSearchEntries
+        ->merge($pageSearchEntries)
+        ->unique(fn ($item) => strtolower($item['url']))
+        ->values()
+        ->all();
+    $initialSearchEntries = array_slice($searchEntries, 0, 10);
 @endphp
 
 @if (!empty($announcementItems))
@@ -135,11 +161,14 @@
         <nav class="site-nav hidden items-center text-slate-700 lg:flex">
             @foreach ($menu as $item)
                 <a class="nav-link" href="{{ $item['url'] ?? '#' }}">{{ $item['label'] ?? 'Menu' }}</a>
+                @if (!$loop->last)
+                    <span class="nav-separator" aria-hidden="true">|</span>
+                @endif
             @endforeach
         </nav>
 
         <div class="flex items-center gap-3">
-            <button class="icon-button" aria-label="Search">
+            <button class="icon-button" aria-label="Search" data-site-search-toggle>
                 <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.03 4.11l3.43 3.43a.75.75 0 1 1-1.06 1.06l-3.43-3.43A7 7 0 0 1 2 9Z" clip-rule="evenodd" />
                 </svg>
@@ -171,6 +200,40 @@
         </div>
     </div>
 </header>
+
+<div class="site-search" data-site-search hidden>
+    <div class="site-search-backdrop" data-site-search-backdrop></div>
+    <div class="site-search-panel" role="dialog" aria-modal="true" aria-labelledby="site-search-title">
+        <div class="site-search-head">
+            <h2 id="site-search-title" class="site-search-title">Search products and pages</h2>
+            <button class="site-search-close" type="button" aria-label="Close search" data-site-search-close>×</button>
+        </div>
+        <label class="sr-only" for="site-search-input">Search website</label>
+        <input
+            id="site-search-input"
+            class="site-search-input"
+            type="search"
+            placeholder="Search product pages and website pages..."
+            autocomplete="off"
+            data-site-search-input
+        >
+        <p class="site-search-hint">Suggestions update as you type.</p>
+        <ul class="site-search-results" data-site-search-results>
+            @foreach ($initialSearchEntries as $entry)
+                <li>
+                    <a class="site-search-item" href="{{ $entry['url'] }}">
+                        <span class="site-search-item-title">{{ $entry['title'] }}</span>
+                        <span class="site-search-item-meta">{{ $entry['type'] }}{{ !empty($entry['subtitle']) ? ' • ' . $entry['subtitle'] : '' }}</span>
+                    </a>
+                </li>
+            @endforeach
+        </ul>
+        <p class="site-search-empty" data-site-search-empty @if (!empty($initialSearchEntries)) hidden @endif>
+            No matching products or pages found.
+        </p>
+        <script type="application/json" data-site-search-source>@json($searchEntries)</script>
+    </div>
+</div>
 
 @if ($showMenuStrip && !empty($menuStrip))
     <div class="menu-strip">
