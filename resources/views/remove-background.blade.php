@@ -14,10 +14,10 @@
             .rb-page {
                 margin: 0 auto;
                 max-width: 1200px;
-                padding: clamp(0.9rem, 1.8vw, 1.35rem) clamp(0.85rem, 2.2vw, 1.2rem) 4rem;
+                padding: clamp(0.2rem, 0.8vw, 0.55rem) clamp(0.85rem, 2.2vw, 1.2rem) 4rem;
             }
             .rb-hero {
-                padding-top: 1.4rem;
+                padding-top: 0.15rem;
             }
             .rb-hero h1 {
                 color: #1f2937;
@@ -25,7 +25,7 @@
                 font-weight: 800;
                 letter-spacing: -0.03em;
                 line-height: 1.12;
-                margin: 1.5rem auto 0;
+                margin: 0.45rem auto 0;
                 max-width: 1050px;
                 text-align: center;
                 text-wrap: balance;
@@ -508,7 +508,7 @@
                 .rb-hero h1 {
                     font-size: clamp(1.25rem, 6.7vw, 1.95rem);
                     line-height: 1.16;
-                    margin-top: 0.9rem;
+                    margin-top: 0.3rem;
                 }
                 .rb-hero p {
                     font-size: 0.95rem;
@@ -907,6 +907,20 @@
                             const hardTolerance = clamp(18 + avgDeviation * 1.4, 22, 92);
                             const softTolerance = clamp(hardTolerance + 24, 46, 132);
                             const bgMask = new Uint8Array(pixelCount);
+                            const centerMinX = Math.floor(width * 0.14);
+                            const centerMaxX = Math.ceil(width * 0.86);
+                            const centerMinY = Math.floor(height * 0.04);
+                            const centerMaxY = Math.ceil(height * 0.97);
+                            const coreMinX = Math.floor(width * 0.16);
+                            const coreMaxX = Math.ceil(width * 0.84);
+                            const coreMinY = Math.floor(height * 0.05);
+                            const coreMaxY = Math.ceil(height * 0.96);
+                            const isInCenterBand = (x, y) =>
+                                x >= centerMinX && x <= centerMaxX && y >= centerMinY && y <= centerMaxY;
+                            const isInCoreBand = (x, y) =>
+                                x >= coreMinX && x <= coreMaxX && y >= coreMinY && y <= coreMaxY;
+                            const centerTolerance = clamp(hardTolerance + 12, hardTolerance + 4, Math.max(hardTolerance + 5, softTolerance - 8));
+                            const coreTolerance = clamp(hardTolerance + 6, hardTolerance + 2, centerTolerance);
 
                             const isBackgroundLike = (idx, tolerance = softTolerance) => {
                                 const offset = getOffset(idx);
@@ -928,7 +942,12 @@
                                 if (idx < 0 || idx >= pixelCount || bgMask[idx]) {
                                     return;
                                 }
-                                if (!isBackgroundLike(idx, softTolerance)) {
+                                const x = idx % width;
+                                const y = Math.floor(idx / width);
+                                const tolerance = isInCoreBand(x, y)
+                                    ? coreTolerance
+                                    : (isInCenterBand(x, y) ? centerTolerance : softTolerance);
+                                if (!isBackgroundLike(idx, tolerance)) {
                                     return;
                                 }
                                 bgMask[idx] = 1;
@@ -960,18 +979,7 @@
                             const protectMask = new Uint8Array(pixelCount);
                             const subjectMask = new Uint8Array(pixelCount);
                             const foregroundSeed = new Uint8Array(pixelCount);
-                            const centerMinX = Math.floor(width * 0.14);
-                            const centerMaxX = Math.ceil(width * 0.86);
-                            const centerMinY = Math.floor(height * 0.04);
-                            const centerMaxY = Math.ceil(height * 0.97);
-                            const coreMinX = Math.floor(width * 0.16);
-                            const coreMaxX = Math.ceil(width * 0.84);
-                            const coreMinY = Math.floor(height * 0.05);
-                            const coreMaxY = Math.ceil(height * 0.96);
-                            const isInCenterBand = (x, y) =>
-                                x >= centerMinX && x <= centerMaxX && y >= centerMinY && y <= centerMaxY;
-                            const isInCoreBand = (x, y) =>
-                                x >= coreMinX && x <= coreMaxX && y >= coreMinY && y <= coreMaxY;
+                            const subjectBounds = { minX: width, minY: height, maxX: -1, maxY: -1, has: false };
 
                             // First keep the strongest foreground components around the center.
                             const subjectVisited = new Uint8Array(pixelCount);
@@ -1081,6 +1089,13 @@
                                     const pixel = component[j];
                                     subjectMask[pixel] = 1;
                                     protectMask[pixel] = 1;
+                                    const x = pixel % width;
+                                    const y = Math.floor(pixel / width);
+                                    subjectBounds.minX = Math.min(subjectBounds.minX, x);
+                                    subjectBounds.minY = Math.min(subjectBounds.minY, y);
+                                    subjectBounds.maxX = Math.max(subjectBounds.maxX, x);
+                                    subjectBounds.maxY = Math.max(subjectBounds.maxY, y);
+                                    subjectBounds.has = true;
                                 }
                             }
 
@@ -1177,7 +1192,7 @@
                             }
 
                             // Dilate protection mask so fine edges around subjects are preserved.
-                            for (let pass = 0; pass < 2; pass += 1) {
+                            for (let pass = 0; pass < 3; pass += 1) {
                                 const nextMask = protectMask.slice();
                                 for (let idx = 0; idx < pixelCount; idx += 1) {
                                     if (!protectMask[idx]) {
@@ -1241,6 +1256,20 @@
                                     bgMask[idx] = 0;
                                 }
                             }
+                            const subjectBoundsPadding = Math.max(8, Math.round(Math.min(width, height) * 0.02));
+                            const isInsideSubjectBounds = (idx, padding = subjectBoundsPadding) => {
+                                if (!subjectBounds.has) {
+                                    return false;
+                                }
+                                const x = idx % width;
+                                const y = Math.floor(idx / width);
+                                return (
+                                    x >= subjectBounds.minX - padding &&
+                                    x <= subjectBounds.maxX + padding &&
+                                    y >= subjectBounds.minY - padding &&
+                                    y <= subjectBounds.maxY + padding
+                                );
+                            };
 
                             // Clear small leftover background islands that often remain around text/wording shapes.
                             const checked = new Uint8Array(pixelCount);
@@ -1248,6 +1277,9 @@
 
                             for (let idx = 0; idx < pixelCount; idx += 1) {
                                 if (protectMask[idx] || bgMask[idx] || checked[idx] || !isBackgroundLike(idx, hardTolerance * 0.92)) {
+                                    continue;
+                                }
+                                if (isInsideSubjectBounds(idx)) {
                                     continue;
                                 }
 
@@ -1310,6 +1342,37 @@
                                 }
                                 return count;
                             };
+                            const estimateLocalContrast = (idx) => {
+                                const x = idx % width;
+                                const y = Math.floor(idx / width);
+                                const offset = getOffset(idx);
+                                const r = pixels[offset];
+                                const g = pixels[offset + 1];
+                                const b = pixels[offset + 2];
+                                let total = 0;
+                                let samples = 0;
+                                if (x > 0) {
+                                    const n = getOffset(idx - 1);
+                                    total += (Math.abs(r - pixels[n]) + Math.abs(g - pixels[n + 1]) + Math.abs(b - pixels[n + 2])) / 3;
+                                    samples += 1;
+                                }
+                                if (x < width - 1) {
+                                    const n = getOffset(idx + 1);
+                                    total += (Math.abs(r - pixels[n]) + Math.abs(g - pixels[n + 1]) + Math.abs(b - pixels[n + 2])) / 3;
+                                    samples += 1;
+                                }
+                                if (y > 0) {
+                                    const n = getOffset(idx - width);
+                                    total += (Math.abs(r - pixels[n]) + Math.abs(g - pixels[n + 1]) + Math.abs(b - pixels[n + 2])) / 3;
+                                    samples += 1;
+                                }
+                                if (y < height - 1) {
+                                    const n = getOffset(idx + width);
+                                    total += (Math.abs(r - pixels[n]) + Math.abs(g - pixels[n + 1]) + Math.abs(b - pixels[n + 2])) / 3;
+                                    samples += 1;
+                                }
+                                return samples ? total / samples : 0;
+                            };
                             const hasProtectedNeighbor = (x, y) => {
                                 for (let oy = -1; oy <= 1; oy += 1) {
                                     for (let ox = -1; ox <= 1; ox += 1) {
@@ -1346,8 +1409,23 @@
                                 const x = idx % width;
                                 const y = Math.floor(idx / width);
                                 const bgNeighbors = countBgNeighbors(x, y);
-                                const nearSubject = hasProtectedNeighbor(x, y);
+                                const nearSubject = hasProtectedNeighbor(x, y) || isInsideSubjectBounds(idx, subjectBoundsPadding + 4);
                                 const distance = colorDistanceToBg(idx, bgR, bgG, bgB);
+                                const r = pixels[offset];
+                                const g = pixels[offset + 1];
+                                const b = pixels[offset + 2];
+                                const colorSpread = Math.max(r, g, b) - Math.min(r, g, b);
+                                const localContrast = estimateLocalContrast(idx);
+                                const isBlurryBackgroundPixel = !nearSubject
+                                    && bgNeighbors >= 3
+                                    && distance <= softTolerance + 22
+                                    && colorSpread <= 22
+                                    && localContrast <= 18;
+
+                                if (isBlurryBackgroundPixel) {
+                                    pixels[offset + 3] = 0;
+                                    continue;
+                                }
 
                                 if (bgNeighbors > 0 && distance <= softTolerance + 8) {
                                     const softness = clamp((softTolerance - distance) / Math.max(1, softTolerance - hardTolerance), 0, 1);
