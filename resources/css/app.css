@@ -183,8 +183,15 @@
         background-color: #16a34a;
     }
 
+    .site-nav {
+        @apply gap-2 xl:gap-3;
+        flex-wrap: nowrap;
+        white-space: nowrap;
+    }
+
     .nav-link {
-        @apply text-sm font-semibold text-slate-700 transition;
+        @apply shrink-0 whitespace-nowrap text-[0.94rem] font-semibold text-slate-700 transition;
+        line-height: 1.1;
     }
 
     .nav-link:hover {

@@ -114,7 +114,7 @@
 @endif
 
 <header class="sticky top-0 z-40 border-b border-black/5 bg-white/90 backdrop-blur">
-    <div class="mx-auto flex max-w-6xl items-center justify-between gap-6 px-4 py-4">
+    <div class="mx-auto flex max-w-6xl xl:max-w-[88rem] items-center justify-between gap-3 xl:gap-5 px-4 py-4">
         <div class="flex items-center gap-3">
             <button class="icon-button mobile-menu-toggle lg:hidden" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobile-menu" data-mobile-menu-toggle>
                 <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -132,7 +132,7 @@
             </a>
         </div>
 
-        <nav class="hidden items-center gap-5 text-sm font-semibold text-slate-700 lg:flex">
+        <nav class="site-nav hidden items-center text-slate-700 lg:flex">
             @foreach ($menu as $item)
                 <a class="nav-link" href="{{ $item['url'] ?? '#' }}">{{ $item['label'] ?? 'Menu' }}</a>
             @endforeach
