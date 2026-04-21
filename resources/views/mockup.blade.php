@@ -566,7 +566,7 @@
                     <div class="mockup-stage-toolbar">
                         <div class="mockup-stage-tabs">
                             <button class="mockup-stage-tab is-active" type="button" data-tools-toggle aria-expanded="false" aria-haspopup="menu" aria-controls="mockup-tools-menu">Tools</button>
-                            <button class="mockup-stage-tab" type="button">Animate</button>
+                            <button class="mockup-stage-tab" type="button" data-remove-bg>Remove BG</button>
                             <button class="mockup-stage-tab" type="button">Position</button>
                         </div>
                         <div class="mockup-stage-actions">
@@ -1155,6 +1155,7 @@
                 const textAnimateBtn = document.querySelector('[data-text-animate]');
                 const textPositionBtn = document.querySelector('[data-text-position]');
                 const textPaintBtn = document.querySelector('[data-text-paint]');
+                const removeBgBtn = document.querySelector('[data-remove-bg]');
                 const brandUploadInput = document.querySelector('[data-brand-upload]');
                 const brandClearBtn = document.querySelector('[data-brand-clear]');
                 const brandLogoImg = document.querySelector('[data-brand-logo]');
@@ -2443,6 +2444,7 @@
                     const { x, y, w, h } = currentPrintArea;
                     const maxScale = Math.min(w / obj.width, h / obj.height) * 0.8;
                     ensureLayerMetadata(obj, { newId: true });
+                    const layer = options.layer || obj?.data?.layer || 'design';
                     obj.set({
                         left: x + w / 2,
                         top: y + h / 2,
@@ -2451,7 +2453,7 @@
                         scaleX: maxScale,
                         scaleY: maxScale,
                         lockUniScaling: true,
-                        data: { ...(obj.data || {}), role: 'design', layer: options.layer || 'design' },
+                        data: { ...(obj.data || {}), ...(options.data || {}), role: 'design', layer },
                     });
                     obj.clipPath = createClipPath();
                     canvas.add(obj);
@@ -2695,21 +2697,53 @@
                         if (!dataUrl) {
                             return;
                         }
-                        uploads.unshift({ id: `${Date.now()}-${Math.random()}`, name: file.name, url: dataUrl });
+                        uploads.unshift({
+                            id: `${Date.now()}-${Math.random()}`,
+                            name: file.name,
+                            url: dataUrl,
+                            mimeType: (file.type || '').toLowerCase(),
+                        });
                         renderUploads();
-                        placeUpload(dataUrl);
+                        placeUpload(dataUrl, { source: 'uploads', name: file.name, mimeType: file.type });
                     };
                     reader.readAsDataURL(file);
                 };
 
-                const placeUpload = (dataUrl) => {
+                const inferMimeTypeFromSource = (source = '') => {
+                    if (typeof source !== 'string' || !source) {
+                        return '';
+                    }
+                    const dataMatch = source.match(/^data:([^;,]+)[;,]/i);
+                    if (dataMatch?.[1]) {
+                        return dataMatch[1].toLowerCase();
+                    }
+                    const path = source.split('?')[0].toLowerCase();
+                    if (path.endsWith('.jpg') || path.endsWith('.jpeg')) {
+                        return 'image/jpeg';
+                    }
+                    if (path.endsWith('.png')) {
+                        return 'image/png';
+                    }
+                    if (path.endsWith('.svg')) {
+                        return 'image/svg+xml';
+                    }
+                    return '';
+                };
+
+                const placeUpload = (dataUrl, metadata = {}) => {
+                    const inferredMime = (metadata.mimeType || inferMimeTypeFromSource(dataUrl) || '').toLowerCase();
+                    const imageData = {
+                        source: metadata.source || 'upload',
+                        sourceName: metadata.name || '',
+                        sourceMime: inferredMime,
+                    };
                     if (dataUrl.startsWith('data:image/svg')) {
                         fabric.loadSVGFromURL(dataUrl, (objects, options) => {
                             const group = fabric.util.groupSVGElements(objects, options);
-                            addDesignObject(group, { layer: 'underlay' });
+                            addDesignObject(group, { layer: 'underlay', data: imageData });
                         });
                     } else {
-                        fabric.Image.fromURL(dataUrl, (img) => addDesignObject(img, { layer: 'underlay' }));
+                        fabric.Image.fromURL(dataUrl, (img) => addDesignObject(img, { layer: 'underlay', data: imageData }));
                     }
                 };
 
@@ -2721,7 +2755,13 @@
                         btn.className = 'mockup-upload-thumb';
                         btn.style.backgroundImage = `url('${upload.url}')`;
                         btn.title = upload.name;
-                        btn.addEventListener('click', () => placeUpload(upload.url));
+                        btn.addEventListener('click', () =>
+                            placeUpload(upload.url, {
+                                source: 'uploads',
+                                name: upload.name,
+                                mimeType: upload.mimeType,
+                            })
+                        );
                         uploadList.appendChild(btn);
                     });
                 };
@@ -2982,6 +3022,283 @@
                     img.onerror = () => reject(new Error('Image failed to load'));
                     img.src = src;
                 });
+
+                const isJpegSource = (source = '', mimeType = '') => {
+                    const normalizedMime = (mimeType || '').toLowerCase();
+                    if (normalizedMime.includes('jpeg') || normalizedMime.includes('jpg')) {
+                        return true;
+                    }
+                    const normalizedSource = (source || '').toLowerCase();
+                    return normalizedSource.startsWith('data:image/jpeg') || /\.(jpe?g)(?:$|\?)/i.test(normalizedSource);
+                };
+
+                const getImageObjectSource = (imageObj) => {
+                    if (!imageObj) {
+                        return '';
+                    }
+                    if (typeof imageObj.getSrc === 'function') {
+                        try {
+                            const src = imageObj.getSrc();
+                            if (src) {
+                                return src;
+                            }
+                        } catch (err) {
+                            // Ignore and fallback to element source.
+                        }
+                    }
+                    const element = imageObj.getElement?.() || imageObj._element;
+                    return element?.src || '';
+                };
+
+                const removeBackgroundFromRasterSource = (source) => new Promise((resolve, reject) => {
+                    const image = new Image();
+                    image.crossOrigin = 'anonymous';
+                    image.onload = () => {
+                        try {
+                            const width = image.naturalWidth || image.width;
+                            const height = image.naturalHeight || image.height;
+                            if (!width || !height) {
+                                reject(new Error('Invalid image dimensions.'));
+                                return;
+                            }
+
+                            const tempCanvas = document.createElement('canvas');
+                            tempCanvas.width = width;
+                            tempCanvas.height = height;
+                            const ctx = tempCanvas.getContext('2d', { willReadFrequently: true });
+                            if (!ctx) {
+                                reject(new Error('Canvas context unavailable.'));
+                                return;
+                            }
+
+                            ctx.drawImage(image, 0, 0, width, height);
+                            const imageData = ctx.getImageData(0, 0, width, height);
+                            const pixels = imageData.data;
+                            const pixelCount = width * height;
+
+                            let sumR = 0;
+                            let sumG = 0;
+                            let sumB = 0;
+                            let sampleCount = 0;
+
+                            const samplePixel = (idx) => {
+                                const offset = idx * 4;
+                                const alpha = pixels[offset + 3];
+                                if (alpha < 12) {
+                                    return;
+                                }
+                                sumR += pixels[offset];
+                                sumG += pixels[offset + 1];
+                                sumB += pixels[offset + 2];
+                                sampleCount += 1;
+                            };
+
+                            for (let x = 0; x < width; x += 1) {
+                                samplePixel(x);
+                                samplePixel((height - 1) * width + x);
+                            }
+                            for (let y = 1; y < height - 1; y += 1) {
+                                samplePixel(y * width);
+                                samplePixel(y * width + (width - 1));
+                            }
+
+                            if (!sampleCount) {
+                                reject(new Error('Unable to sample image background.'));
+                                return;
+                            }
+
+                            const avgR = sumR / sampleCount;
+                            const avgG = sumG / sampleCount;
+                            const avgB = sumB / sampleCount;
+
+                            let deviation = 0;
+                            const measureDeviation = (idx) => {
+                                const offset = idx * 4;
+                                const alpha = pixels[offset + 3];
+                                if (alpha < 12) {
+                                    return;
+                                }
+                                const dr = pixels[offset] - avgR;
+                                const dg = pixels[offset + 1] - avgG;
+                                const db = pixels[offset + 2] - avgB;
+                                deviation += Math.sqrt((dr * dr) + (dg * dg) + (db * db));
+                            };
+
+                            for (let x = 0; x < width; x += 1) {
+                                measureDeviation(x);
+                                measureDeviation((height - 1) * width + x);
+                            }
+                            for (let y = 1; y < height - 1; y += 1) {
+                                measureDeviation(y * width);
+                                measureDeviation(y * width + (width - 1));
+                            }
+
+                            const averageDeviation = deviation / sampleCount;
+                            const tolerance = Math.max(28, Math.min(96, 24 + averageDeviation * 1.8));
+                            const queue = new Int32Array(pixelCount);
+                            const visited = new Uint8Array(pixelCount);
+                            let head = 0;
+                            let tail = 0;
+
+                            const isBackgroundPixel = (idx) => {
+                                const offset = idx * 4;
+                                const alpha = pixels[offset + 3];
+                                if (alpha === 0) {
+                                    return true;
+                                }
+                                const r = pixels[offset];
+                                const g = pixels[offset + 1];
+                                const b = pixels[offset + 2];
+                                const dr = r - avgR;
+                                const dg = g - avgG;
+                                const db = b - avgB;
+                                const distance = Math.sqrt((dr * dr) + (dg * dg) + (db * db));
+                                const nearWhite = r > 244 && g > 244 && b > 244;
+                                return nearWhite || distance <= tolerance;
+                            };
+
+                            const enqueue = (idx) => {
+                                if (idx < 0 || idx >= pixelCount || visited[idx]) {
+                                    return;
+                                }
+                                if (!isBackgroundPixel(idx)) {
+                                    return;
+                                }
+                                visited[idx] = 1;
+                                queue[tail] = idx;
+                                tail += 1;
+                            };
+
+                            for (let x = 0; x < width; x += 1) {
+                                enqueue(x);
+                                enqueue((height - 1) * width + x);
+                            }
+                            for (let y = 1; y < height - 1; y += 1) {
+                                enqueue(y * width);
+                                enqueue(y * width + (width - 1));
+                            }
+
+                            while (head < tail) {
+                                const idx = queue[head];
+                                head += 1;
+                                const offset = idx * 4;
+                                pixels[offset + 3] = 0;
+
+                                const x = idx % width;
+                                const y = Math.floor(idx / width);
+                                if (x > 0) {
+                                    enqueue(idx - 1);
+                                }
+                                if (x < width - 1) {
+                                    enqueue(idx + 1);
+                                }
+                                if (y > 0) {
+                                    enqueue(idx - width);
+                                }
+                                if (y < height - 1) {
+                                    enqueue(idx + width);
+                                }
+                            }
+
+                            ctx.putImageData(imageData, 0, 0);
+                            resolve(tempCanvas.toDataURL('image/png'));
+                        } catch (error) {
+                            reject(error);
+                        }
+                    };
+                    image.onerror = () => reject(new Error('Could not load image for background removal.'));
+                    image.src = source;
+                });
+
+                const replaceImageLayerSource = (targetImage, newSource) => new Promise((resolve, reject) => {
+                    if (!targetImage) {
+                        resolve(null);
+                        return;
+                    }
+                    const previousData = { ...(targetImage.data || {}) };
+                    const isLocked = Boolean(previousData.locked);
+                    const transform = {
+                        left: targetImage.left,
+                        top: targetImage.top,
+                        originX: targetImage.originX,
+                        originY: targetImage.originY,
+                        scaleX: targetImage.scaleX,
+                        scaleY: targetImage.scaleY,
+                        angle: targetImage.angle,
+                        flipX: targetImage.flipX,
+                        flipY: targetImage.flipY,
+                        opacity: targetImage.opacity,
+                        skewX: targetImage.skewX || 0,
+                        skewY: targetImage.skewY || 0,
+                        globalCompositeOperation: targetImage.globalCompositeOperation,
+                    };
+
+                    fabric.Image.fromURL(newSource, (nextImage) => {
+                        if (!nextImage) {
+                            reject(new Error('Unable to apply processed image.'));
+                            return;
+                        }
+                        nextImage.set({
+                            ...transform,
+                            selectable: !isLocked,
+                            evented: !isLocked,
+                            hasControls: !isLocked,
+                            lockMovementX: isLocked,
+                            lockMovementY: isLocked,
+                            lockScalingX: isLocked,
+                            lockScalingY: isLocked,
+                            lockRotation: isLocked,
+                            data: {
+                                ...previousData,
+                                sourceMime: 'image/png',
+                                backgroundRemoved: true,
+                            },
+                        });
+                        ensureLayerMetadata(nextImage);
+                        nextImage.clipPath = createClipPath();
+                        canvas.remove(targetImage);
+                        canvas.add(nextImage);
+                        canvas.setActiveObject(nextImage);
+                        setLayerOrder();
+                        canvas.renderAll();
+                        saveState();
+                        refreshBuilder();
+                        resolve(nextImage);
+                    }, { crossOrigin: 'anonymous' });
+                });
+
+                const setRemoveBgButtonState = (busy) => {
+                    if (!removeBgBtn) {
+                        return;
+                    }
+                    removeBgBtn.disabled = busy;
+                    removeBgBtn.textContent = busy ? 'Removing...' : 'Remove BG';
+                };
+
+                const removeBackgroundFromActiveImage = async () => {
+                    const active = canvas.getActiveObject();
+                    if (!active || active?.data?.role !== 'design' || active.type !== 'image') {
+                        alert('Select a JPEG image layer first, then click Remove BG.');
+                        return;
+                    }
+
+                    const source = getImageObjectSource(active);
+                    const mimeType = active?.data?.sourceMime || inferMimeTypeFromSource(source);
+                    if (!isJpegSource(source, mimeType)) {
+                        alert('Remove BG currently supports JPEG uploads. Select a JPG/JPEG layer and try again.');
+                        return;
+                    }
+
+                    setRemoveBgButtonState(true);
+                    try {
+                        const processedSource = await removeBackgroundFromRasterSource(source);
+                        await replaceImageLayerSource(active, processedSource);
+                    } catch (error) {
+                        alert(error?.message || 'Unable to remove image background right now.');
+                    } finally {
+                        setRemoveBgButtonState(false);
+                    }
+                };
 
                 const buildDesignLayerUrl = () => new Promise((resolve) => {
                     const designObjects = canvas.getObjects().filter((obj) => obj?.data?.role === 'design');
@@ -3536,6 +3853,10 @@
 
                 textPaintBtn?.addEventListener('click', () => {
                     alert('More styling tools coming soon.');
+                });
+
+                removeBgBtn?.addEventListener('click', () => {
+                    removeBackgroundFromActiveImage();
                 });
 
                 toolButtons.forEach((button) => {
