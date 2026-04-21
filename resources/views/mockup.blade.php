@@ -566,7 +566,7 @@
                     <div class="mockup-stage-toolbar">
                         <div class="mockup-stage-tabs">
                             <button class="mockup-stage-tab is-active" type="button" data-tools-toggle aria-expanded="false" aria-haspopup="menu" aria-controls="mockup-tools-menu">Tools</button>
-                            <button class="mockup-stage-tab" type="button" data-remove-bg>Tools</button>
+                            <button class="mockup-stage-tab" type="button" data-remove-bg>Remove Background</button>
                             <button class="mockup-stage-tab" type="button">Position</button>
                         </div>
                         <div class="mockup-stage-actions">
@@ -3263,19 +3263,19 @@
                         return;
                     }
                     removeBgBtn.disabled = busy;
-                    removeBgBtn.textContent = busy ? 'Working...' : 'Tools';
+                    removeBgBtn.textContent = busy ? 'Removing...' : 'Remove Background';
                 };
 
                 const removeBackgroundFromActiveImage = async () => {
                     const active = canvas.getActiveObject();
                     if (!active || active?.data?.role !== 'design' || active.type !== 'image') {
-                        alert('Select an uploaded image layer first, then click Tools.');
+                        alert('Select an uploaded image layer first, then click Remove Background.');
                         return;
                     }
 
                     const source = getImageObjectSource(active);
                     if (!source) {
-                        alert('Unable to read this image layer source. Try re-uploading it, then click Tools.');
+                        alert('Unable to read this image layer source. Try re-uploading it, then click Remove Background.');
                         return;
                     }
 
