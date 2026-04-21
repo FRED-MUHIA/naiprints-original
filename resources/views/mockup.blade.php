@@ -3066,16 +3066,27 @@
                             const imageData = ctx.getImageData(0, 0, width, height);
                             const pixels = imageData.data;
                             const pixelCount = width * height;
+                            const queue = new Int32Array(pixelCount);
+
+                            const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+                            const getOffset = (idx) => idx * 4;
+                            const colorDistanceToBg = (idx, bgR, bgG, bgB) => {
+                                const offset = getOffset(idx);
+                                const dr = pixels[offset] - bgR;
+                                const dg = pixels[offset + 1] - bgG;
+                                const db = pixels[offset + 2] - bgB;
+                                return Math.sqrt((dr * dr) + (dg * dg) + (db * db));
+                            };
 
                             let sumR = 0;
                             let sumG = 0;
                             let sumB = 0;
                             let sampleCount = 0;
 
-                            const samplePixel = (idx) => {
-                                const offset = idx * 4;
+                            const sampleBorderPixel = (idx) => {
+                                const offset = getOffset(idx);
                                 const alpha = pixels[offset + 3];
-                                if (alpha < 12) {
+                                if (alpha < 10) {
                                     return;
                                 }
                                 sumR += pixels[offset];
@@ -3085,12 +3096,12 @@
                             };
 
                             for (let x = 0; x < width; x += 1) {
-                                samplePixel(x);
-                                samplePixel((height - 1) * width + x);
+                                sampleBorderPixel(x);
+                                sampleBorderPixel((height - 1) * width + x);
                             }
                             for (let y = 1; y < height - 1; y += 1) {
-                                samplePixel(y * width);
-                                samplePixel(y * width + (width - 1));
+                                sampleBorderPixel(y * width);
+                                sampleBorderPixel(y * width + (width - 1));
                             }
 
                             if (!sampleCount) {
@@ -3098,20 +3109,20 @@
                                 return;
                             }
 
-                            const avgR = sumR / sampleCount;
-                            const avgG = sumG / sampleCount;
-                            const avgB = sumB / sampleCount;
+                            const bgR = sumR / sampleCount;
+                            const bgG = sumG / sampleCount;
+                            const bgB = sumB / sampleCount;
 
                             let deviation = 0;
                             const measureDeviation = (idx) => {
-                                const offset = idx * 4;
+                                const offset = getOffset(idx);
                                 const alpha = pixels[offset + 3];
-                                if (alpha < 12) {
+                                if (alpha < 10) {
                                     return;
                                 }
-                                const dr = pixels[offset] - avgR;
-                                const dg = pixels[offset + 1] - avgG;
-                                const db = pixels[offset + 2] - avgB;
+                                const dr = pixels[offset] - bgR;
+                                const dg = pixels[offset + 1] - bgG;
+                                const db = pixels[offset + 2] - bgB;
                                 deviation += Math.sqrt((dr * dr) + (dg * dg) + (db * db));
                             };
 
@@ -3124,15 +3135,13 @@
                                 measureDeviation(y * width + (width - 1));
                             }
 
-                            const averageDeviation = deviation / sampleCount;
-                            const tolerance = Math.max(28, Math.min(96, 24 + averageDeviation * 1.8));
-                            const queue = new Int32Array(pixelCount);
-                            const visited = new Uint8Array(pixelCount);
-                            let head = 0;
-                            let tail = 0;
+                            const avgDeviation = deviation / sampleCount;
+                            const hardTolerance = clamp(18 + avgDeviation * 1.4, 22, 92);
+                            const softTolerance = clamp(hardTolerance + 24, 46, 132);
+                            const bgMask = new Uint8Array(pixelCount);
 
-                            const isBackgroundPixel = (idx) => {
-                                const offset = idx * 4;
+                            const isBackgroundLike = (idx, tolerance = softTolerance) => {
+                                const offset = getOffset(idx);
                                 const alpha = pixels[offset + 3];
                                 if (alpha === 0) {
                                     return true;
@@ -3140,22 +3149,21 @@
                                 const r = pixels[offset];
                                 const g = pixels[offset + 1];
                                 const b = pixels[offset + 2];
-                                const dr = r - avgR;
-                                const dg = g - avgG;
-                                const db = b - avgB;
-                                const distance = Math.sqrt((dr * dr) + (dg * dg) + (db * db));
-                                const nearWhite = r > 244 && g > 244 && b > 244;
-                                return nearWhite || distance <= tolerance;
+                                const nearWhite = r > 245 && g > 245 && b > 245;
+                                const distance = colorDistanceToBg(idx, bgR, bgG, bgB);
+                                return distance <= tolerance || (nearWhite && distance <= tolerance + 14);
                             };
 
+                            let head = 0;
+                            let tail = 0;
                             const enqueue = (idx) => {
-                                if (idx < 0 || idx >= pixelCount || visited[idx]) {
+                                if (idx < 0 || idx >= pixelCount || bgMask[idx]) {
                                     return;
                                 }
-                                if (!isBackgroundPixel(idx)) {
+                                if (!isBackgroundLike(idx, softTolerance)) {
                                     return;
                                 }
-                                visited[idx] = 1;
+                                bgMask[idx] = 1;
                                 queue[tail] = idx;
                                 tail += 1;
                             };
@@ -3172,22 +3180,120 @@
                             while (head < tail) {
                                 const idx = queue[head];
                                 head += 1;
-                                const offset = idx * 4;
-                                pixels[offset + 3] = 0;
+                                const x = idx % width;
+                                const y = Math.floor(idx / width);
+                                if (x > 0) enqueue(idx - 1);
+                                if (x < width - 1) enqueue(idx + 1);
+                                if (y > 0) enqueue(idx - width);
+                                if (y < height - 1) enqueue(idx + width);
+                            }
+
+                            // Clear small leftover background islands that often remain around text/wording shapes.
+                            const checked = new Uint8Array(pixelCount);
+                            const islandLimit = Math.max(14, Math.min(2400, Math.round(pixelCount * 0.0012)));
+
+                            for (let idx = 0; idx < pixelCount; idx += 1) {
+                                if (bgMask[idx] || checked[idx] || !isBackgroundLike(idx, hardTolerance * 0.92)) {
+                                    continue;
+                                }
+
+                                let componentHead = 0;
+                                let componentTail = 0;
+                                queue[componentTail] = idx;
+                                componentTail += 1;
+                                checked[idx] = 1;
+                                const component = [idx];
+
+                                while (componentHead < componentTail) {
+                                    const current = queue[componentHead];
+                                    componentHead += 1;
+                                    const x = current % width;
+                                    const y = Math.floor(current / width);
+                                    const neighbors = [];
+                                    if (x > 0) neighbors.push(current - 1);
+                                    if (x < width - 1) neighbors.push(current + 1);
+                                    if (y > 0) neighbors.push(current - width);
+                                    if (y < height - 1) neighbors.push(current + width);
+
+                                    for (let n = 0; n < neighbors.length; n += 1) {
+                                        const neighbor = neighbors[n];
+                                        if (bgMask[neighbor] || checked[neighbor]) {
+                                            continue;
+                                        }
+                                        if (!isBackgroundLike(neighbor, hardTolerance * 0.92)) {
+                                            continue;
+                                        }
+                                        checked[neighbor] = 1;
+                                        queue[componentTail] = neighbor;
+                                        componentTail += 1;
+                                        component.push(neighbor);
+                                    }
+                                }
+
+                                if (component.length <= islandLimit) {
+                                    for (let i = 0; i < component.length; i += 1) {
+                                        bgMask[component[i]] = 1;
+                                    }
+                                }
+                            }
+
+                            const countBgNeighbors = (x, y) => {
+                                let count = 0;
+                                for (let oy = -1; oy <= 1; oy += 1) {
+                                    for (let ox = -1; ox <= 1; ox += 1) {
+                                        if (ox === 0 && oy === 0) {
+                                            continue;
+                                        }
+                                        const nx = x + ox;
+                                        const ny = y + oy;
+                                        if (nx < 0 || ny < 0 || nx >= width || ny >= height) {
+                                            continue;
+                                        }
+                                        if (bgMask[ny * width + nx]) {
+                                            count += 1;
+                                        }
+                                    }
+                                }
+                                return count;
+                            };
+
+                            for (let idx = 0; idx < pixelCount; idx += 1) {
+                                const offset = getOffset(idx);
+                                let alpha = pixels[offset + 3];
+                                if (bgMask[idx]) {
+                                    pixels[offset + 3] = 0;
+                                    continue;
+                                }
+                                if (alpha === 0) {
+                                    continue;
+                                }
 
                                 const x = idx % width;
                                 const y = Math.floor(idx / width);
-                                if (x > 0) {
-                                    enqueue(idx - 1);
+                                const bgNeighbors = countBgNeighbors(x, y);
+                                const distance = colorDistanceToBg(idx, bgR, bgG, bgB);
+
+                                if (bgNeighbors > 0 && distance <= softTolerance + 8) {
+                                    const softness = clamp((softTolerance - distance) / Math.max(1, softTolerance - hardTolerance), 0, 1);
+                                    const edgeFactor = bgNeighbors >= 5 ? 0.95 : bgNeighbors >= 3 ? 0.8 : 0.62;
+                                    alpha = Math.round(alpha * (1 - softness * edgeFactor));
                                 }
-                                if (x < width - 1) {
-                                    enqueue(idx + 1);
+                                if (distance <= hardTolerance * 0.86 && bgNeighbors >= 2) {
+                                    alpha = Math.min(alpha, 24);
                                 }
-                                if (y > 0) {
-                                    enqueue(idx - width);
+                                if (alpha < 10) {
+                                    alpha = 0;
                                 }
-                                if (y < height - 1) {
-                                    enqueue(idx + width);
+                                pixels[offset + 3] = alpha;
+
+                                if (alpha > 0 && alpha < 255) {
+                                    // Decontaminate edge colors so PNG halos are reduced.
+                                    const a = alpha / 255;
+                                    const restore = (channel, bgChannel) =>
+                                        clamp(Math.round((channel - bgChannel * (1 - a)) / Math.max(0.08, a)), 0, 255);
+                                    pixels[offset] = restore(pixels[offset], bgR);
+                                    pixels[offset + 1] = restore(pixels[offset + 1], bgG);
+                                    pixels[offset + 2] = restore(pixels[offset + 2], bgB);
                                 }
                             }
 

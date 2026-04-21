@@ -4,7 +4,7 @@
     $menu = $header['menu'] ?? [];
     $menu = array_values(array_filter($menu, static function ($item) {
         $label = strtolower(trim((string) ($item['label'] ?? '')));
-        return !in_array($label, ['gift', 'gifts', 'kid', 'kids'], true);
+        return !in_array($label, ['gift', 'gifts', 'kid', 'kids', 'sport', 'sports'], true);
     }));
     $hasJerseyLink = collect($menu)->contains(function ($item) {
         return strtolower(trim((string) ($item['label'] ?? ''))) === 'jersey';
@@ -66,6 +66,10 @@
     }));
     $menu[] = $contactItem ?? ['label' => 'Contact', 'url' => '/contact'];
     $menuStrip = $header['menu_strip'] ?? [];
+    $menuStrip = array_values(array_filter($menuStrip, static function ($item) {
+        $label = strtolower(trim((string) ($item['label'] ?? '')));
+        return !in_array($label, ['sport', 'sports'], true);
+    }));
     $menuStripCta = $header['menu_strip_cta'] ?? null;
     $ctaPosition = $header['menu_strip_cta_position'] ?? 8;
     $announcementItems = $header['announcement_items'] ?? [];

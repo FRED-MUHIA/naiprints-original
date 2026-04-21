@@ -14,7 +14,7 @@
             .rb-page {
                 margin: 0 auto;
                 max-width: 1200px;
-                padding: 1.25rem 1rem 4rem;
+                padding: clamp(0.9rem, 1.8vw, 1.35rem) clamp(0.85rem, 2.2vw, 1.2rem) 4rem;
             }
             .rb-hero {
                 border-top: 1px solid rgba(15, 23, 42, 0.12);
@@ -43,6 +43,7 @@
                 margin: 1.5rem auto 0;
                 max-width: 1050px;
                 text-align: center;
+                text-wrap: balance;
             }
             .rb-hero p {
                 color: #334155;
@@ -51,12 +52,13 @@
                 margin: 1.2rem auto 0;
                 max-width: 1080px;
                 text-align: center;
+                text-wrap: pretty;
             }
             .rb-workspace {
                 align-items: stretch;
                 display: grid;
                 gap: 1.6rem;
-                grid-template-columns: 1fr 1.3fr;
+                grid-template-columns: minmax(0, 1fr) minmax(0, 1.22fr);
                 margin-top: 2.5rem;
             }
             .rb-preview-card,
@@ -72,7 +74,7 @@
                 padding: 1rem 1rem 1.2rem;
             }
             .rb-card-kicker {
-                color: #475569;
+                color: var(--brand-red, #e11d2e);
                 font-size: 0.86rem;
                 font-weight: 700;
                 letter-spacing: 0.12em;
@@ -81,10 +83,12 @@
             }
             .rb-preview-stage {
                 align-items: center;
-                background: radial-gradient(circle at 20% 20%, #eff6ff 0%, #dbeafe 35%, #f8fafc 100%);
+                background:
+                    radial-gradient(circle at 18% 22%, rgba(225, 29, 46, 0.16) 0%, rgba(225, 29, 46, 0.03) 40%, rgba(255, 255, 255, 0.95) 72%),
+                    radial-gradient(circle at 82% 78%, rgba(245, 158, 11, 0.18) 0%, rgba(245, 158, 11, 0.03) 45%, rgba(255, 255, 255, 0.96) 76%);
                 border-radius: 1.25rem;
                 display: grid;
-                min-height: 455px;
+                min-height: clamp(270px, 42vw, 455px);
                 overflow: hidden;
                 place-items: center;
                 position: relative;
@@ -99,12 +103,12 @@
                 background-size: 20px 20px;
                 content: '';
                 inset: 0;
-                opacity: 0.3;
+                opacity: 0.16;
                 position: absolute;
             }
             .rb-preview-stage img {
                 height: 100%;
-                max-height: 455px;
+                max-height: clamp(270px, 42vw, 455px);
                 object-fit: contain;
                 position: relative;
                 width: 100%;
@@ -129,19 +133,19 @@
             }
             .rb-dropzone {
                 align-items: center;
-                border: 4px dashed rgba(100, 116, 139, 0.42);
+                border: 4px dashed rgba(225, 29, 46, 0.35);
                 border-radius: 1.4rem;
                 display: grid;
                 gap: 1rem;
-                min-height: 344px;
+                min-height: clamp(280px, 33vw, 344px);
                 padding: 2.2rem 1.3rem;
                 place-content: center;
                 text-align: center;
                 transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
             }
             .rb-dropzone.is-drag {
-                background: #f8fafc;
-                border-color: #4f46e5;
+                background: rgba(225, 29, 46, 0.05);
+                border-color: var(--brand-red, #e11d2e);
                 transform: scale(0.995);
             }
             .rb-drop-title {
@@ -151,10 +155,13 @@
                 line-height: 1.15;
                 margin: 0;
             }
+            .rb-drop-title br {
+                display: block;
+            }
             .rb-browse {
                 background: transparent;
                 border: 0;
-                color: #4f46e5;
+                color: var(--brand-red, #e11d2e);
                 cursor: pointer;
                 font: inherit;
                 font-weight: 800;
@@ -162,7 +169,7 @@
                 text-decoration: none;
             }
             .rb-browse:hover {
-                color: #4338ca;
+                color: var(--brand-deep, #0b1026);
             }
             .rb-upload-btn,
             .rb-download-btn,
@@ -174,16 +181,17 @@
                 font-weight: 700;
                 justify-content: center;
                 min-height: 3rem;
-                min-width: 208px;
+                min-width: 180px;
+                max-width: 100%;
                 padding: 0.7rem 1.3rem;
                 text-decoration: none;
                 transition: transform 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;
             }
             .rb-upload-btn,
             .rb-download-btn {
-                background: linear-gradient(135deg, #4f46e5, #6366f1);
+                background: linear-gradient(135deg, var(--brand-red, #e11d2e) 0%, var(--brand-deep, #0b1026) 100%);
                 border: 0;
-                box-shadow: 0 14px 20px -16px rgba(79, 70, 229, 0.85);
+                box-shadow: 0 14px 22px -16px rgba(225, 29, 46, 0.85);
                 color: #ffffff;
             }
             .rb-upload-btn:hover,
@@ -215,7 +223,7 @@
                 gap: 0.35rem;
             }
             .rb-perk-dot {
-                background: #f472b6;
+                background: var(--brand-red, #e11d2e);
                 border-radius: 999px;
                 color: #ffffff;
                 display: inline-grid;
@@ -252,10 +260,17 @@
                 flex-wrap: wrap;
                 gap: 0.75rem;
             }
+            .rb-result-actions > * {
+                flex: 1 1 180px;
+            }
             .rb-reset-btn {
                 background: #ffffff;
                 border: 1px solid rgba(100, 116, 139, 0.45);
                 color: #334155;
+            }
+            .rb-reset-btn:hover {
+                border-color: var(--brand-red, #e11d2e);
+                color: var(--brand-red, #e11d2e);
             }
             .rb-content {
                 display: grid;
@@ -314,25 +329,89 @@
             .rb-steps li {
                 line-height: 1.45;
             }
+            @media (max-width: 1200px) {
+                .rb-workspace {
+                    gap: 1.2rem;
+                }
+            }
             @media (max-width: 1024px) {
                 .rb-workspace {
                     grid-template-columns: 1fr;
                 }
                 .rb-preview-stage {
-                    min-height: 345px;
+                    min-height: clamp(250px, 56vw, 370px);
+                }
+                .rb-preview-stage img {
+                    max-height: clamp(250px, 56vw, 370px);
                 }
             }
             @media (max-width: 768px) {
+                .rb-page {
+                    padding-bottom: 5rem;
+                }
+                .rb-breadcrumbs {
+                    font-size: 0.88rem;
+                    gap: 0.45rem;
+                }
+                .rb-hero h1 {
+                    font-size: clamp(1.9rem, 10vw, 2.8rem);
+                    line-height: 1.1;
+                    margin-top: 1.1rem;
+                }
+                .rb-hero p {
+                    font-size: 1.04rem;
+                    line-height: 1.5;
+                    margin-top: 0.95rem;
+                }
+                .rb-workspace {
+                    margin-top: 1.6rem;
+                }
+                .rb-preview-card,
+                .rb-uploader-card,
+                .rb-content-card,
+                .rb-steps {
+                    border-radius: 1.1rem;
+                }
+                .rb-preview-card,
+                .rb-uploader-card {
+                    padding: 0.8rem;
+                }
+                .rb-dropzone {
+                    border-width: 3px;
+                    min-height: auto;
+                    padding: 1.45rem 0.85rem;
+                }
                 .rb-content-grid {
                     grid-template-columns: 1fr;
                 }
                 .rb-drop-title {
-                    font-size: 1.9rem;
+                    font-size: clamp(1.3rem, 7.8vw, 1.85rem);
+                    line-height: 1.2;
+                }
+                .rb-drop-title br {
+                    display: none;
+                }
+                .rb-upload-btn,
+                .rb-download-btn,
+                .rb-reset-btn {
+                    min-width: 0;
+                    width: 100%;
+                }
+                .rb-result-actions {
+                    display: grid;
+                    grid-template-columns: 1fr;
+                }
+                .remove-bg-page .purchase-popup {
+                    display: none !important;
+                }
+                .remove-bg-page .whatsapp-float {
+                    bottom: 12px;
+                    right: 12px;
                 }
             }
         </style>
     </head>
-    <body class="bg-sand text-ink">
+    <body class="bg-sand text-ink remove-bg-page">
         <div class="min-h-screen">
             @include('partials.site-header', ['globalHeader' => $globalHeader ?? []])
 
@@ -513,16 +592,27 @@
                             const imageData = ctx.getImageData(0, 0, width, height);
                             const pixels = imageData.data;
                             const pixelCount = width * height;
+                            const queue = new Int32Array(pixelCount);
+
+                            const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+                            const getOffset = (idx) => idx * 4;
+                            const colorDistanceToBg = (idx, bgR, bgG, bgB) => {
+                                const offset = getOffset(idx);
+                                const dr = pixels[offset] - bgR;
+                                const dg = pixels[offset + 1] - bgG;
+                                const db = pixels[offset + 2] - bgB;
+                                return Math.sqrt((dr * dr) + (dg * dg) + (db * db));
+                            };
 
                             let sumR = 0;
                             let sumG = 0;
                             let sumB = 0;
                             let sampleCount = 0;
 
-                            const samplePixel = (idx) => {
-                                const offset = idx * 4;
+                            const sampleBorderPixel = (idx) => {
+                                const offset = getOffset(idx);
                                 const alpha = pixels[offset + 3];
-                                if (alpha < 12) {
+                                if (alpha < 10) {
                                     return;
                                 }
                                 sumR += pixels[offset];
@@ -532,12 +622,12 @@
                             };
 
                             for (let x = 0; x < width; x += 1) {
-                                samplePixel(x);
-                                samplePixel((height - 1) * width + x);
+                                sampleBorderPixel(x);
+                                sampleBorderPixel((height - 1) * width + x);
                             }
                             for (let y = 1; y < height - 1; y += 1) {
-                                samplePixel(y * width);
-                                samplePixel(y * width + (width - 1));
+                                sampleBorderPixel(y * width);
+                                sampleBorderPixel(y * width + (width - 1));
                             }
 
                             if (!sampleCount) {
@@ -545,20 +635,20 @@
                                 return;
                             }
 
-                            const avgR = sumR / sampleCount;
-                            const avgG = sumG / sampleCount;
-                            const avgB = sumB / sampleCount;
+                            const bgR = sumR / sampleCount;
+                            const bgG = sumG / sampleCount;
+                            const bgB = sumB / sampleCount;
 
                             let deviation = 0;
                             const measureDeviation = (idx) => {
-                                const offset = idx * 4;
+                                const offset = getOffset(idx);
                                 const alpha = pixels[offset + 3];
-                                if (alpha < 12) {
+                                if (alpha < 10) {
                                     return;
                                 }
-                                const dr = pixels[offset] - avgR;
-                                const dg = pixels[offset + 1] - avgG;
-                                const db = pixels[offset + 2] - avgB;
+                                const dr = pixels[offset] - bgR;
+                                const dg = pixels[offset + 1] - bgG;
+                                const db = pixels[offset + 2] - bgB;
                                 deviation += Math.sqrt((dr * dr) + (dg * dg) + (db * db));
                             };
 
@@ -571,15 +661,13 @@
                                 measureDeviation(y * width + (width - 1));
                             }
 
-                            const averageDeviation = deviation / sampleCount;
-                            const tolerance = Math.max(28, Math.min(96, 24 + averageDeviation * 1.8));
-                            const queue = new Int32Array(pixelCount);
-                            const visited = new Uint8Array(pixelCount);
-                            let head = 0;
-                            let tail = 0;
+                            const avgDeviation = deviation / sampleCount;
+                            const hardTolerance = clamp(18 + avgDeviation * 1.4, 22, 92);
+                            const softTolerance = clamp(hardTolerance + 24, 46, 132);
+                            const bgMask = new Uint8Array(pixelCount);
 
-                            const isBackgroundPixel = (idx) => {
-                                const offset = idx * 4;
+                            const isBackgroundLike = (idx, tolerance = softTolerance) => {
+                                const offset = getOffset(idx);
                                 const alpha = pixels[offset + 3];
                                 if (alpha === 0) {
                                     return true;
@@ -587,22 +675,21 @@
                                 const r = pixels[offset];
                                 const g = pixels[offset + 1];
                                 const b = pixels[offset + 2];
-                                const dr = r - avgR;
-                                const dg = g - avgG;
-                                const db = b - avgB;
-                                const distance = Math.sqrt((dr * dr) + (dg * dg) + (db * db));
-                                const nearWhite = r > 244 && g > 244 && b > 244;
-                                return nearWhite || distance <= tolerance;
+                                const nearWhite = r > 245 && g > 245 && b > 245;
+                                const distance = colorDistanceToBg(idx, bgR, bgG, bgB);
+                                return distance <= tolerance || (nearWhite && distance <= tolerance + 14);
                             };
 
+                            let head = 0;
+                            let tail = 0;
                             const enqueue = (idx) => {
-                                if (idx < 0 || idx >= pixelCount || visited[idx]) {
+                                if (idx < 0 || idx >= pixelCount || bgMask[idx]) {
                                     return;
                                 }
-                                if (!isBackgroundPixel(idx)) {
+                                if (!isBackgroundLike(idx, softTolerance)) {
                                     return;
                                 }
-                                visited[idx] = 1;
+                                bgMask[idx] = 1;
                                 queue[tail] = idx;
                                 tail += 1;
                             };
@@ -619,15 +706,121 @@
                             while (head < tail) {
                                 const idx = queue[head];
                                 head += 1;
-                                const offset = idx * 4;
-                                pixels[offset + 3] = 0;
-
                                 const x = idx % width;
                                 const y = Math.floor(idx / width);
                                 if (x > 0) enqueue(idx - 1);
                                 if (x < width - 1) enqueue(idx + 1);
                                 if (y > 0) enqueue(idx - width);
                                 if (y < height - 1) enqueue(idx + width);
+                            }
+
+                            // Clear small leftover background islands that often remain around text/wording shapes.
+                            const checked = new Uint8Array(pixelCount);
+                            const islandLimit = Math.max(14, Math.min(2400, Math.round(pixelCount * 0.0012)));
+
+                            for (let idx = 0; idx < pixelCount; idx += 1) {
+                                if (bgMask[idx] || checked[idx] || !isBackgroundLike(idx, hardTolerance * 0.92)) {
+                                    continue;
+                                }
+
+                                let componentHead = 0;
+                                let componentTail = 0;
+                                queue[componentTail] = idx;
+                                componentTail += 1;
+                                checked[idx] = 1;
+                                const component = [idx];
+
+                                while (componentHead < componentTail) {
+                                    const current = queue[componentHead];
+                                    componentHead += 1;
+                                    const x = current % width;
+                                    const y = Math.floor(current / width);
+                                    const neighbors = [];
+                                    if (x > 0) neighbors.push(current - 1);
+                                    if (x < width - 1) neighbors.push(current + 1);
+                                    if (y > 0) neighbors.push(current - width);
+                                    if (y < height - 1) neighbors.push(current + width);
+
+                                    for (let n = 0; n < neighbors.length; n += 1) {
+                                        const neighbor = neighbors[n];
+                                        if (bgMask[neighbor] || checked[neighbor]) {
+                                            continue;
+                                        }
+                                        if (!isBackgroundLike(neighbor, hardTolerance * 0.92)) {
+                                            continue;
+                                        }
+                                        checked[neighbor] = 1;
+                                        queue[componentTail] = neighbor;
+                                        componentTail += 1;
+                                        component.push(neighbor);
+                                    }
+                                }
+
+                                if (component.length <= islandLimit) {
+                                    for (let i = 0; i < component.length; i += 1) {
+                                        bgMask[component[i]] = 1;
+                                    }
+                                }
+                            }
+
+                            const countBgNeighbors = (x, y) => {
+                                let count = 0;
+                                for (let oy = -1; oy <= 1; oy += 1) {
+                                    for (let ox = -1; ox <= 1; ox += 1) {
+                                        if (ox === 0 && oy === 0) {
+                                            continue;
+                                        }
+                                        const nx = x + ox;
+                                        const ny = y + oy;
+                                        if (nx < 0 || ny < 0 || nx >= width || ny >= height) {
+                                            continue;
+                                        }
+                                        if (bgMask[ny * width + nx]) {
+                                            count += 1;
+                                        }
+                                    }
+                                }
+                                return count;
+                            };
+
+                            for (let idx = 0; idx < pixelCount; idx += 1) {
+                                const offset = getOffset(idx);
+                                let alpha = pixels[offset + 3];
+                                if (bgMask[idx]) {
+                                    pixels[offset + 3] = 0;
+                                    continue;
+                                }
+                                if (alpha === 0) {
+                                    continue;
+                                }
+
+                                const x = idx % width;
+                                const y = Math.floor(idx / width);
+                                const bgNeighbors = countBgNeighbors(x, y);
+                                const distance = colorDistanceToBg(idx, bgR, bgG, bgB);
+
+                                if (bgNeighbors > 0 && distance <= softTolerance + 8) {
+                                    const softness = clamp((softTolerance - distance) / Math.max(1, softTolerance - hardTolerance), 0, 1);
+                                    const edgeFactor = bgNeighbors >= 5 ? 0.95 : bgNeighbors >= 3 ? 0.8 : 0.62;
+                                    alpha = Math.round(alpha * (1 - softness * edgeFactor));
+                                }
+                                if (distance <= hardTolerance * 0.86 && bgNeighbors >= 2) {
+                                    alpha = Math.min(alpha, 24);
+                                }
+                                if (alpha < 10) {
+                                    alpha = 0;
+                                }
+                                pixels[offset + 3] = alpha;
+
+                                if (alpha > 0 && alpha < 255) {
+                                    // Decontaminate edge colors so PNG halos are reduced.
+                                    const a = alpha / 255;
+                                    const restore = (channel, bgChannel) =>
+                                        clamp(Math.round((channel - bgChannel * (1 - a)) / Math.max(0.08, a)), 0, 255);
+                                    pixels[offset] = restore(pixels[offset], bgR);
+                                    pixels[offset + 1] = restore(pixels[offset + 1], bgG);
+                                    pixels[offset + 2] = restore(pixels[offset + 2], bgB);
+                                }
                             }
 
                             ctx.putImageData(imageData, 0, 0);
