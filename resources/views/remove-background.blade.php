@@ -20,26 +20,12 @@
                 border-top: 1px solid rgba(15, 23, 42, 0.12);
                 padding-top: 1.4rem;
             }
-            .rb-breadcrumbs {
-                align-items: center;
-                display: flex;
-                flex-wrap: wrap;
-                gap: 0.55rem;
-                font-size: 0.96rem;
-            }
-            .rb-breadcrumbs a {
-                color: #425466;
-                text-decoration: none;
-            }
-            .rb-breadcrumbs a:hover {
-                color: #e11d2e;
-            }
             .rb-hero h1 {
                 color: #1f2937;
-                font-size: clamp(2rem, 4.6vw, 4.05rem);
+                font-size: clamp(1.35rem, 2.8vw, 2.75rem);
                 font-weight: 800;
                 letter-spacing: -0.03em;
-                line-height: 1.05;
+                line-height: 1.12;
                 margin: 1.5rem auto 0;
                 max-width: 1050px;
                 text-align: center;
@@ -47,12 +33,64 @@
             }
             .rb-hero p {
                 color: #334155;
-                font-size: clamp(1.02rem, 1.7vw, 1.9rem);
-                line-height: 1.45;
+                font-size: clamp(0.9rem, 1.25vw, 1.45rem);
+                line-height: 1.52;
                 margin: 1.2rem auto 0;
                 max-width: 1080px;
                 text-align: center;
                 text-wrap: pretty;
+            }
+            .rb-howto {
+                margin-top: 1.6rem;
+                border-radius: 1.3rem;
+                padding: clamp(1.5rem, 3vw, 3rem) clamp(1rem, 2.4vw, 2rem);
+                background: linear-gradient(120deg, #7d7bef 0%, #f045c7 100%);
+                box-shadow: 0 20px 40px -30px rgba(79, 70, 229, 0.55);
+            }
+            .rb-howto-title {
+                color: #ffffff;
+                font-size: clamp(1.25rem, 3.1vw, 3rem);
+                font-weight: 800;
+                letter-spacing: -0.02em;
+                margin: 0;
+                text-align: center;
+                text-wrap: balance;
+            }
+            .rb-howto-grid {
+                margin-top: clamp(1rem, 2vw, 2rem);
+                display: grid;
+                gap: 1rem;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+            .rb-howto-card {
+                background: #ffffff;
+                border-radius: 1rem;
+                border: 1px solid rgba(255, 255, 255, 0.62);
+                padding: 1.1rem;
+                box-shadow: 0 14px 28px -24px rgba(15, 23, 42, 0.4);
+            }
+            .rb-howto-head {
+                align-items: center;
+                display: flex;
+                gap: 0.65rem;
+            }
+            .rb-howto-icon {
+                color: #334155;
+                flex: 0 0 auto;
+                height: 2.8rem;
+                width: 2.8rem;
+            }
+            .rb-howto-head h3 {
+                color: #0f172a;
+                font-size: clamp(1rem, 1.4vw, 1.8rem);
+                font-weight: 800;
+                margin: 0;
+            }
+            .rb-howto-card p {
+                color: #1e293b;
+                font-size: 0.95rem;
+                line-height: 1.45;
+                margin: 0.7rem 0 0;
             }
             .rb-workspace {
                 align-items: stretch;
@@ -242,7 +280,14 @@
                 margin: 0 0 0.7rem;
             }
             .rb-result-media {
-                background: #f8fafc;
+                background-color: #f8fafc;
+                background-image:
+                    linear-gradient(45deg, rgba(15, 23, 42, 0.08) 25%, transparent 25%),
+                    linear-gradient(-45deg, rgba(15, 23, 42, 0.08) 25%, transparent 25%),
+                    linear-gradient(45deg, transparent 75%, rgba(15, 23, 42, 0.08) 75%),
+                    linear-gradient(-45deg, transparent 75%, rgba(15, 23, 42, 0.08) 75%);
+                background-position: 0 0, 0 11px, 11px -11px, -11px 0;
+                background-size: 22px 22px;
                 border-radius: 1rem;
                 display: grid;
                 margin-bottom: 0.85rem;
@@ -329,12 +374,90 @@
             .rb-steps li {
                 line-height: 1.45;
             }
+            .rb-reviews {
+                margin-top: 2.3rem;
+                border: 1px solid rgba(148, 163, 184, 0.22);
+                border-radius: 1.25rem;
+                background:
+                    linear-gradient(120deg, rgba(226, 232, 240, 0.66), rgba(216, 180, 254, 0.32) 55%, rgba(253, 242, 248, 0.44));
+                overflow: hidden;
+                padding: 1.2rem 1rem 1.35rem;
+            }
+            .rb-reviews-head {
+                align-items: center;
+                display: flex;
+                justify-content: space-between;
+                gap: 1rem;
+                margin-bottom: 0.9rem;
+            }
+            .rb-reviews-title {
+                margin: 0;
+                color: #0f172a;
+                font-size: clamp(1.05rem, 2vw, 1.5rem);
+                font-weight: 800;
+                letter-spacing: -0.01em;
+            }
+            .rb-reviews-sub {
+                margin: 0;
+                color: #334155;
+                font-size: 0.9rem;
+                font-weight: 600;
+            }
+            .rb-reviews-track {
+                display: grid;
+                gap: 1rem;
+                grid-auto-flow: column;
+                grid-auto-columns: minmax(260px, 1fr);
+                overflow-x: auto;
+                overscroll-behavior-x: contain;
+                padding-bottom: 0.4rem;
+                scrollbar-width: thin;
+            }
+            .rb-review-card {
+                display: flex;
+                flex-direction: column;
+                min-height: 320px;
+                background: rgba(255, 255, 255, 0.82);
+                border: 1px solid rgba(255, 255, 255, 0.85);
+                border-radius: 1rem;
+                padding: 1rem 1rem 0.9rem;
+                box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+            }
+            .rb-review-stars {
+                color: #f59e0b;
+                font-size: 1.05rem;
+                letter-spacing: 0.18rem;
+                margin-bottom: 0.65rem;
+                user-select: none;
+            }
+            .rb-review-title {
+                margin: 0;
+                color: #1e1b3a;
+                font-size: 1.05rem;
+                font-weight: 800;
+            }
+            .rb-review-text {
+                color: #1f2937;
+                font-size: 0.97rem;
+                line-height: 1.5;
+                margin: 0.7rem 0 0;
+            }
+            .rb-review-author {
+                margin-top: auto;
+                padding-top: 1rem;
+                color: #111827;
+                font-size: 0.95rem;
+                font-weight: 700;
+            }
             @media (max-width: 1200px) {
                 .rb-workspace {
                     gap: 1.2rem;
                 }
             }
             @media (max-width: 1024px) {
+                .rb-howto-grid {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
                 .rb-workspace {
                     grid-template-columns: 1fr;
                 }
@@ -349,19 +472,36 @@
                 .rb-page {
                     padding-bottom: 5rem;
                 }
-                .rb-breadcrumbs {
-                    font-size: 0.88rem;
-                    gap: 0.45rem;
+                .rb-reviews {
+                    padding: 1rem 0.75rem 1.15rem;
+                }
+                .rb-reviews-track {
+                    grid-auto-columns: minmax(238px, 82vw);
+                }
+                .rb-review-card {
+                    min-height: 290px;
+                }
+                .rb-howto {
+                    border-radius: 1.05rem;
+                    margin-top: 1.2rem;
+                    padding: 1.1rem 0.85rem;
+                }
+                .rb-howto-grid {
+                    grid-template-columns: 1fr;
+                }
+                .rb-howto-title {
+                    font-size: clamp(1.2rem, 8vw, 1.9rem);
+                    line-height: 1.15;
                 }
                 .rb-hero h1 {
-                    font-size: clamp(1.9rem, 10vw, 2.8rem);
-                    line-height: 1.1;
-                    margin-top: 1.1rem;
+                    font-size: clamp(1.25rem, 6.7vw, 1.95rem);
+                    line-height: 1.16;
+                    margin-top: 0.9rem;
                 }
                 .rb-hero p {
-                    font-size: 1.04rem;
-                    line-height: 1.5;
-                    margin-top: 0.95rem;
+                    font-size: 0.95rem;
+                    line-height: 1.56;
+                    margin-top: 0.8rem;
                 }
                 .rb-workspace {
                     margin-top: 1.6rem;
@@ -369,7 +509,8 @@
                 .rb-preview-card,
                 .rb-uploader-card,
                 .rb-content-card,
-                .rb-steps {
+                .rb-steps,
+                .rb-reviews {
                     border-radius: 1.1rem;
                 }
                 .rb-preview-card,
@@ -417,18 +558,55 @@
 
             <main class="rb-page">
                 <section class="rb-hero">
-                    <nav class="rb-breadcrumbs" aria-label="Breadcrumb">
-                        <a href="{{ url('/') }}">Home</a>
-                        <span>/</span>
-                        <span>Feature</span>
-                        <span>/</span>
-                        <span aria-current="page">Remove Background</span>
-                    </nav>
                     <h1>Remove the background from your image for free.</h1>
                     <p>
                         Quickly clear unwanted backgrounds and keep only the subject. Use the transparent result for product photos,
                         social media creatives, print-ready branding, and cleaner mockups.
                     </p>
+                </section>
+
+                <section class="rb-howto" aria-label="How to remove the background">
+                    <h2 class="rb-howto-title">How to remove the background of a picture.</h2>
+                    <div class="rb-howto-grid">
+                        <article class="rb-howto-card">
+                            <div class="rb-howto-head">
+                                <svg class="rb-howto-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <path d="M12 20V7" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+                                    <path d="M7.5 11.5L12 7l4.5 4.5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M5 19v-2.4C5 15.2 6.2 14 7.6 14h8.8c1.4 0 2.6 1.2 2.6 2.6V19" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+                                </svg>
+                                <h3>1. Select.</h3>
+                            </div>
+                            <p>
+                                For best results, choose an image where the subject has clear edges with nothing overlapping.
+                            </p>
+                        </article>
+                        <article class="rb-howto-card">
+                            <div class="rb-howto-head">
+                                <svg class="rb-howto-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <rect x="3.5" y="5" width="17" height="14" rx="3" stroke="currentColor" stroke-width="2.4"/>
+                                    <circle cx="16.8" cy="9.1" r="1.7" fill="currentColor"/>
+                                    <path d="M6.4 15.9l3.8-3.8a1.6 1.6 0 0 1 2.2 0l1.4 1.4a1.6 1.6 0 0 0 2.2 0l1.6-1.6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                <h3>2. Remove.</h3>
+                            </div>
+                            <p>
+                                Upload your image to automatically remove the background in an instant.
+                            </p>
+                        </article>
+                        <article class="rb-howto-card">
+                            <div class="rb-howto-head">
+                                <svg class="rb-howto-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <path d="M4 20h4.6l9.8-9.8a2.2 2.2 0 0 0 0-3.1l-1.4-1.4a2.2 2.2 0 0 0-3.1 0L4 15.5V20z" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>
+                                    <path d="M13.6 6.4l4 4" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+                                </svg>
+                                <h3>3. Download.</h3>
+                            </div>
+                            <p>
+                                Download your new image as a PNG file with a transparent background to save, share, or keep editing.
+                            </p>
+                        </article>
+                    </div>
                 </section>
 
                 <section class="rb-workspace">
@@ -515,6 +693,47 @@
                             <li>Use the output in your mockups, product pages, and design layouts.</li>
                         </ol>
                     </article>
+                </section>
+
+                <section class="rb-reviews" aria-label="User reviews">
+                    <div class="rb-reviews-head">
+                        <h2 class="rb-reviews-title">What people say about our background remover</h2>
+                        <p class="rb-reviews-sub">Real user feedback</p>
+                    </div>
+                    <div class="rb-reviews-track">
+                        <article class="rb-review-card">
+                            <p class="rb-review-stars" aria-hidden="true">★★★★★</p>
+                            <h3 class="rb-review-title">Cool app!</h3>
+                            <p class="rb-review-text">
+                                It was my first time using this tool to remove background. Too easy and super clean output.
+                            </p>
+                            <p class="rb-review-author">LuizAfonsos, 07.01.25</p>
+                        </article>
+                        <article class="rb-review-card">
+                            <p class="rb-review-stars" aria-hidden="true">★★★★★</p>
+                            <h3 class="rb-review-title">Excellent</h3>
+                            <p class="rb-review-text">
+                                This is one of the most helpful editing tools I have used. The AI background remover is next-level compared to rivals.
+                            </p>
+                            <p class="rb-review-author">bob99 flake, 03.01.25</p>
+                        </article>
+                        <article class="rb-review-card">
+                            <p class="rb-review-stars" aria-hidden="true">★★★★★</p>
+                            <h3 class="rb-review-title">Great for removing backgrounds</h3>
+                            <p class="rb-review-text">
+                                I remove backgrounds from artwork images all the time, and this is my go-to because results stay sharp.
+                            </p>
+                            <p class="rb-review-author">alim96, 18.12.24</p>
+                        </article>
+                        <article class="rb-review-card">
+                            <p class="rb-review-stars" aria-hidden="true">★★★★★</p>
+                            <h3 class="rb-review-title">Great!</h3>
+                            <p class="rb-review-text">
+                                I use this app regularly and it gives me a quality transparent PNG I can publish immediately.
+                            </p>
+                            <p class="rb-review-author">Ya girl1643849, 12.12.24</p>
+                        </article>
+                    </div>
                 </section>
             </main>
 

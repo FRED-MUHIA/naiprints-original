@@ -1091,13 +1091,18 @@ document.addEventListener('DOMContentLoaded', () => {
         applyItem(items[index]);
         scheduleCycle();
 
-        closeEl?.addEventListener('click', () => {
+        const closePopup = (event) => {
+            event?.preventDefault();
+            event?.stopPropagation();
             hidePopup();
             clearTimeout(timer);
             timer = window.setTimeout(() => {
                 scheduleCycle();
             }, hiddenMs);
-        });
+        };
+
+        closeEl?.addEventListener('pointerdown', closePopup);
+        closeEl?.addEventListener('click', closePopup);
     });
 
     const bindCartItemControls = (container) => {

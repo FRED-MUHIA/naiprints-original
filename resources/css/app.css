@@ -6365,12 +6365,14 @@
         position: absolute;
         right: 10px;
         top: 8px;
+        z-index: 3;
         border: none;
         background: transparent;
         font-size: 1rem;
         color: #94a3b8;
         cursor: pointer;
         line-height: 1;
+        pointer-events: auto;
     }
 
     .purchase-popup-media {
