@@ -184,7 +184,7 @@
     }
 
     .site-nav {
-        @apply gap-2 xl:gap-3;
+        @apply gap-1 xl:gap-2;
         flex-wrap: nowrap;
         white-space: nowrap;
     }
@@ -192,6 +192,23 @@
     .nav-link {
         @apply shrink-0 whitespace-nowrap text-[0.94rem] font-semibold text-slate-700 transition;
         line-height: 1.1;
+    }
+
+    .site-nav .nav-link {
+        margin-right: 0.18rem;
+        padding-right: 0.8rem;
+        position: relative;
+    }
+
+    .site-nav .nav-link:not(:last-child)::after {
+        color: rgba(15, 23, 42, 0.35);
+        content: '-';
+        font-weight: 600;
+        pointer-events: none;
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-48%);
     }
 
     .nav-link:hover {

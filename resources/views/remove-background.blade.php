@@ -730,7 +730,7 @@
                             <p class="rb-review-text">
                                 It was my first time using this tool to remove background. Too easy and super clean output.
                             </p>
-                            <p class="rb-review-author">LuizAfonsos, 07.01.25</p>
+                            <p class="rb-review-author">Luis Afonso</p>
                         </article>
                         <article class="rb-review-card">
                             <p class="rb-review-stars" aria-hidden="true">★★★★★</p>
@@ -738,7 +738,7 @@
                             <p class="rb-review-text">
                                 This is one of the most helpful editing tools I have used. The AI background remover is next-level compared to rivals.
                             </p>
-                            <p class="rb-review-author">bob99 flake, 03.01.25</p>
+                            <p class="rb-review-author">Bob Flake</p>
                         </article>
                         <article class="rb-review-card">
                             <p class="rb-review-stars" aria-hidden="true">★★★★★</p>
@@ -746,7 +746,7 @@
                             <p class="rb-review-text">
                                 I remove backgrounds from artwork images all the time, and this is my go-to because results stay sharp.
                             </p>
-                            <p class="rb-review-author">alim96, 18.12.24</p>
+                            <p class="rb-review-author">Ali Mohamed</p>
                         </article>
                         <article class="rb-review-card">
                             <p class="rb-review-stars" aria-hidden="true">★★★★★</p>
@@ -754,7 +754,7 @@
                             <p class="rb-review-text">
                                 I use this app regularly and it gives me a quality transparent PNG I can publish immediately.
                             </p>
-                            <p class="rb-review-author">Ya girl1643849, 12.12.24</p>
+                            <p class="rb-review-author">Yasmin Achieng</p>
                         </article>
                     </div>
                 </section>
