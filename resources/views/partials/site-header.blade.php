@@ -1,5 +1,6 @@
 @php
     $header = $globalHeader ?? [];
+    $showMenuStrip = $showMenuStrip ?? true;
     $logoUrl = $header['logo_url'] ?? null;
     $menu = $header['menu'] ?? [];
     $menu = array_values(array_filter($menu, static function ($item) {
@@ -171,7 +172,7 @@
     </div>
 </header>
 
-@if (!empty($menuStrip))
+@if ($showMenuStrip && !empty($menuStrip))
     <div class="menu-strip">
         <div class="menu-track">
             @foreach ($menuStrip as $index => $item)

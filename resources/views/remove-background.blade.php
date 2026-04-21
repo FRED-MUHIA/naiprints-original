@@ -566,7 +566,10 @@
     </head>
     <body class="bg-sand text-ink remove-bg-page">
         <div class="min-h-screen">
-            @include('partials.site-header', ['globalHeader' => $globalHeader ?? []])
+            @include('partials.site-header', [
+                'globalHeader' => $globalHeader ?? [],
+                'showMenuStrip' => false,
+            ])
 
             <main class="rb-page">
                 <section class="rb-hero">
@@ -953,12 +956,298 @@
                                 if (y < height - 1) enqueue(idx + width);
                             }
 
+                            // Protect likely main subjects so people/primary characters are not over-erased.
+                            const protectMask = new Uint8Array(pixelCount);
+                            const subjectMask = new Uint8Array(pixelCount);
+                            const foregroundSeed = new Uint8Array(pixelCount);
+                            const centerMinX = Math.floor(width * 0.14);
+                            const centerMaxX = Math.ceil(width * 0.86);
+                            const centerMinY = Math.floor(height * 0.04);
+                            const centerMaxY = Math.ceil(height * 0.97);
+                            const coreMinX = Math.floor(width * 0.16);
+                            const coreMaxX = Math.ceil(width * 0.84);
+                            const coreMinY = Math.floor(height * 0.05);
+                            const coreMaxY = Math.ceil(height * 0.96);
+                            const isInCenterBand = (x, y) =>
+                                x >= centerMinX && x <= centerMaxX && y >= centerMinY && y <= centerMaxY;
+                            const isInCoreBand = (x, y) =>
+                                x >= coreMinX && x <= coreMaxX && y >= coreMinY && y <= coreMaxY;
+
+                            // First keep the strongest foreground components around the center.
+                            const subjectVisited = new Uint8Array(pixelCount);
+                            const minSubjectComponent = Math.max(260, Math.round(pixelCount * 0.0015));
+                            const largeSubjectComponent = Math.max(1400, Math.round(pixelCount * 0.012));
+                            const maxSubjectComponents = 3;
+                            const subjectCandidates = [];
+
+                            for (let idx = 0; idx < pixelCount; idx += 1) {
+                                if (bgMask[idx] || subjectVisited[idx]) {
+                                    continue;
+                                }
+                                const offset = getOffset(idx);
+                                if (pixels[offset + 3] < 16) {
+                                    continue;
+                                }
+
+                                let componentHead = 0;
+                                let componentTail = 0;
+                                queue[componentTail] = idx;
+                                componentTail += 1;
+                                subjectVisited[idx] = 1;
+                                const component = [idx];
+                                let coreHits = 0;
+                                let borderHits = 0;
+
+                                while (componentHead < componentTail) {
+                                    const current = queue[componentHead];
+                                    componentHead += 1;
+                                    const x = current % width;
+                                    const y = Math.floor(current / width);
+                                    if (isInCoreBand(x, y)) {
+                                        coreHits += 1;
+                                    }
+                                    if (x === 0 || y === 0 || x === width - 1 || y === height - 1) {
+                                        borderHits += 1;
+                                    }
+
+                                    if (x > 0) {
+                                        const neighbor = current - 1;
+                                        if (!bgMask[neighbor] && !subjectVisited[neighbor]) {
+                                            const neighborOffset = getOffset(neighbor);
+                                            if (pixels[neighborOffset + 3] >= 16) {
+                                                subjectVisited[neighbor] = 1;
+                                                queue[componentTail] = neighbor;
+                                                componentTail += 1;
+                                                component.push(neighbor);
+                                            }
+                                        }
+                                    }
+                                    if (x < width - 1) {
+                                        const neighbor = current + 1;
+                                        if (!bgMask[neighbor] && !subjectVisited[neighbor]) {
+                                            const neighborOffset = getOffset(neighbor);
+                                            if (pixels[neighborOffset + 3] >= 16) {
+                                                subjectVisited[neighbor] = 1;
+                                                queue[componentTail] = neighbor;
+                                                componentTail += 1;
+                                                component.push(neighbor);
+                                            }
+                                        }
+                                    }
+                                    if (y > 0) {
+                                        const neighbor = current - width;
+                                        if (!bgMask[neighbor] && !subjectVisited[neighbor]) {
+                                            const neighborOffset = getOffset(neighbor);
+                                            if (pixels[neighborOffset + 3] >= 16) {
+                                                subjectVisited[neighbor] = 1;
+                                                queue[componentTail] = neighbor;
+                                                componentTail += 1;
+                                                component.push(neighbor);
+                                            }
+                                        }
+                                    }
+                                    if (y < height - 1) {
+                                        const neighbor = current + width;
+                                        if (!bgMask[neighbor] && !subjectVisited[neighbor]) {
+                                            const neighborOffset = getOffset(neighbor);
+                                            if (pixels[neighborOffset + 3] >= 16) {
+                                                subjectVisited[neighbor] = 1;
+                                                queue[componentTail] = neighbor;
+                                                componentTail += 1;
+                                                component.push(neighbor);
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if (component.length < minSubjectComponent) {
+                                    continue;
+                                }
+                                const coreStrongEnough = coreHits >= Math.max(18, Math.round(component.length * 0.018));
+                                const canKeepLargeCenter = component.length >= largeSubjectComponent && coreHits >= 10;
+                                if (!coreStrongEnough && !canKeepLargeCenter) {
+                                    continue;
+                                }
+
+                                const score = (component.length * 1.35) + (coreHits * 24) - (borderHits * 8);
+                                subjectCandidates.push({ component, score });
+                            }
+
+                            subjectCandidates.sort((a, b) => b.score - a.score);
+                            const pickedSubjectCount = Math.min(maxSubjectComponents, subjectCandidates.length);
+                            for (let i = 0; i < pickedSubjectCount; i += 1) {
+                                const component = subjectCandidates[i].component;
+                                for (let j = 0; j < component.length; j += 1) {
+                                    const pixel = component[j];
+                                    subjectMask[pixel] = 1;
+                                    protectMask[pixel] = 1;
+                                }
+                            }
+
+                            for (let idx = 0; idx < pixelCount; idx += 1) {
+                                if (bgMask[idx]) {
+                                    continue;
+                                }
+                                const offset = getOffset(idx);
+                                if (pixels[offset + 3] < 10) {
+                                    continue;
+                                }
+                                const r = pixels[offset];
+                                const g = pixels[offset + 1];
+                                const b = pixels[offset + 2];
+                                const colorSpread = Math.max(r, g, b) - Math.min(r, g, b);
+                                const distance = colorDistanceToBg(idx, bgR, bgG, bgB);
+                                if (distance >= hardTolerance + 18 || colorSpread >= 24) {
+                                    foregroundSeed[idx] = 1;
+                                }
+                            }
+
+                            const seedVisited = new Uint8Array(pixelCount);
+                            const minCenterComponent = Math.max(120, Math.round(pixelCount * 0.00028));
+                            const largeAnywhereComponent = Math.max(650, Math.round(pixelCount * 0.009));
+
+                            for (let idx = 0; idx < pixelCount; idx += 1) {
+                                if (!foregroundSeed[idx] || seedVisited[idx]) {
+                                    continue;
+                                }
+
+                                let componentHead = 0;
+                                let componentTail = 0;
+                                queue[componentTail] = idx;
+                                componentTail += 1;
+                                seedVisited[idx] = 1;
+                                const component = [idx];
+                                let touchesCenter = false;
+
+                                while (componentHead < componentTail) {
+                                    const current = queue[componentHead];
+                                    componentHead += 1;
+                                    const x = current % width;
+                                    const y = Math.floor(current / width);
+                                    if (isInCenterBand(x, y)) {
+                                        touchesCenter = true;
+                                    }
+
+                                    if (x > 0) {
+                                        const neighbor = current - 1;
+                                        if (foregroundSeed[neighbor] && !seedVisited[neighbor]) {
+                                            seedVisited[neighbor] = 1;
+                                            queue[componentTail] = neighbor;
+                                            componentTail += 1;
+                                            component.push(neighbor);
+                                        }
+                                    }
+                                    if (x < width - 1) {
+                                        const neighbor = current + 1;
+                                        if (foregroundSeed[neighbor] && !seedVisited[neighbor]) {
+                                            seedVisited[neighbor] = 1;
+                                            queue[componentTail] = neighbor;
+                                            componentTail += 1;
+                                            component.push(neighbor);
+                                        }
+                                    }
+                                    if (y > 0) {
+                                        const neighbor = current - width;
+                                        if (foregroundSeed[neighbor] && !seedVisited[neighbor]) {
+                                            seedVisited[neighbor] = 1;
+                                            queue[componentTail] = neighbor;
+                                            componentTail += 1;
+                                            component.push(neighbor);
+                                        }
+                                    }
+                                    if (y < height - 1) {
+                                        const neighbor = current + width;
+                                        if (foregroundSeed[neighbor] && !seedVisited[neighbor]) {
+                                            seedVisited[neighbor] = 1;
+                                            queue[componentTail] = neighbor;
+                                            componentTail += 1;
+                                            component.push(neighbor);
+                                        }
+                                    }
+                                }
+
+                                if (
+                                    (touchesCenter && component.length >= minCenterComponent) ||
+                                    component.length >= largeAnywhereComponent
+                                ) {
+                                    for (let i = 0; i < component.length; i += 1) {
+                                        protectMask[component[i]] = 1;
+                                    }
+                                }
+                            }
+
+                            // Dilate protection mask so fine edges around subjects are preserved.
+                            for (let pass = 0; pass < 2; pass += 1) {
+                                const nextMask = protectMask.slice();
+                                for (let idx = 0; idx < pixelCount; idx += 1) {
+                                    if (!protectMask[idx]) {
+                                        continue;
+                                    }
+                                    const x = idx % width;
+                                    const y = Math.floor(idx / width);
+                                    for (let oy = -1; oy <= 1; oy += 1) {
+                                        for (let ox = -1; ox <= 1; ox += 1) {
+                                            const nx = x + ox;
+                                            const ny = y + oy;
+                                            if (nx < 0 || ny < 0 || nx >= width || ny >= height) {
+                                                continue;
+                                            }
+                                            nextMask[ny * width + nx] = 1;
+                                        }
+                                    }
+                                }
+                                protectMask.set(nextMask);
+                            }
+
+                            // Recover tiny cutouts inside protected subjects (common on white shirts/highlights).
+                            for (let pass = 0; pass < 2; pass += 1) {
+                                const nextMask = protectMask.slice();
+                                for (let idx = 0; idx < pixelCount; idx += 1) {
+                                    if (protectMask[idx] || !bgMask[idx]) {
+                                        continue;
+                                    }
+                                    const offset = getOffset(idx);
+                                    if (pixels[offset + 3] < 10) {
+                                        continue;
+                                    }
+                                    let protectedNeighbors = 0;
+                                    const x = idx % width;
+                                    const y = Math.floor(idx / width);
+                                    for (let oy = -1; oy <= 1; oy += 1) {
+                                        for (let ox = -1; ox <= 1; ox += 1) {
+                                            if (ox === 0 && oy === 0) {
+                                                continue;
+                                            }
+                                            const nx = x + ox;
+                                            const ny = y + oy;
+                                            if (nx < 0 || ny < 0 || nx >= width || ny >= height) {
+                                                continue;
+                                            }
+                                            if (protectMask[ny * width + nx]) {
+                                                protectedNeighbors += 1;
+                                            }
+                                        }
+                                    }
+                                    const distance = colorDistanceToBg(idx, bgR, bgG, bgB);
+                                    if (protectedNeighbors >= 5 && distance <= softTolerance + 18) {
+                                        nextMask[idx] = 1;
+                                    }
+                                }
+                                protectMask.set(nextMask);
+                            }
+
+                            for (let idx = 0; idx < pixelCount; idx += 1) {
+                                if (protectMask[idx]) {
+                                    bgMask[idx] = 0;
+                                }
+                            }
+
                             // Clear small leftover background islands that often remain around text/wording shapes.
                             const checked = new Uint8Array(pixelCount);
                             const islandLimit = Math.max(14, Math.min(2400, Math.round(pixelCount * 0.0012)));
 
                             for (let idx = 0; idx < pixelCount; idx += 1) {
-                                if (bgMask[idx] || checked[idx] || !isBackgroundLike(idx, hardTolerance * 0.92)) {
+                                if (protectMask[idx] || bgMask[idx] || checked[idx] || !isBackgroundLike(idx, hardTolerance * 0.92)) {
                                     continue;
                                 }
 
@@ -982,7 +1271,7 @@
 
                                     for (let n = 0; n < neighbors.length; n += 1) {
                                         const neighbor = neighbors[n];
-                                        if (bgMask[neighbor] || checked[neighbor]) {
+                                        if (protectMask[neighbor] || bgMask[neighbor] || checked[neighbor]) {
                                             continue;
                                         }
                                         if (!isBackgroundLike(neighbor, hardTolerance * 0.92)) {
@@ -1021,10 +1310,31 @@
                                 }
                                 return count;
                             };
+                            const hasProtectedNeighbor = (x, y) => {
+                                for (let oy = -1; oy <= 1; oy += 1) {
+                                    for (let ox = -1; ox <= 1; ox += 1) {
+                                        if (ox === 0 && oy === 0) {
+                                            continue;
+                                        }
+                                        const nx = x + ox;
+                                        const ny = y + oy;
+                                        if (nx < 0 || ny < 0 || nx >= width || ny >= height) {
+                                            continue;
+                                        }
+                                        if (protectMask[ny * width + nx] || subjectMask[ny * width + nx]) {
+                                            return true;
+                                        }
+                                    }
+                                }
+                                return false;
+                            };
 
                             for (let idx = 0; idx < pixelCount; idx += 1) {
                                 const offset = getOffset(idx);
                                 let alpha = pixels[offset + 3];
+                                if (protectMask[idx]) {
+                                    continue;
+                                }
                                 if (bgMask[idx]) {
                                     pixels[offset + 3] = 0;
                                     continue;
@@ -1036,15 +1346,18 @@
                                 const x = idx % width;
                                 const y = Math.floor(idx / width);
                                 const bgNeighbors = countBgNeighbors(x, y);
+                                const nearSubject = hasProtectedNeighbor(x, y);
                                 const distance = colorDistanceToBg(idx, bgR, bgG, bgB);
 
                                 if (bgNeighbors > 0 && distance <= softTolerance + 8) {
                                     const softness = clamp((softTolerance - distance) / Math.max(1, softTolerance - hardTolerance), 0, 1);
-                                    const edgeFactor = bgNeighbors >= 5 ? 0.95 : bgNeighbors >= 3 ? 0.8 : 0.62;
+                                    const edgeFactor = nearSubject
+                                        ? (bgNeighbors >= 5 ? 0.58 : bgNeighbors >= 3 ? 0.44 : 0.3)
+                                        : (bgNeighbors >= 5 ? 0.92 : bgNeighbors >= 3 ? 0.76 : 0.6);
                                     alpha = Math.round(alpha * (1 - softness * edgeFactor));
                                 }
-                                if (distance <= hardTolerance * 0.86 && bgNeighbors >= 2) {
-                                    alpha = Math.min(alpha, 24);
+                                if (!nearSubject && distance <= hardTolerance * 0.82 && bgNeighbors >= 4) {
+                                    alpha = Math.min(alpha, 20);
                                 }
                                 if (alpha < 10) {
                                     alpha = 0;
