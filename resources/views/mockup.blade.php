@@ -566,7 +566,7 @@
                     <div class="mockup-stage-toolbar">
                         <div class="mockup-stage-tabs">
                             <button class="mockup-stage-tab is-active" type="button" data-tools-toggle aria-expanded="false" aria-haspopup="menu" aria-controls="mockup-tools-menu">Tools</button>
-                            <button class="mockup-stage-tab" type="button" data-remove-bg>Remove Background</button>
+                            <button class="mockup-stage-tab" type="button" data-remove-bg>Tools</button>
                             <button class="mockup-stage-tab" type="button">Position</button>
                         </div>
                         <div class="mockup-stage-actions">
@@ -3023,15 +3023,6 @@
                     img.src = src;
                 });
 
-                const isJpegSource = (source = '', mimeType = '') => {
-                    const normalizedMime = (mimeType || '').toLowerCase();
-                    if (normalizedMime.includes('jpeg') || normalizedMime.includes('jpg')) {
-                        return true;
-                    }
-                    const normalizedSource = (source || '').toLowerCase();
-                    return normalizedSource.startsWith('data:image/jpeg') || /\.(jpe?g)(?:$|\?)/i.test(normalizedSource);
-                };
-
                 const getImageObjectSource = (imageObj) => {
                     if (!imageObj) {
                         return '';
@@ -3272,20 +3263,19 @@
                         return;
                     }
                     removeBgBtn.disabled = busy;
-                    removeBgBtn.textContent = busy ? 'Removing...' : 'Remove Background';
+                    removeBgBtn.textContent = busy ? 'Working...' : 'Tools';
                 };
 
                 const removeBackgroundFromActiveImage = async () => {
                     const active = canvas.getActiveObject();
                     if (!active || active?.data?.role !== 'design' || active.type !== 'image') {
-                        alert('Select a JPEG image layer first, then click Remove Background.');
+                        alert('Select an uploaded image layer first, then click Tools.');
                         return;
                     }
 
                     const source = getImageObjectSource(active);
-                    const mimeType = active?.data?.sourceMime || inferMimeTypeFromSource(source);
-                    if (!isJpegSource(source, mimeType)) {
-                        alert('Remove Background currently supports JPEG uploads. Select a JPG/JPEG layer and try again.');
+                    if (!source) {
+                        alert('Unable to read this image layer source. Try re-uploading it, then click Tools.');
                         return;
                     }
 
