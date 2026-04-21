@@ -556,6 +556,20 @@ Route::get('/corporate', function () {
 Route::get('/contact', [ContactController::class, 'show'])->name('contact.show');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 
+Route::get('/remove-background', function () {
+    $header = GlobalSection::ensure('header', PageDefaults::header());
+    $footer = GlobalSection::ensure('footer', PageDefaults::footer());
+    $purchasePopups = GlobalSection::ensure('purchase_popups', PageDefaults::purchasePopups());
+    $purchasePopupProducts = resolvePurchasePopupProducts($purchasePopups->content ?? []);
+
+    return view('remove-background', [
+        'globalHeader' => $header->content,
+        'globalFooter' => $footer->content,
+        'globalPurchasePopups' => $purchasePopups->content,
+        'globalPurchasePopupProducts' => $purchasePopupProducts,
+    ]);
+})->name('remove-background');
+
 Route::post('/newsletter', function (Request $request) {
     $request->validate([
         'email' => ['required', 'email:rfc,dns'],

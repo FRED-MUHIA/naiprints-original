@@ -4,7 +4,7 @@
     $menu = $header['menu'] ?? [];
     $menu = array_values(array_filter($menu, static function ($item) {
         $label = strtolower(trim((string) ($item['label'] ?? '')));
-        return !in_array($label, ['gift', 'gifts'], true);
+        return !in_array($label, ['gift', 'gifts', 'kid', 'kids'], true);
     }));
     $hasJerseyLink = collect($menu)->contains(function ($item) {
         return strtolower(trim((string) ($item['label'] ?? ''))) === 'jersey';
@@ -34,6 +34,22 @@
             $menu[] = $designerMenuItem;
         } else {
             array_splice($menu, $jerseyIndex + 1, 0, [$designerMenuItem]);
+        }
+    }
+    $hasRemoveBackgroundLink = collect($menu)->contains(function ($item) {
+        $label = strtolower(trim((string) ($item['label'] ?? '')));
+        $url = strtolower(trim((string) ($item['url'] ?? '')));
+        return $label === 'remove background' || $url === '/remove-background';
+    });
+    if (!$hasRemoveBackgroundLink) {
+        $mockupIndex = collect($menu)->search(function ($item) {
+            return strtolower(trim((string) ($item['label'] ?? ''))) === 'mockup';
+        });
+        $removeBackgroundMenuItem = ['label' => 'Remove Background', 'url' => '/remove-background'];
+        if ($mockupIndex === false) {
+            $menu[] = $removeBackgroundMenuItem;
+        } else {
+            array_splice($menu, $mockupIndex + 1, 0, [$removeBackgroundMenuItem]);
         }
     }
     $contactItem = null;
