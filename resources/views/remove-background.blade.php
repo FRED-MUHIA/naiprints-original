@@ -17,7 +17,6 @@
                 padding: clamp(0.9rem, 1.8vw, 1.35rem) clamp(0.85rem, 2.2vw, 1.2rem) 4rem;
             }
             .rb-hero {
-                border-top: 1px solid rgba(15, 23, 42, 0.12);
                 padding-top: 1.4rem;
             }
             .rb-hero h1 {
@@ -44,8 +43,10 @@
                 margin-top: 1.6rem;
                 border-radius: 1.3rem;
                 padding: clamp(1.5rem, 3vw, 3rem) clamp(1rem, 2.4vw, 2rem);
-                background: linear-gradient(120deg, #7d7bef 0%, #f045c7 100%);
-                box-shadow: 0 20px 40px -30px rgba(79, 70, 229, 0.55);
+                background:
+                    radial-gradient(140% 120% at 0% 100%, rgba(245, 158, 11, 0.25) 0%, transparent 58%),
+                    linear-gradient(122deg, var(--brand-deep, #0b1026) 0%, var(--brand-red, #e11d2e) 62%, #f97316 100%);
+                box-shadow: 0 20px 42px -30px rgba(225, 29, 46, 0.55);
             }
             .rb-howto-title {
                 color: #ffffff;
@@ -63,7 +64,7 @@
                 grid-template-columns: repeat(3, minmax(0, 1fr));
             }
             .rb-howto-card {
-                background: #ffffff;
+                background: rgba(255, 255, 255, 0.96);
                 border-radius: 1rem;
                 border: 1px solid rgba(255, 255, 255, 0.62);
                 padding: 1.1rem;
@@ -74,11 +75,22 @@
                 display: flex;
                 gap: 0.65rem;
             }
-            .rb-howto-icon {
-                color: #334155;
+            .rb-howto-icon-wrap {
+                align-items: center;
+                background: linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.78));
+                border: 1px solid rgba(226, 232, 240, 0.9);
+                border-radius: 0.85rem;
+                box-shadow: 0 10px 18px -15px rgba(11, 16, 38, 0.6);
+                display: inline-flex;
                 flex: 0 0 auto;
-                height: 2.8rem;
-                width: 2.8rem;
+                height: 3rem;
+                justify-content: center;
+                width: 3rem;
+            }
+            .rb-howto-icon {
+                color: var(--brand-red, #e11d2e);
+                height: 1.65rem;
+                width: 1.65rem;
             }
             .rb-howto-head h3 {
                 color: #0f172a;
@@ -565,50 +577,6 @@
                     </p>
                 </section>
 
-                <section class="rb-howto" aria-label="How to remove the background">
-                    <h2 class="rb-howto-title">How to remove the background of a picture.</h2>
-                    <div class="rb-howto-grid">
-                        <article class="rb-howto-card">
-                            <div class="rb-howto-head">
-                                <svg class="rb-howto-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                    <path d="M12 20V7" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
-                                    <path d="M7.5 11.5L12 7l4.5 4.5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <path d="M5 19v-2.4C5 15.2 6.2 14 7.6 14h8.8c1.4 0 2.6 1.2 2.6 2.6V19" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
-                                </svg>
-                                <h3>1. Select.</h3>
-                            </div>
-                            <p>
-                                For best results, choose an image where the subject has clear edges with nothing overlapping.
-                            </p>
-                        </article>
-                        <article class="rb-howto-card">
-                            <div class="rb-howto-head">
-                                <svg class="rb-howto-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                    <rect x="3.5" y="5" width="17" height="14" rx="3" stroke="currentColor" stroke-width="2.4"/>
-                                    <circle cx="16.8" cy="9.1" r="1.7" fill="currentColor"/>
-                                    <path d="M6.4 15.9l3.8-3.8a1.6 1.6 0 0 1 2.2 0l1.4 1.4a1.6 1.6 0 0 0 2.2 0l1.6-1.6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                                <h3>2. Remove.</h3>
-                            </div>
-                            <p>
-                                Upload your image to automatically remove the background in an instant.
-                            </p>
-                        </article>
-                        <article class="rb-howto-card">
-                            <div class="rb-howto-head">
-                                <svg class="rb-howto-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                    <path d="M4 20h4.6l9.8-9.8a2.2 2.2 0 0 0 0-3.1l-1.4-1.4a2.2 2.2 0 0 0-3.1 0L4 15.5V20z" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>
-                                    <path d="M13.6 6.4l4 4" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
-                                </svg>
-                                <h3>3. Download.</h3>
-                            </div>
-                            <p>
-                                Download your new image as a PNG file with a transparent background to save, share, or keep editing.
-                            </p>
-                        </article>
-                    </div>
-                </section>
-
                 <section class="rb-workspace">
                     <article class="rb-preview-card">
                         <p class="rb-card-kicker">Original Preview</p>
@@ -651,6 +619,58 @@
                             </div>
                         </section>
                     </article>
+                </section>
+
+                <section class="rb-howto" aria-label="How to remove the background">
+                    <h2 class="rb-howto-title">How to remove the background of a picture.</h2>
+                    <div class="rb-howto-grid">
+                        <article class="rb-howto-card">
+                            <div class="rb-howto-head">
+                                <span class="rb-howto-icon-wrap" aria-hidden="true">
+                                    <svg class="rb-howto-icon" viewBox="0 0 24 24" fill="none">
+                                        <path d="M12 16V6.8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+                                        <path d="M8.7 10.2L12 6.8l3.3 3.4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <rect x="4" y="13.6" width="16" height="6.4" rx="2.2" stroke="currentColor" stroke-width="2.2"/>
+                                    </svg>
+                                </span>
+                                <h3>1. Select.</h3>
+                            </div>
+                            <p>
+                                For best results, choose an image where the subject has clear edges with nothing overlapping.
+                            </p>
+                        </article>
+                        <article class="rb-howto-card">
+                            <div class="rb-howto-head">
+                                <span class="rb-howto-icon-wrap" aria-hidden="true">
+                                    <svg class="rb-howto-icon" viewBox="0 0 24 24" fill="none">
+                                        <rect x="3.5" y="4.5" width="17" height="15" rx="3" stroke="currentColor" stroke-width="2.2"/>
+                                        <circle cx="16.7" cy="9" r="1.6" fill="currentColor"/>
+                                        <path d="M6.7 15.8l3.1-3.1a1.6 1.6 0 0 1 2.2 0l1.5 1.5a1.6 1.6 0 0 0 2.2 0l1.6-1.6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </span>
+                                <h3>2. Remove.</h3>
+                            </div>
+                            <p>
+                                Upload your image to automatically remove the background in an instant.
+                            </p>
+                        </article>
+                        <article class="rb-howto-card">
+                            <div class="rb-howto-head">
+                                <span class="rb-howto-icon-wrap" aria-hidden="true">
+                                    <svg class="rb-howto-icon" viewBox="0 0 24 24" fill="none">
+                                        <path d="M12 4.6v9.8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+                                        <path d="M8.6 11.1L12 14.5l3.4-3.4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path d="M5 18h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+                                        <path d="M7.2 18v1.3h9.6V18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </span>
+                                <h3>3. Download.</h3>
+                            </div>
+                            <p>
+                                Download your new image as a PNG file with a transparent background to save, share, or keep editing.
+                            </p>
+                        </article>
+                    </div>
                 </section>
 
                 <section class="rb-content">
