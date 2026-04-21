@@ -388,10 +388,11 @@
             }
             .rb-reviews {
                 margin-top: 2.3rem;
-                border: 1px solid rgba(148, 163, 184, 0.22);
+                border: 1px solid rgba(11, 16, 38, 0.14);
                 border-radius: 1.25rem;
                 background:
-                    linear-gradient(120deg, rgba(226, 232, 240, 0.66), rgba(216, 180, 254, 0.32) 55%, rgba(253, 242, 248, 0.44));
+                    radial-gradient(130% 115% at 0% 100%, rgba(245, 158, 11, 0.2) 0%, transparent 58%),
+                    linear-gradient(120deg, rgba(11, 16, 38, 0.07) 0%, rgba(225, 29, 46, 0.12) 56%, rgba(245, 158, 11, 0.12) 100%);
                 overflow: hidden;
                 padding: 1.2rem 1rem 1.35rem;
             }
@@ -404,16 +405,16 @@
             }
             .rb-reviews-title {
                 margin: 0;
-                color: #0f172a;
+                color: var(--brand-deep, #0b1026);
                 font-size: clamp(1.05rem, 2vw, 1.5rem);
                 font-weight: 800;
                 letter-spacing: -0.01em;
             }
             .rb-reviews-sub {
                 margin: 0;
-                color: #334155;
+                color: var(--brand-red, #e11d2e);
                 font-size: 0.9rem;
-                font-weight: 600;
+                font-weight: 700;
             }
             .rb-reviews-track {
                 display: grid;
@@ -429,11 +430,11 @@
                 display: flex;
                 flex-direction: column;
                 min-height: 320px;
-                background: rgba(255, 255, 255, 0.82);
-                border: 1px solid rgba(255, 255, 255, 0.85);
+                background: rgba(255, 255, 255, 0.95);
+                border: 1px solid rgba(11, 16, 38, 0.08);
                 border-radius: 1rem;
                 padding: 1rem 1rem 0.9rem;
-                box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+                box-shadow: 0 16px 34px -28px rgba(11, 16, 38, 0.45);
             }
             .rb-review-stars {
                 color: #f59e0b;
