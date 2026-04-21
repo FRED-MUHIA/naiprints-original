@@ -201,14 +201,16 @@
     }
 
     .site-nav .nav-link:not(:last-child)::after {
-        color: rgba(15, 23, 42, 0.35);
-        content: '-';
-        font-weight: 600;
+        content: '';
         pointer-events: none;
         position: absolute;
-        right: 0;
+        right: 0.08rem;
         top: 50%;
-        transform: translateY(-48%);
+        transform: translateY(-50%);
+        width: 1px;
+        height: 0.92em;
+        background: rgba(15, 23, 42, 0.35);
+        border-radius: 999px;
     }
 
     .nav-link:hover {
