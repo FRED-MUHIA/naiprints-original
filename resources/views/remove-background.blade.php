@@ -1033,6 +1033,42 @@
                                 }
                                 return corePixels ? (coreBackground / corePixels) : 0;
                             };
+                            const estimateBackgroundRatio = (mask) => {
+                                let count = 0;
+                                for (let idx = 0; idx < pixelCount; idx += 1) {
+                                    if (mask[idx]) {
+                                        count += 1;
+                                    }
+                                }
+                                return pixelCount ? (count / pixelCount) : 0;
+                            };
+                            const estimateBorderBackgroundRatio = (mask) => {
+                                let borderPixels = 0;
+                                let borderBackground = 0;
+                                for (let x = 0; x < width; x += 1) {
+                                    const top = x;
+                                    const bottom = ((height - 1) * width) + x;
+                                    borderPixels += 2;
+                                    if (mask[top]) {
+                                        borderBackground += 1;
+                                    }
+                                    if (mask[bottom]) {
+                                        borderBackground += 1;
+                                    }
+                                }
+                                for (let y = 1; y < height - 1; y += 1) {
+                                    const left = y * width;
+                                    const right = (y * width) + (width - 1);
+                                    borderPixels += 2;
+                                    if (mask[left]) {
+                                        borderBackground += 1;
+                                    }
+                                    if (mask[right]) {
+                                        borderBackground += 1;
+                                    }
+                                }
+                                return borderPixels ? (borderBackground / borderPixels) : 0;
+                            };
 
                             let bgMask = fillBackgroundMask(hardTolerance, softTolerance, false);
                             const coreBackgroundRatio = estimateCoreBackgroundRatio(bgMask);
@@ -1041,7 +1077,13 @@
                                 const conservativeSoftTolerance = clamp(conservativeHardTolerance + 14, 30, 94);
                                 const conservativeMask = fillBackgroundMask(conservativeHardTolerance, conservativeSoftTolerance, true);
                                 const conservativeCoreBackgroundRatio = estimateCoreBackgroundRatio(conservativeMask);
-                                if (conservativeCoreBackgroundRatio + 0.04 < coreBackgroundRatio) {
+                                const conservativeBgRatio = estimateBackgroundRatio(conservativeMask);
+                                const conservativeBorderRatio = estimateBorderBackgroundRatio(conservativeMask);
+                                const canUseConservativeMask = (
+                                    conservativeBgRatio >= 0.12 &&
+                                    conservativeBorderRatio >= 0.62
+                                );
+                                if (canUseConservativeMask && conservativeCoreBackgroundRatio + 0.04 < coreBackgroundRatio) {
                                     bgMask = conservativeMask;
                                 }
                             }
@@ -1325,7 +1367,13 @@
                             // Extra portrait-safe recovery:
                             // if pixels are inside/near the protected subject bounds and mostly surrounded by
                             // protected or non-background pixels, keep them to avoid cutting face/hair/clothing.
-                            if (subjectBounds.has) {
+                            const subjectBoundsArea = subjectBounds.has
+                                ? (subjectBounds.maxX - subjectBounds.minX + 1) * (subjectBounds.maxY - subjectBounds.minY + 1)
+                                : 0;
+                            const subjectBoundsRatio = pixelCount ? (subjectBoundsArea / pixelCount) : 0;
+                            const canRunPortraitRecovery = subjectBounds.has && subjectBoundsRatio <= 0.82;
+
+                            if (canRunPortraitRecovery) {
                                 const interiorPadding = Math.max(4, Math.round(Math.min(width, height) * 0.015));
                                 const isInsideExpandedSubject = (x, y) => (
                                     x >= subjectBounds.minX - interiorPadding &&
@@ -1391,7 +1439,7 @@
                             }
 
                             // Fill enclosed holes inside the subject region so portraits do not break apart.
-                            if (subjectBounds.has) {
+                            if (canRunPortraitRecovery) {
                                 const holePadding = Math.max(10, Math.round(Math.min(width, height) * 0.04));
                                 const regionMinX = clamp(subjectBounds.minX - holePadding, 0, width - 1);
                                 const regionMaxX = clamp(subjectBounds.maxX + holePadding, 0, width - 1);
@@ -1714,6 +1762,26 @@
                                             for (let i = 0; i < component.length; i += 1) {
                                                 bgMask[component[i]] = 1;
                                             }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Safety fallback: avoid "nothing removed" outputs by rebuilding a balanced
+                            // background mask when the selected background area is unrealistically small.
+                            const finalBgRatio = estimateBackgroundRatio(bgMask);
+                            if (finalBgRatio < 0.045) {
+                                const retryHardTolerance = clamp(hardTolerance * 0.95, 20, 88);
+                                const retrySoftTolerance = clamp(softTolerance + 8, 44, 138);
+                                const retryMask = fillBackgroundMask(retryHardTolerance, retrySoftTolerance, false);
+                                const retryBgRatio = estimateBackgroundRatio(retryMask);
+                                const retryBorderRatio = estimateBorderBackgroundRatio(retryMask);
+
+                                if (retryBgRatio >= 0.12 && retryBorderRatio >= 0.62) {
+                                    bgMask = retryMask;
+                                    for (let idx = 0; idx < pixelCount; idx += 1) {
+                                        if (subjectMask[idx]) {
+                                            bgMask[idx] = 0;
                                         }
                                     }
                                 }
