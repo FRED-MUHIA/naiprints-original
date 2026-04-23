@@ -1394,6 +1394,130 @@
                                 }
                             }
 
+                            // Secondary pass: remove large flat-color panels (for example bold red backdrops)
+                            // that may not be edge-connected but are still background.
+                            let bgPixelCount = 0;
+                            for (let idx = 0; idx < pixelCount; idx += 1) {
+                                if (bgMask[idx]) {
+                                    bgPixelCount += 1;
+                                }
+                            }
+                            const bgRatio = pixelCount ? (bgPixelCount / pixelCount) : 0;
+
+                            if (bgRatio < 0.58) {
+                                const vividBuckets = new Map();
+                                for (let idx = 0; idx < pixelCount; idx += 1) {
+                                    if (protectMask[idx] || bgMask[idx]) {
+                                        continue;
+                                    }
+                                    const offset = getOffset(idx);
+                                    if (pixels[offset + 3] < 16) {
+                                        continue;
+                                    }
+                                    const r = pixels[offset];
+                                    const g = pixels[offset + 1];
+                                    const b = pixels[offset + 2];
+                                    const spread = Math.max(r, g, b) - Math.min(r, g, b);
+                                    if (spread < 30) {
+                                        continue;
+                                    }
+
+                                    const key = `${r >> 4}:${g >> 4}:${b >> 4}`;
+                                    const bucket = vividBuckets.get(key) || { count: 0, sumR: 0, sumG: 0, sumB: 0 };
+                                    bucket.count += 1;
+                                    bucket.sumR += r;
+                                    bucket.sumG += g;
+                                    bucket.sumB += b;
+                                    vividBuckets.set(key, bucket);
+                                }
+
+                                let dominantVivid = null;
+                                vividBuckets.forEach((bucket) => {
+                                    if (!dominantVivid || bucket.count > dominantVivid.count) {
+                                        dominantVivid = bucket;
+                                    }
+                                });
+
+                                const vividThreshold = Math.max(1200, Math.round(pixelCount * 0.03));
+                                if (dominantVivid && dominantVivid.count >= vividThreshold) {
+                                    const keyR = dominantVivid.sumR / dominantVivid.count;
+                                    const keyG = dominantVivid.sumG / dominantVivid.count;
+                                    const keyB = dominantVivid.sumB / dominantVivid.count;
+                                    const keyTolerance = clamp((hardTolerance * 0.58) + 18, 22, 54);
+                                    const largePanelMin = Math.max(1400, Math.round(pixelCount * 0.032));
+                                    const visitedPanels = new Uint8Array(pixelCount);
+                                    const isNearKeyColor = (idx) => colorDistanceToBg(idx, keyR, keyG, keyB) <= keyTolerance;
+
+                                    for (let idx = 0; idx < pixelCount; idx += 1) {
+                                        if (visitedPanels[idx] || protectMask[idx] || bgMask[idx] || !isNearKeyColor(idx)) {
+                                            continue;
+                                        }
+                                        const offset = getOffset(idx);
+                                        if (pixels[offset + 3] < 16) {
+                                            continue;
+                                        }
+
+                                        let componentHead = 0;
+                                        let componentTail = 0;
+                                        queue[componentTail] = idx;
+                                        componentTail += 1;
+                                        visitedPanels[idx] = 1;
+                                        const component = [idx];
+                                        let minR = 255;
+                                        let minG = 255;
+                                        let minB = 255;
+                                        let maxR = 0;
+                                        let maxG = 0;
+                                        let maxB = 0;
+
+                                        while (componentHead < componentTail) {
+                                            const current = queue[componentHead];
+                                            componentHead += 1;
+                                            const off = getOffset(current);
+                                            const r = pixels[off];
+                                            const g = pixels[off + 1];
+                                            const b = pixels[off + 2];
+                                            minR = Math.min(minR, r);
+                                            minG = Math.min(minG, g);
+                                            minB = Math.min(minB, b);
+                                            maxR = Math.max(maxR, r);
+                                            maxG = Math.max(maxG, g);
+                                            maxB = Math.max(maxB, b);
+
+                                            const x = current % width;
+                                            const y = Math.floor(current / width);
+                                            const neighbors = [];
+                                            if (x > 0) neighbors.push(current - 1);
+                                            if (x < width - 1) neighbors.push(current + 1);
+                                            if (y > 0) neighbors.push(current - width);
+                                            if (y < height - 1) neighbors.push(current + width);
+
+                                            for (let n = 0; n < neighbors.length; n += 1) {
+                                                const neighbor = neighbors[n];
+                                                if (visitedPanels[neighbor] || protectMask[neighbor] || bgMask[neighbor] || !isNearKeyColor(neighbor)) {
+                                                    continue;
+                                                }
+                                                const no = getOffset(neighbor);
+                                                if (pixels[no + 3] < 16) {
+                                                    continue;
+                                                }
+                                                visitedPanels[neighbor] = 1;
+                                                queue[componentTail] = neighbor;
+                                                componentTail += 1;
+                                                component.push(neighbor);
+                                            }
+                                        }
+
+                                        const flatRange = Math.max(maxR - minR, maxG - minG, maxB - minB);
+                                        if (component.length >= largePanelMin && flatRange <= 92) {
+                                            for (let i = 0; i < component.length; i += 1) {
+                                                bgMask[component[i]] = 1;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
                             const countBgNeighbors = (x, y) => {
                                 let count = 0;
                                 for (let oy = -1; oy <= 1; oy += 1) {
