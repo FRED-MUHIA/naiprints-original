@@ -1322,6 +1322,207 @@
                                 protectMask.set(nextMask);
                             }
 
+                            // Extra portrait-safe recovery:
+                            // if pixels are inside/near the protected subject bounds and mostly surrounded by
+                            // protected or non-background pixels, keep them to avoid cutting face/hair/clothing.
+                            if (subjectBounds.has) {
+                                const interiorPadding = Math.max(4, Math.round(Math.min(width, height) * 0.015));
+                                const isInsideExpandedSubject = (x, y) => (
+                                    x >= subjectBounds.minX - interiorPadding &&
+                                    x <= subjectBounds.maxX + interiorPadding &&
+                                    y >= subjectBounds.minY - interiorPadding &&
+                                    y <= subjectBounds.maxY + interiorPadding
+                                );
+
+                                for (let pass = 0; pass < 3; pass += 1) {
+                                    const nextMask = protectMask.slice();
+                                    for (let idx = 0; idx < pixelCount; idx += 1) {
+                                        if (protectMask[idx] || !bgMask[idx]) {
+                                            continue;
+                                        }
+                                        const offset = getOffset(idx);
+                                        if (pixels[offset + 3] < 16) {
+                                            continue;
+                                        }
+
+                                        const x = idx % width;
+                                        const y = Math.floor(idx / width);
+                                        if (!isInsideExpandedSubject(x, y)) {
+                                            continue;
+                                        }
+
+                                        let protectedNeighbors = 0;
+                                        let nonBgNeighbors = 0;
+                                        for (let oy = -1; oy <= 1; oy += 1) {
+                                            for (let ox = -1; ox <= 1; ox += 1) {
+                                                if (ox === 0 && oy === 0) {
+                                                    continue;
+                                                }
+                                                const nx = x + ox;
+                                                const ny = y + oy;
+                                                if (nx < 0 || ny < 0 || nx >= width || ny >= height) {
+                                                    continue;
+                                                }
+                                                const nIdx = ny * width + nx;
+                                                if (protectMask[nIdx]) {
+                                                    protectedNeighbors += 1;
+                                                }
+                                                if (!bgMask[nIdx]) {
+                                                    nonBgNeighbors += 1;
+                                                }
+                                            }
+                                        }
+
+                                        const r = pixels[offset];
+                                        const g = pixels[offset + 1];
+                                        const b = pixels[offset + 2];
+                                        const colorSpread = Math.max(r, g, b) - Math.min(r, g, b);
+                                        const distance = colorDistanceToBg(idx, bgR, bgG, bgB);
+                                        const strongInterior = protectedNeighbors >= 5 || nonBgNeighbors >= 7;
+                                        const closeToSubject = protectedNeighbors >= 3 && nonBgNeighbors >= 5;
+                                        const likelyForeground = colorSpread >= 12 || distance >= hardTolerance * 0.72;
+
+                                        if (strongInterior || (closeToSubject && likelyForeground)) {
+                                            nextMask[idx] = 1;
+                                        }
+                                    }
+                                    protectMask.set(nextMask);
+                                }
+                            }
+
+                            // Fill enclosed holes inside the subject region so portraits do not break apart.
+                            if (subjectBounds.has) {
+                                const holePadding = Math.max(10, Math.round(Math.min(width, height) * 0.04));
+                                const regionMinX = clamp(subjectBounds.minX - holePadding, 0, width - 1);
+                                const regionMaxX = clamp(subjectBounds.maxX + holePadding, 0, width - 1);
+                                const regionMinY = clamp(subjectBounds.minY - holePadding, 0, height - 1);
+                                const regionMaxY = clamp(subjectBounds.maxY + holePadding, 0, height - 1);
+                                const exteriorBg = new Uint8Array(pixelCount);
+                                const holeVisited = new Uint8Array(pixelCount);
+                                const subjectArea = Math.max(1, (subjectBounds.maxX - subjectBounds.minX + 1) * (subjectBounds.maxY - subjectBounds.minY + 1));
+                                const maxHoleArea = Math.max(120, Math.min(Math.round(subjectArea * 0.22), Math.round(pixelCount * 0.085)));
+
+                                let head = 0;
+                                let tail = 0;
+                                const enqueueExterior = (idx) => {
+                                    if (exteriorBg[idx] || protectMask[idx] || !bgMask[idx]) {
+                                        return;
+                                    }
+                                    exteriorBg[idx] = 1;
+                                    queue[tail] = idx;
+                                    tail += 1;
+                                };
+                                const inRegion = (x, y) => (
+                                    x >= regionMinX && x <= regionMaxX && y >= regionMinY && y <= regionMaxY
+                                );
+
+                                for (let x = regionMinX; x <= regionMaxX; x += 1) {
+                                    enqueueExterior((regionMinY * width) + x);
+                                    enqueueExterior((regionMaxY * width) + x);
+                                }
+                                for (let y = regionMinY + 1; y < regionMaxY; y += 1) {
+                                    enqueueExterior((y * width) + regionMinX);
+                                    enqueueExterior((y * width) + regionMaxX);
+                                }
+
+                                while (head < tail) {
+                                    const idx = queue[head];
+                                    head += 1;
+                                    const x = idx % width;
+                                    const y = Math.floor(idx / width);
+                                    if (x > regionMinX) {
+                                        const n = idx - 1;
+                                        if (!exteriorBg[n] && !protectMask[n] && bgMask[n]) {
+                                            exteriorBg[n] = 1;
+                                            queue[tail] = n;
+                                            tail += 1;
+                                        }
+                                    }
+                                    if (x < regionMaxX) {
+                                        const n = idx + 1;
+                                        if (!exteriorBg[n] && !protectMask[n] && bgMask[n]) {
+                                            exteriorBg[n] = 1;
+                                            queue[tail] = n;
+                                            tail += 1;
+                                        }
+                                    }
+                                    if (y > regionMinY) {
+                                        const n = idx - width;
+                                        if (!exteriorBg[n] && !protectMask[n] && bgMask[n]) {
+                                            exteriorBg[n] = 1;
+                                            queue[tail] = n;
+                                            tail += 1;
+                                        }
+                                    }
+                                    if (y < regionMaxY) {
+                                        const n = idx + width;
+                                        if (!exteriorBg[n] && !protectMask[n] && bgMask[n]) {
+                                            exteriorBg[n] = 1;
+                                            queue[tail] = n;
+                                            tail += 1;
+                                        }
+                                    }
+                                }
+
+                                for (let y = regionMinY; y <= regionMaxY; y += 1) {
+                                    for (let x = regionMinX; x <= regionMaxX; x += 1) {
+                                        const idx = (y * width) + x;
+                                        if (protectMask[idx] || !bgMask[idx] || exteriorBg[idx] || holeVisited[idx]) {
+                                            continue;
+                                        }
+
+                                        head = 0;
+                                        tail = 0;
+                                        queue[tail] = idx;
+                                        tail += 1;
+                                        holeVisited[idx] = 1;
+                                        const component = [idx];
+                                        let touchesSubject = 0;
+
+                                        while (head < tail) {
+                                            const current = queue[head];
+                                            head += 1;
+                                            const cx = current % width;
+                                            const cy = Math.floor(current / width);
+                                            const neighbors = [];
+                                            if (cx > regionMinX) neighbors.push(current - 1);
+                                            if (cx < regionMaxX) neighbors.push(current + 1);
+                                            if (cy > regionMinY) neighbors.push(current - width);
+                                            if (cy < regionMaxY) neighbors.push(current + width);
+
+                                            for (let i = 0; i < neighbors.length; i += 1) {
+                                                const neighbor = neighbors[i];
+                                                if (protectMask[neighbor]) {
+                                                    touchesSubject += 1;
+                                                    continue;
+                                                }
+                                                if (holeVisited[neighbor] || exteriorBg[neighbor] || !bgMask[neighbor]) {
+                                                    continue;
+                                                }
+                                                const nx = neighbor % width;
+                                                const ny = Math.floor(neighbor / width);
+                                                if (!inRegion(nx, ny)) {
+                                                    continue;
+                                                }
+                                                holeVisited[neighbor] = 1;
+                                                queue[tail] = neighbor;
+                                                tail += 1;
+                                                component.push(neighbor);
+                                            }
+                                        }
+
+                                        if (
+                                            component.length <= maxHoleArea &&
+                                            touchesSubject >= Math.max(8, Math.round(component.length * 0.04))
+                                        ) {
+                                            for (let i = 0; i < component.length; i += 1) {
+                                                protectMask[component[i]] = 1;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
                             for (let idx = 0; idx < pixelCount; idx += 1) {
                                 if (protectMask[idx]) {
                                     bgMask[idx] = 0;
