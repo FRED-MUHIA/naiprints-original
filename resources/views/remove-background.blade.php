@@ -1878,6 +1878,7 @@
                                 const r = pixels[offset];
                                 const g = pixels[offset + 1];
                                 const b = pixels[offset + 2];
+                                const brightness = (r + g + b) / 3;
                                 const colorSpread = Math.max(r, g, b) - Math.min(r, g, b);
                                 const localContrast = estimateLocalContrast(idx);
                                 const isBlurryBackgroundPixel = !nearSubject
@@ -1894,10 +1895,67 @@
                                 if (bgNeighbors > 0 && distance <= softTolerance + 8) {
                                     const softness = clamp((softTolerance - distance) / Math.max(1, softTolerance - hardTolerance), 0, 1);
                                     const edgeFactor = nearSubject
-                                        ? (bgNeighbors >= 5 ? 0.58 : bgNeighbors >= 3 ? 0.44 : 0.3)
+                                        ? (bgNeighbors >= 5 ? 0.7 : bgNeighbors >= 3 ? 0.54 : 0.38)
                                         : (bgNeighbors >= 5 ? 0.92 : bgNeighbors >= 3 ? 0.76 : 0.6);
                                     alpha = Math.round(alpha * (1 - softness * edgeFactor));
                                 }
+
+                                // Remove dark outline/stroke on cut edges by detecting fringe pixels that are
+                                // darker than nearby kept subject pixels.
+                                if (nearSubject && bgNeighbors >= 2 && distance <= softTolerance + 24) {
+                                    let fgNeighbors = 0;
+                                    let fgBrightnessTotal = 0;
+                                    let fgRTotal = 0;
+                                    let fgGTotal = 0;
+                                    let fgBTotal = 0;
+                                    for (let oy = -1; oy <= 1; oy += 1) {
+                                        for (let ox = -1; ox <= 1; ox += 1) {
+                                            if (ox === 0 && oy === 0) {
+                                                continue;
+                                            }
+                                            const nx = x + ox;
+                                            const ny = y + oy;
+                                            if (nx < 0 || ny < 0 || nx >= width || ny >= height) {
+                                                continue;
+                                            }
+                                            const nIdx = ny * width + nx;
+                                            if (bgMask[nIdx]) {
+                                                continue;
+                                            }
+                                            const no = getOffset(nIdx);
+                                            if (pixels[no + 3] <= 0) {
+                                                continue;
+                                            }
+                                            const nr = pixels[no];
+                                            const ng = pixels[no + 1];
+                                            const nb = pixels[no + 2];
+                                            fgNeighbors += 1;
+                                            fgRTotal += nr;
+                                            fgGTotal += ng;
+                                            fgBTotal += nb;
+                                            fgBrightnessTotal += (nr + ng + nb) / 3;
+                                        }
+                                    }
+
+                                    if (fgNeighbors >= 3) {
+                                        const avgFgBrightness = fgBrightnessTotal / fgNeighbors;
+                                        const isDarkFringe = colorSpread <= 52 && (avgFgBrightness - brightness) >= 18;
+                                        if (isDarkFringe) {
+                                            const fringeStrength = clamp((avgFgBrightness - brightness) / 110, 0, 1);
+                                            const fringeFade = bgNeighbors >= 5 ? 0.34 : (bgNeighbors >= 3 ? 0.26 : 0.2);
+                                            alpha = Math.round(alpha * (1 - (fringeStrength * fringeFade)));
+
+                                            const avgFgR = fgRTotal / fgNeighbors;
+                                            const avgFgG = fgGTotal / fgNeighbors;
+                                            const avgFgB = fgBTotal / fgNeighbors;
+                                            const colorBlend = clamp(0.18 + (fringeStrength * 0.38), 0.18, 0.56);
+                                            pixels[offset] = Math.round((pixels[offset] * (1 - colorBlend)) + (avgFgR * colorBlend));
+                                            pixels[offset + 1] = Math.round((pixels[offset + 1] * (1 - colorBlend)) + (avgFgG * colorBlend));
+                                            pixels[offset + 2] = Math.round((pixels[offset + 2] * (1 - colorBlend)) + (avgFgB * colorBlend));
+                                        }
+                                    }
+                                }
+
                                 if (!nearSubject && distance <= hardTolerance * 0.82 && bgNeighbors >= 4) {
                                     alpha = Math.min(alpha, 20);
                                 }
