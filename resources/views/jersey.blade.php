@@ -82,7 +82,7 @@
                             JERSEY
                             <span class="mt-0.5 block text-[30px] leading-[0.95] tracking-[0.02em] text-white sm:text-[36px]">CATALOGUE</span>
                         </h1>
-                        <p class="mx-auto mt-7 max-w-2xl text-base leading-relaxed text-white/75 sm:text-2xl">
+                        <p class="mx-auto mt-7 max-w-2xl text-base leading-relaxed text-white/75 sm:text-xl">
                             {{ $catalogIntro }}
                         </p>
                     </div>
