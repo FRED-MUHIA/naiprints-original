@@ -9,6 +9,10 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="min-h-screen bg-slate-100 text-slate-900">
+        @php
+            $adminRole = strtolower((string) session('admin_role', 'admin'));
+            $isAdminRole = $adminRole === 'admin';
+        @endphp
         <div class="flex min-h-screen gap-6 p-6">
             <aside class="w-72 shrink-0">
                 <div class="admin-panel flex h-full flex-col p-5">
@@ -27,14 +31,17 @@
                     <div class="mt-6 flex-1">
                         <p class="px-3 text-xs font-semibold uppercase tracking-[0.35em] text-slate-400">Content management</p>
                         <nav class="mt-3 space-y-2 text-sm font-semibold">
-                            <a href="{{ route('admin.dashboard') }}"
-                               class="block rounded-2xl px-4 py-3 transition {{ request()->routeIs('admin.dashboard') ? 'bg-brand text-white shadow-md' : 'text-slate-600 hover:bg-slate-100' }}">
-                                Dashboard
-                            </a>
+                            @if ($isAdminRole)
+                                <a href="{{ route('admin.dashboard') }}"
+                                   class="block rounded-2xl px-4 py-3 transition {{ request()->routeIs('admin.dashboard') ? 'bg-brand text-white shadow-md' : 'text-slate-600 hover:bg-slate-100' }}">
+                                    Dashboard
+                                </a>
+                            @endif
                             <a href="{{ route('admin.products.index') }}"
                                class="block rounded-2xl px-4 py-3 transition {{ request()->routeIs('admin.products.*') ? 'bg-brand text-white shadow-md' : 'text-slate-600 hover:bg-slate-100' }}">
                                 Products
                             </a>
+                            @if ($isAdminRole)
                             <a href="{{ route('admin.blogs.index') }}"
                                class="block rounded-2xl px-4 py-3 transition {{ request()->routeIs('admin.blogs.*') ? 'bg-brand text-white shadow-md' : 'text-slate-600 hover:bg-slate-100' }}">
                                 Blogs
@@ -75,8 +82,10 @@
                                class="block rounded-2xl px-4 py-3 transition {{ request()->routeIs('admin.sizes.*') ? 'bg-brand text-white shadow-md' : 'text-slate-600 hover:bg-slate-100' }}">
                                 Sizes
                             </a>
+                            @endif
                         </nav>
 
+                        @if ($isAdminRole)
                         <p class="mt-8 px-3 text-xs font-semibold uppercase tracking-[0.35em] text-slate-400">Invoicing</p>
                         <nav class="mt-3 space-y-2 text-sm font-semibold">
                             <a href="{{ route('admin.invoices.index') }}"
@@ -112,10 +121,11 @@
                                 Settings
                             </a>
                         </nav>
+                        @endif
                     </div>
 
                     <div class="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-xs text-slate-500">
-                        Manage your catalog, pricing, and inventory in one place.
+                        {{ $isAdminRole ? 'Manage your catalog, pricing, and inventory in one place.' : 'Editor access: manage products only.' }}
                     </div>
                 </div>
             </aside>
@@ -128,8 +138,8 @@
                             <h1 class="mt-2 text-4xl font-semibold tracking-tight">@yield('title')</h1>
                         </div>
                         <div class="flex flex-wrap items-center gap-3 text-sm text-slate-500">
-                            <a href="{{ route('admin.dashboard') }}" class="admin-btn-primary text-xs uppercase tracking-[0.3em]">
-                                Admin
+                            <a href="{{ $isAdminRole ? route('admin.dashboard') : route('admin.products.index') }}" class="admin-btn-primary text-xs uppercase tracking-[0.3em]">
+                                {{ $isAdminRole ? 'Admin' : 'Editor' }}
                             </a>
                             <span class="rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">
                                 {{ now()->format('M d, Y') }}

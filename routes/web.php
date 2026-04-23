@@ -34,6 +34,7 @@ use App\Models\Size;
 use App\Models\Tag;
 use App\Models\Task;
 use App\Models\Page;
+use App\Models\User;
 use App\Support\PageDefaults;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Hash;
@@ -688,15 +689,43 @@ Route::post('/admin/login', function (Request $request) {
         'password' => ['required', 'string'],
     ]);
 
+    $username = trim((string) $credentials['username']);
     $expectedUser = config('admin.username');
     $expectedHash = config('admin.password_hash');
 
     if (
-        $credentials['username'] === $expectedUser &&
+        $username === $expectedUser &&
         Hash::check($credentials['password'], $expectedHash)
     ) {
-        $request->session()->put('admin_authenticated', true);
+        $request->session()->put([
+            'admin_authenticated' => true,
+            'admin_role' => 'admin',
+            'admin_user_id' => null,
+            'admin_name' => (string) $expectedUser,
+        ]);
         $request->session()->regenerate();
+
+        return redirect()->route('admin.dashboard');
+    }
+
+    $editor = User::query()
+        ->where('email', $username)
+        ->whereIn('role', ['admin', 'editor'])
+        ->first();
+
+    if ($editor && Hash::check($credentials['password'], (string) $editor->password)) {
+        $role = strtolower((string) $editor->role);
+        $request->session()->put([
+            'admin_authenticated' => true,
+            'admin_role' => $role,
+            'admin_user_id' => (int) $editor->id,
+            'admin_name' => (string) ($editor->name ?: $editor->email),
+        ]);
+        $request->session()->regenerate();
+
+        if ($role === 'editor') {
+            return redirect()->route('admin.products.index');
+        }
 
         return redirect()->route('admin.dashboard');
     }
@@ -705,7 +734,7 @@ Route::post('/admin/login', function (Request $request) {
 })->name('admin.login.submit');
 
 Route::post('/admin/logout', function (Request $request) {
-    $request->session()->forget('admin_authenticated');
+    $request->session()->forget(['admin_authenticated', 'admin_role', 'admin_user_id', 'admin_name']);
     $request->session()->invalidate();
     $request->session()->regenerateToken();
 
@@ -714,6 +743,10 @@ Route::post('/admin/logout', function (Request $request) {
 
 Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function () {
     Route::get('/', function () {
+        if (session('admin_role') === 'editor') {
+            return redirect()->route('admin.products.index');
+        }
+
         $categoryId = request('category');
 
         $products = Product::with(['category', 'categories', 'brand'])
@@ -756,54 +789,59 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
         }
 
         return view('admin.dashboard', compact('products', 'featuredProduct', 'categories', 'brands', 'taskStats', 'recentTasks', 'isTaskModuleReady'));
-    })->name('dashboard');
+    })->name('dashboard')->middleware('admin.can:admin');
 
-    Route::resource('products', ProductController::class)->except(['show']);
-    Route::post('blogs/editor/upload-image', [AdminBlogController::class, 'uploadEditorImage'])->name('blogs.editor.upload-image');
-    Route::post('blogs/editor/upload-image-url', [AdminBlogController::class, 'uploadEditorImageUrl'])->name('blogs.editor.upload-image-url');
-    Route::post('blogs/{blog}/publish', [AdminBlogController::class, 'publish'])->name('blogs.publish');
-    Route::get('blogs/{blog}', [AdminBlogController::class, 'edit'])
-        ->whereNumber('blog')
-        ->name('blogs.edit.alias');
-    Route::resource('blogs', AdminBlogController::class)->except(['show']);
-    Route::resource('blog-categories', BlogCategoryController::class)->except(['show']);
-    Route::resource('blog-posters', BlogPosterController::class)->except(['show']);
-    Route::resource('categories', CategoryController::class)->except(['show']);
-    Route::resource('brands', BrandController::class)->except(['show']);
-    Route::resource('tags', TagController::class)->except(['show']);
-    Route::resource('attributes', AttributeController::class)->except(['show']);
-    Route::resource('sizes', SizeController::class)->except(['show']);
-    Route::resource('media', MediaAssetController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::middleware('admin.can:admin,editor')->group(function () {
+        Route::resource('products', ProductController::class)->except(['show']);
+    });
 
-    Route::resource('clients', ClientController::class)->except(['show']);
-    Route::get('tasks/{task}/work-note', [TaskController::class, 'downloadWorkNote'])->name('tasks.work-note');
-    Route::post('tasks/{task}/next-stage', [TaskController::class, 'nextStage'])->name('tasks.next-stage');
-    Route::resource('tasks', TaskController::class)->except(['show']);
-    Route::get('invoices/export', [InvoiceController::class, 'export'])->name('invoices.export');
-    Route::get('invoices/trash', [InvoiceController::class, 'trash'])->name('invoices.trash');
-    Route::post('invoices/{invoice}/restore', [InvoiceController::class, 'restore'])->name('invoices.restore');
-    Route::delete('invoices/{invoice}/force', [InvoiceController::class, 'forceDelete'])->name('invoices.force');
-    Route::get('invoices/settings', [InvoiceSettingController::class, 'edit'])->name('invoices.settings');
-    Route::post('invoices/settings', [InvoiceSettingController::class, 'update'])->name('invoices.settings.update');
-    Route::post('invoices/settings/mpesa/test', [MpesaController::class, 'testCredentials'])->name('invoices.mpesa.test');
-    Route::post('invoices/settings/mpesa/register', [MpesaController::class, 'registerC2b'])->name('invoices.mpesa.register');
-    Route::post('invoices/{invoice}/payments', [InvoiceController::class, 'addPayment'])->name('invoices.payments.store');
-    Route::post('invoices/{invoice}/mpesa/stk', [MpesaController::class, 'stkPush'])->name('invoices.mpesa.stk');
-    Route::get('invoices/{invoice}/download', [InvoiceController::class, 'download'])->name('invoices.download');
-    Route::post('invoices/{invoice}/send', [InvoiceController::class, 'sendEmail'])->name('invoices.send');
-    Route::resource('invoices', InvoiceController::class);
-    Route::get('quotations/export', [QuotationController::class, 'export'])->name('quotations.export');
-    Route::get('quotations/trash', [QuotationController::class, 'trash'])->name('quotations.trash');
-    Route::post('quotations/{quotation}/restore', [QuotationController::class, 'restore'])->name('quotations.restore');
-    Route::delete('quotations/{quotation}/force', [QuotationController::class, 'forceDelete'])->name('quotations.force');
-    Route::get('quotations/{quotation}/download', [QuotationController::class, 'download'])->name('quotations.download');
-    Route::post('quotations/{quotation}/send', [QuotationController::class, 'sendEmail'])->name('quotations.send');
-    Route::resource('quotations', QuotationController::class);
-    Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
-    Route::get('receipts', [ReceiptController::class, 'index'])->name('receipts.index');
+    Route::middleware('admin.can:admin')->group(function () {
+        Route::post('blogs/editor/upload-image', [AdminBlogController::class, 'uploadEditorImage'])->name('blogs.editor.upload-image');
+        Route::post('blogs/editor/upload-image-url', [AdminBlogController::class, 'uploadEditorImageUrl'])->name('blogs.editor.upload-image-url');
+        Route::post('blogs/{blog}/publish', [AdminBlogController::class, 'publish'])->name('blogs.publish');
+        Route::get('blogs/{blog}', [AdminBlogController::class, 'edit'])
+            ->whereNumber('blog')
+            ->name('blogs.edit.alias');
+        Route::resource('blogs', AdminBlogController::class)->except(['show']);
+        Route::resource('blog-categories', BlogCategoryController::class)->except(['show']);
+        Route::resource('blog-posters', BlogPosterController::class)->except(['show']);
+        Route::resource('categories', CategoryController::class)->except(['show']);
+        Route::resource('brands', BrandController::class)->except(['show']);
+        Route::resource('tags', TagController::class)->except(['show']);
+        Route::resource('attributes', AttributeController::class)->except(['show']);
+        Route::resource('sizes', SizeController::class)->except(['show']);
+        Route::resource('media', MediaAssetController::class)->only(['index', 'store', 'update', 'destroy']);
 
-    Route::get('builder', [PageBuilderController::class, 'index'])->name('builder.index');
-    Route::post('builder/globals', [PageBuilderController::class, 'updateGlobals'])->name('builder.globals');
-    Route::get('builder/{page}', [PageBuilderController::class, 'edit'])->name('builder.edit');
-    Route::put('builder/{page}', [PageBuilderController::class, 'update'])->name('builder.update');
+        Route::resource('clients', ClientController::class)->except(['show']);
+        Route::get('tasks/{task}/work-note', [TaskController::class, 'downloadWorkNote'])->name('tasks.work-note');
+        Route::post('tasks/{task}/next-stage', [TaskController::class, 'nextStage'])->name('tasks.next-stage');
+        Route::resource('tasks', TaskController::class)->except(['show']);
+        Route::get('invoices/export', [InvoiceController::class, 'export'])->name('invoices.export');
+        Route::get('invoices/trash', [InvoiceController::class, 'trash'])->name('invoices.trash');
+        Route::post('invoices/{invoice}/restore', [InvoiceController::class, 'restore'])->name('invoices.restore');
+        Route::delete('invoices/{invoice}/force', [InvoiceController::class, 'forceDelete'])->name('invoices.force');
+        Route::get('invoices/settings', [InvoiceSettingController::class, 'edit'])->name('invoices.settings');
+        Route::post('invoices/settings', [InvoiceSettingController::class, 'update'])->name('invoices.settings.update');
+        Route::post('invoices/settings/mpesa/test', [MpesaController::class, 'testCredentials'])->name('invoices.mpesa.test');
+        Route::post('invoices/settings/mpesa/register', [MpesaController::class, 'registerC2b'])->name('invoices.mpesa.register');
+        Route::post('invoices/{invoice}/payments', [InvoiceController::class, 'addPayment'])->name('invoices.payments.store');
+        Route::post('invoices/{invoice}/mpesa/stk', [MpesaController::class, 'stkPush'])->name('invoices.mpesa.stk');
+        Route::get('invoices/{invoice}/download', [InvoiceController::class, 'download'])->name('invoices.download');
+        Route::post('invoices/{invoice}/send', [InvoiceController::class, 'sendEmail'])->name('invoices.send');
+        Route::resource('invoices', InvoiceController::class);
+        Route::get('quotations/export', [QuotationController::class, 'export'])->name('quotations.export');
+        Route::get('quotations/trash', [QuotationController::class, 'trash'])->name('quotations.trash');
+        Route::post('quotations/{quotation}/restore', [QuotationController::class, 'restore'])->name('quotations.restore');
+        Route::delete('quotations/{quotation}/force', [QuotationController::class, 'forceDelete'])->name('quotations.force');
+        Route::get('quotations/{quotation}/download', [QuotationController::class, 'download'])->name('quotations.download');
+        Route::post('quotations/{quotation}/send', [QuotationController::class, 'sendEmail'])->name('quotations.send');
+        Route::resource('quotations', QuotationController::class);
+        Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
+        Route::get('receipts', [ReceiptController::class, 'index'])->name('receipts.index');
+
+        Route::get('builder', [PageBuilderController::class, 'index'])->name('builder.index');
+        Route::post('builder/globals', [PageBuilderController::class, 'updateGlobals'])->name('builder.globals');
+        Route::get('builder/{page}', [PageBuilderController::class, 'edit'])->name('builder.edit');
+        Route::put('builder/{page}', [PageBuilderController::class, 'update'])->name('builder.update');
+    });
 });
