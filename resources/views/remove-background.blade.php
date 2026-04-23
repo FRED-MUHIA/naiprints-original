@@ -723,7 +723,6 @@
                 <section class="rb-reviews" aria-label="User reviews">
                     <div class="rb-reviews-head">
                         <h2 class="rb-reviews-title">What people say about our background remover</h2>
-                        <p class="rb-reviews-sub">Real user feedback</p>
                     </div>
                     <div class="rb-reviews-track">
                         <article class="rb-review-card">
@@ -852,6 +851,7 @@
                             let sumG = 0;
                             let sumB = 0;
                             let sampleCount = 0;
+                            const borderColorBuckets = new Map();
 
                             const sampleBorderPixel = (idx) => {
                                 const offset = getOffset(idx);
@@ -859,10 +859,22 @@
                                 if (alpha < 10) {
                                     return;
                                 }
-                                sumR += pixels[offset];
-                                sumG += pixels[offset + 1];
-                                sumB += pixels[offset + 2];
+
+                                const r = pixels[offset];
+                                const g = pixels[offset + 1];
+                                const b = pixels[offset + 2];
+                                sumR += r;
+                                sumG += g;
+                                sumB += b;
                                 sampleCount += 1;
+
+                                const bucketKey = `${r >> 4}:${g >> 4}:${b >> 4}`;
+                                const bucket = borderColorBuckets.get(bucketKey) || { count: 0, sumR: 0, sumG: 0, sumB: 0 };
+                                bucket.count += 1;
+                                bucket.sumR += r;
+                                bucket.sumG += g;
+                                bucket.sumB += b;
+                                borderColorBuckets.set(bucketKey, bucket);
                             };
 
                             for (let x = 0; x < width; x += 1) {
@@ -879,9 +891,21 @@
                                 return;
                             }
 
-                            const bgR = sumR / sampleCount;
-                            const bgG = sumG / sampleCount;
-                            const bgB = sumB / sampleCount;
+                            let bgR = sumR / sampleCount;
+                            let bgG = sumG / sampleCount;
+                            let bgB = sumB / sampleCount;
+
+                            let dominantBucket = null;
+                            borderColorBuckets.forEach((bucket) => {
+                                if (!dominantBucket || bucket.count > dominantBucket.count) {
+                                    dominantBucket = bucket;
+                                }
+                            });
+                            if (dominantBucket && dominantBucket.count >= Math.max(12, Math.round(sampleCount * 0.08))) {
+                                bgR = dominantBucket.sumR / dominantBucket.count;
+                                bgG = dominantBucket.sumG / dominantBucket.count;
+                                bgB = dominantBucket.sumB / dominantBucket.count;
+                            }
 
                             let deviation = 0;
                             const measureDeviation = (idx) => {
@@ -908,7 +932,6 @@
                             const avgDeviation = deviation / sampleCount;
                             const hardTolerance = clamp(18 + avgDeviation * 1.4, 22, 92);
                             const softTolerance = clamp(hardTolerance + 24, 46, 132);
-                            const bgMask = new Uint8Array(pixelCount);
                             const centerMinX = Math.floor(width * 0.14);
                             const centerMaxX = Math.ceil(width * 0.86);
                             const centerMinY = Math.floor(height * 0.04);
@@ -921,10 +944,9 @@
                                 x >= centerMinX && x <= centerMaxX && y >= centerMinY && y <= centerMaxY;
                             const isInCoreBand = (x, y) =>
                                 x >= coreMinX && x <= coreMaxX && y >= coreMinY && y <= coreMaxY;
-                            const centerTolerance = clamp(hardTolerance + 12, hardTolerance + 4, Math.max(hardTolerance + 5, softTolerance - 8));
-                            const coreTolerance = clamp(hardTolerance + 6, hardTolerance + 2, centerTolerance);
+                            const getColorSpread = (r, g, b) => Math.max(r, g, b) - Math.min(r, g, b);
 
-                            const isBackgroundLike = (idx, tolerance = softTolerance) => {
+                            const isBackgroundLike = (idx, tolerance = softTolerance, strict = false) => {
                                 const offset = getOffset(idx);
                                 const alpha = pixels[offset + 3];
                                 if (alpha === 0) {
@@ -934,47 +956,94 @@
                                 const g = pixels[offset + 1];
                                 const b = pixels[offset + 2];
                                 const nearWhite = r > 245 && g > 245 && b > 245;
+                                if (strict) {
+                                    const colorSpread = getColorSpread(r, g, b);
+                                    const brightness = (r + g + b) / 3;
+                                    const nearGray = colorSpread <= 22;
+                                    if (!nearWhite && !(nearGray && brightness >= 152)) {
+                                        return false;
+                                    }
+                                }
                                 const distance = colorDistanceToBg(idx, bgR, bgG, bgB);
                                 return distance <= tolerance || (nearWhite && distance <= tolerance + 14);
                             };
 
-                            let head = 0;
-                            let tail = 0;
-                            const enqueue = (idx) => {
-                                if (idx < 0 || idx >= pixelCount || bgMask[idx]) {
-                                    return;
+                            const fillBackgroundMask = (maskHardTolerance, maskSoftTolerance, strict = false) => {
+                                const mask = new Uint8Array(pixelCount);
+                                const centerTolerance = strict
+                                    ? clamp(maskHardTolerance + 2, maskHardTolerance + 1, Math.max(maskHardTolerance + 2, maskSoftTolerance - 2))
+                                    : clamp(maskHardTolerance + 12, maskHardTolerance + 4, Math.max(maskHardTolerance + 5, maskSoftTolerance - 8));
+                                const coreTolerance = strict
+                                    ? clamp(maskHardTolerance + 1, maskHardTolerance, centerTolerance)
+                                    : clamp(maskHardTolerance + 6, maskHardTolerance + 2, centerTolerance);
+
+                                let head = 0;
+                                let tail = 0;
+                                const enqueue = (idx) => {
+                                    if (idx < 0 || idx >= pixelCount || mask[idx]) {
+                                        return;
+                                    }
+                                    const x = idx % width;
+                                    const y = Math.floor(idx / width);
+                                    const tolerance = isInCoreBand(x, y)
+                                        ? coreTolerance
+                                        : (isInCenterBand(x, y) ? centerTolerance : maskSoftTolerance);
+                                    if (!isBackgroundLike(idx, tolerance, strict)) {
+                                        return;
+                                    }
+                                    mask[idx] = 1;
+                                    queue[tail] = idx;
+                                    tail += 1;
+                                };
+
+                                for (let x = 0; x < width; x += 1) {
+                                    enqueue(x);
+                                    enqueue((height - 1) * width + x);
                                 }
-                                const x = idx % width;
-                                const y = Math.floor(idx / width);
-                                const tolerance = isInCoreBand(x, y)
-                                    ? coreTolerance
-                                    : (isInCenterBand(x, y) ? centerTolerance : softTolerance);
-                                if (!isBackgroundLike(idx, tolerance)) {
-                                    return;
+                                for (let y = 1; y < height - 1; y += 1) {
+                                    enqueue(y * width);
+                                    enqueue(y * width + (width - 1));
                                 }
-                                bgMask[idx] = 1;
-                                queue[tail] = idx;
-                                tail += 1;
+
+                                while (head < tail) {
+                                    const idx = queue[head];
+                                    head += 1;
+                                    const x = idx % width;
+                                    const y = Math.floor(idx / width);
+                                    if (x > 0) enqueue(idx - 1);
+                                    if (x < width - 1) enqueue(idx + 1);
+                                    if (y > 0) enqueue(idx - width);
+                                    if (y < height - 1) enqueue(idx + width);
+                                }
+
+                                return mask;
                             };
 
-                            for (let x = 0; x < width; x += 1) {
-                                enqueue(x);
-                                enqueue((height - 1) * width + x);
-                            }
-                            for (let y = 1; y < height - 1; y += 1) {
-                                enqueue(y * width);
-                                enqueue(y * width + (width - 1));
-                            }
+                            const estimateCoreBackgroundRatio = (mask) => {
+                                let corePixels = 0;
+                                let coreBackground = 0;
+                                for (let y = coreMinY; y <= coreMaxY; y += 1) {
+                                    for (let x = coreMinX; x <= coreMaxX; x += 1) {
+                                        const idx = (y * width) + x;
+                                        corePixels += 1;
+                                        if (mask[idx]) {
+                                            coreBackground += 1;
+                                        }
+                                    }
+                                }
+                                return corePixels ? (coreBackground / corePixels) : 0;
+                            };
 
-                            while (head < tail) {
-                                const idx = queue[head];
-                                head += 1;
-                                const x = idx % width;
-                                const y = Math.floor(idx / width);
-                                if (x > 0) enqueue(idx - 1);
-                                if (x < width - 1) enqueue(idx + 1);
-                                if (y > 0) enqueue(idx - width);
-                                if (y < height - 1) enqueue(idx + width);
+                            let bgMask = fillBackgroundMask(hardTolerance, softTolerance, false);
+                            const coreBackgroundRatio = estimateCoreBackgroundRatio(bgMask);
+                            if (coreBackgroundRatio > 0.52) {
+                                const conservativeHardTolerance = clamp(hardTolerance * 0.72, 18, 66);
+                                const conservativeSoftTolerance = clamp(conservativeHardTolerance + 14, 30, 94);
+                                const conservativeMask = fillBackgroundMask(conservativeHardTolerance, conservativeSoftTolerance, true);
+                                const conservativeCoreBackgroundRatio = estimateCoreBackgroundRatio(conservativeMask);
+                                if (conservativeCoreBackgroundRatio + 0.04 < coreBackgroundRatio) {
+                                    bgMask = conservativeMask;
+                                }
                             }
 
                             // Protect likely main subjects so people/primary characters are not over-erased.

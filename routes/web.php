@@ -708,10 +708,15 @@ Route::post('/admin/login', function (Request $request) {
         return redirect()->route('admin.dashboard');
     }
 
-    $editor = User::query()
-        ->where('email', $username)
-        ->whereIn('role', ['admin', 'editor'])
-        ->first();
+    $supportsRoleBasedAdmin = Schema::hasTable('users') && Schema::hasColumn('users', 'role');
+    $editor = null;
+
+    if ($supportsRoleBasedAdmin) {
+        $editor = User::query()
+            ->where('email', $username)
+            ->whereIn('role', ['admin', 'editor'])
+            ->first();
+    }
 
     if ($editor && Hash::check($credentials['password'], (string) $editor->password)) {
         $role = strtolower((string) $editor->role);
@@ -728,6 +733,12 @@ Route::post('/admin/login', function (Request $request) {
         }
 
         return redirect()->route('admin.dashboard');
+    }
+
+    if (!$supportsRoleBasedAdmin && str_contains($username, '@')) {
+        return back()->withErrors([
+            'username' => 'Editor login is not available yet. Run migrations to enable role-based admin accounts.',
+        ])->withInput();
     }
 
     return back()->withErrors(['username' => 'Invalid credentials.'])->withInput();
