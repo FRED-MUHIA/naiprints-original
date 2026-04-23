@@ -1956,6 +1956,64 @@
                                     }
                                 }
 
+                                // Remove bright/white halo strokes that can remain from pre-cutout source images.
+                                if (bgNeighbors >= 2) {
+                                    let fgNeighbors = 0;
+                                    let fgRTotal = 0;
+                                    let fgGTotal = 0;
+                                    let fgBTotal = 0;
+                                    for (let oy = -1; oy <= 1; oy += 1) {
+                                        for (let ox = -1; ox <= 1; ox += 1) {
+                                            if (ox === 0 && oy === 0) {
+                                                continue;
+                                            }
+                                            const nx = x + ox;
+                                            const ny = y + oy;
+                                            if (nx < 0 || ny < 0 || nx >= width || ny >= height) {
+                                                continue;
+                                            }
+                                            const nIdx = ny * width + nx;
+                                            if (bgMask[nIdx]) {
+                                                continue;
+                                            }
+                                            const no = getOffset(nIdx);
+                                            if (pixels[no + 3] <= 0) {
+                                                continue;
+                                            }
+                                            fgNeighbors += 1;
+                                            fgRTotal += pixels[no];
+                                            fgGTotal += pixels[no + 1];
+                                            fgBTotal += pixels[no + 2];
+                                        }
+                                    }
+
+                                    if (fgNeighbors >= 2) {
+                                        const avgFgR = fgRTotal / fgNeighbors;
+                                        const avgFgG = fgGTotal / fgNeighbors;
+                                        const avgFgB = fgBTotal / fgNeighbors;
+                                        const avgFgBrightness = (avgFgR + avgFgG + avgFgB) / 3;
+                                        const isNearWhite = r >= 224 && g >= 224 && b >= 224;
+                                        const isNeutralLight = brightness >= 210 && colorSpread <= 22;
+                                        const edgeLighterThanInterior = (brightness - avgFgBrightness) >= 14 && colorSpread <= 42;
+                                        const whiteHaloPixel = isNearWhite || isNeutralLight || edgeLighterThanInterior;
+
+                                        if (whiteHaloPixel) {
+                                            const haloStrength = clamp((brightness - avgFgBrightness + 26) / 120, 0, 1);
+                                            const blend = clamp(0.24 + (haloStrength * 0.5), 0.24, 0.7);
+                                            pixels[offset] = Math.round((pixels[offset] * (1 - blend)) + (avgFgR * blend));
+                                            pixels[offset + 1] = Math.round((pixels[offset + 1] * (1 - blend)) + (avgFgG * blend));
+                                            pixels[offset + 2] = Math.round((pixels[offset + 2] * (1 - blend)) + (avgFgB * blend));
+
+                                            const thinHalo = bgNeighbors >= 5 && fgNeighbors <= 3;
+                                            if (thinHalo) {
+                                                alpha = Math.round(alpha * (1 - (0.45 + (haloStrength * 0.35))));
+                                            } else {
+                                                alpha = Math.round(alpha * (1 - (0.16 + (haloStrength * 0.2))));
+                                            }
+                                        }
+                                    }
+                                }
+
                                 if (!nearSubject && distance <= hardTolerance * 0.82 && bgNeighbors >= 4) {
                                     alpha = Math.min(alpha, 20);
                                 }
