@@ -576,8 +576,9 @@
                 <section class="rb-hero">
                     <h1>Remove the background from your image for free.</h1>
                     <p>
-                        Quickly clear unwanted backgrounds and keep only the subject. Use the transparent result for product photos,
-                        social media creatives, print-ready branding, and cleaner mockups.
+                        Quickly clear unwanted backgrounds and keep only the subject with three smart tools: Magic Wand, Quick
+                        Selection, and automatic Object Selection. Use the transparent result for product photos, social media
+                        creatives, print-ready branding, and cleaner mockups.
                     </p>
                 </section>
 
@@ -626,7 +627,7 @@
                 </section>
 
                 <section class="rb-howto" aria-label="How to remove the background">
-                    <h2 class="rb-howto-title">How to remove the background of a picture.</h2>
+                    <h2 class="rb-howto-title">Background Remover Tools for Precise Selections.</h2>
                     <div class="rb-howto-grid">
                         <article class="rb-howto-card">
                             <div class="rb-howto-head">
@@ -637,10 +638,10 @@
                                         <rect x="4" y="13.6" width="16" height="6.4" rx="2.2" stroke="currentColor" stroke-width="2.2"/>
                                     </svg>
                                 </span>
-                                <h3>1. Select.</h3>
+                                <h3>1. Magic Wand Tool</h3>
                             </div>
                             <p>
-                                For best results, choose an image where the subject has clear edges with nothing overlapping.
+                                Select similarly colored image areas in one click. This is ideal for flat or consistent background zones.
                             </p>
                         </article>
                         <article class="rb-howto-card">
@@ -652,10 +653,10 @@
                                         <path d="M6.7 15.8l3.1-3.1a1.6 1.6 0 0 1 2.2 0l1.5 1.5a1.6 1.6 0 0 0 2.2 0l1.6-1.6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
                                     </svg>
                                 </span>
-                                <h3>2. Remove.</h3>
+                                <h3>2. Quick Selection Tool</h3>
                             </div>
                             <p>
-                                Upload your image to automatically remove the background in an instant.
+                                Make your selection quickly while the tool follows visible image edges to keep the cutout clean.
                             </p>
                         </article>
                         <article class="rb-howto-card">
@@ -668,10 +669,10 @@
                                         <path d="M7.2 18v1.3h9.6V18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
                                     </svg>
                                 </span>
-                                <h3>3. Download.</h3>
+                                <h3>3. Selection Tool</h3>
                             </div>
                             <p>
-                                Download your new image as a PNG file with a transparent background to save, share, or keep editing.
+                                Automatically find and select the main object, then remove the background with minimal manual edits.
                             </p>
                         </article>
                     </div>
@@ -709,12 +710,12 @@
                     </div>
 
                     <article class="rb-steps">
-                        <h3>How it works</h3>
+                        <h3>How the tools work together</h3>
                         <ol>
-                            <li>Upload a JPEG, PNG, or WebP file from your device.</li>
-                            <li>The tool detects edge-connected background tones and removes them.</li>
+                            <li>Upload a JPEG, PNG, or WebP image from your device.</li>
+                            <li>Use Magic Wand to select similarly colored background areas.</li>
+                            <li>Refine edges with Quick Selection, or auto-pick your subject with Selection Tool.</li>
                             <li>Preview and download a transparent PNG ready for editing or production.</li>
-                            <li>Use the output in your mockups, product pages, and design layouts.</li>
                         </ol>
                     </article>
                 </section>

@@ -62,9 +62,18 @@ class InvoiceController extends Controller
 
         $invoice = DB::transaction(function () use ($data) {
             $clientId = $data['client_id'] ?? null;
+            $clientDraft = $this->normalizeClientDraft($data['client_new'] ?? []);
             if (!$clientId) {
-                $client = Client::create($data['client_new']);
+                $client = Client::create([
+                    'name' => $clientDraft['name'],
+                    'company_name' => $clientDraft['company_name'],
+                    'phone' => $clientDraft['phone'],
+                    'email' => $clientDraft['email'],
+                    'address' => $clientDraft['address'],
+                ]);
                 $clientId = $client->id;
+            } else {
+                $this->syncSelectedClientDetails((int) $clientId, $clientDraft);
             }
 
             $sequence = (int) Invoice::max('sequence') + 1;
@@ -153,9 +162,18 @@ class InvoiceController extends Controller
 
         DB::transaction(function () use ($invoice, $data) {
             $clientId = $data['client_id'] ?? null;
+            $clientDraft = $this->normalizeClientDraft($data['client_new'] ?? []);
             if (!$clientId) {
-                $client = Client::create($data['client_new']);
+                $client = Client::create([
+                    'name' => $clientDraft['name'],
+                    'company_name' => $clientDraft['company_name'],
+                    'phone' => $clientDraft['phone'],
+                    'email' => $clientDraft['email'],
+                    'address' => $clientDraft['address'],
+                ]);
                 $clientId = $client->id;
+            } else {
+                $this->syncSelectedClientDetails((int) $clientId, $clientDraft);
             }
 
             $invoice->update([
@@ -374,5 +392,46 @@ class InvoiceController extends Controller
     private function formatReceiptNumber(int $sequence): string
     {
         return 'RCPT-' . str_pad((string) $sequence, 4, '0', STR_PAD_LEFT);
+    }
+
+    private function normalizeClientDraft(array $clientDraft): array
+    {
+        $clean = static fn ($value) => ($value !== null && trim((string) $value) !== '')
+            ? trim((string) $value)
+            : null;
+
+        return [
+            'name' => trim((string) ($clientDraft['name'] ?? '')),
+            'company_name' => $clean($clientDraft['company_name'] ?? null),
+            'phone' => $clean($clientDraft['phone'] ?? null),
+            'email' => $clean($clientDraft['email'] ?? null),
+            'address' => $clean($clientDraft['address'] ?? null),
+        ];
+    }
+
+    private function syncSelectedClientDetails(int $clientId, array $clientDraft): void
+    {
+        $hasAnyInput = $clientDraft['name'] !== ''
+            || $clientDraft['company_name'] !== null
+            || $clientDraft['phone'] !== null
+            || $clientDraft['email'] !== null
+            || $clientDraft['address'] !== null;
+
+        if (!$hasAnyInput) {
+            return;
+        }
+
+        $client = Client::query()->find($clientId);
+        if (!$client) {
+            return;
+        }
+
+        $client->update([
+            'name' => $clientDraft['name'] !== '' ? $clientDraft['name'] : $client->name,
+            'company_name' => $clientDraft['company_name'],
+            'phone' => $clientDraft['phone'],
+            'email' => $clientDraft['email'],
+            'address' => $clientDraft['address'],
+        ]);
     }
 }
