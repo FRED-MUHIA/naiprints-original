@@ -4365,6 +4365,12 @@
                     button.addEventListener('click', () => {
                         const tab = button.dataset.mockupTab;
                         if (tab) {
+                            const normalizedTab = tab.toLowerCase().trim();
+                            if (normalizedTab === 'designs') {
+                                setActivePanel('uploads');
+                            } else {
+                                setActivePanel('mockups');
+                            }
                             setMockupTab(tab);
                         }
                     });

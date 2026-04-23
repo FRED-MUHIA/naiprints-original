@@ -312,9 +312,28 @@ Route::get('/jersey', function () {
     $footer = GlobalSection::ensure('footer', PageDefaults::footer());
     $purchasePopups = GlobalSection::ensure('purchase_popups', PageDefaults::purchasePopups());
     $purchasePopupProducts = resolvePurchasePopupProducts($purchasePopups->content ?? []);
+    $jerseyProducts = Product::with(['category', 'categories', 'galleryImages', 'alternateImages', 'images'])
+        ->where('status', 'active')
+        ->where(function ($categoryQuery) {
+            $categoryQuery
+                ->whereHas('category', function ($primaryCategoryQuery) {
+                    $primaryCategoryQuery
+                        ->whereRaw('LOWER(slug) = ?', ['jersey'])
+                        ->orWhereRaw('LOWER(name) = ?', ['jersey']);
+                })
+                ->orWhereHas('categories', function ($relatedCategoryQuery) {
+                    $relatedCategoryQuery
+                        ->whereRaw('LOWER(slug) = ?', ['jersey'])
+                        ->orWhereRaw('LOWER(name) = ?', ['jersey']);
+                });
+        })
+        ->orderByDesc('created_at')
+        ->take(18)
+        ->get();
 
     return view('jersey', [
         'pageContent' => $page->content,
+        'jerseyProducts' => $jerseyProducts,
         'globalHeader' => $header->content,
         'globalFooter' => $footer->content,
         'globalPurchasePopups' => $purchasePopups->content,
