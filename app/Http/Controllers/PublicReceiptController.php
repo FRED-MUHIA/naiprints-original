@@ -20,7 +20,8 @@ class PublicReceiptController extends Controller
     {
         $receipt->load(['invoice.client', 'payment']);
         $settings = InvoiceSetting::first() ?? new InvoiceSetting(InvoiceSetting::defaults());
-        $pdf = Pdf::loadView('receipts.pdf', compact('receipt', 'settings'));
+        $pdf = Pdf::loadView('receipts.pdf', compact('receipt', 'settings'))
+            ->setOption('isRemoteEnabled', true);
 
         return $pdf->download("{$receipt->number}.pdf");
     }

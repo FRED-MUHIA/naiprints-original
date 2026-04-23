@@ -1,6 +1,16 @@
 @php
     use Illuminate\Support\Facades\Storage;
-    $logoUrl = $settings->logo_path ? Storage::url($settings->logo_path) : null;
+    $logoDataUri = null;
+    if (!empty($settings->logo_path) && Storage::disk('public')->exists($settings->logo_path)) {
+        $logoPath = Storage::disk('public')->path($settings->logo_path);
+        if (is_file($logoPath) && is_readable($logoPath)) {
+            $logoContents = file_get_contents($logoPath);
+            if ($logoContents !== false) {
+                $logoMime = mime_content_type($logoPath) ?: 'image/png';
+                $logoDataUri = 'data:' . $logoMime . ';base64,' . base64_encode($logoContents);
+            }
+        }
+    }
     $accent = $settings->theme_color ?: '#e11d2e';
 @endphp
 <!doctype html>
@@ -24,8 +34,8 @@
 <body>
     <div class="header">
         <div class="brand">
-            @if ($logoUrl)
-                <img src="{{ $logoUrl }}" class="logo" alt="Logo">
+            @if ($logoDataUri)
+                <img src="{{ $logoDataUri }}" class="logo" alt="Logo">
             @else
                 <div class="logo" style="background: {{ $accent }}; color: #fff; display: flex; align-items: center; justify-content: center;">NP</div>
             @endif

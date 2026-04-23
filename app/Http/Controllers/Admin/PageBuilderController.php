@@ -129,6 +129,7 @@ class PageBuilderController extends Controller
 
         $headerPayload = $request->input('header', null);
         if (is_array($headerPayload)) {
+            $headerPayload = $this->normalizeHeaderPayload($headerPayload);
             $header->update([
                 'content' => $this->mergeGlobalContent((array) ($header->content ?? []), $headerPayload),
             ]);
@@ -181,6 +182,67 @@ class PageBuilderController extends Controller
         // Merge only root keys so each card/form can save independently.
         // Nested arrays submitted by the form (e.g. columns/menu/items) fully replace their root key.
         return array_replace($existing, $payload);
+    }
+
+    private function normalizeHeaderPayload(array $payload): array
+    {
+        $menuManaged = array_key_exists('_menu_managed', $payload);
+        unset($payload['_menu_managed']);
+
+        if ($menuManaged || array_key_exists('menu', $payload)) {
+            $payload['menu'] = collect($payload['menu'] ?? [])
+                ->filter(fn ($item) => is_array($item))
+                ->map(function ($item) {
+                    $label = trim((string) ($item['label'] ?? ''));
+                    $url = trim((string) ($item['url'] ?? ''));
+                    return [
+                        'label' => $label,
+                        'url' => $url !== '' ? $url : '#',
+                    ];
+                })
+                ->filter(fn ($item) => $item['label'] !== '')
+                ->values()
+                ->all();
+        }
+
+        if (array_key_exists('announcement_items', $payload)) {
+            $payload['announcement_items'] = collect($payload['announcement_items'] ?? [])
+                ->filter(fn ($item) => is_array($item))
+                ->map(function ($item) {
+                    return [
+                        'text' => trim((string) ($item['text'] ?? '')),
+                        'highlight' => !empty($item['highlight']),
+                    ];
+                })
+                ->filter(fn ($item) => $item['text'] !== '')
+                ->values()
+                ->all();
+        }
+
+        if (array_key_exists('menu_strip', $payload)) {
+            $payload['menu_strip'] = collect($payload['menu_strip'] ?? [])
+                ->filter(fn ($item) => is_array($item))
+                ->map(function ($item) {
+                    return [
+                        'icon' => trim((string) ($item['icon'] ?? '')),
+                        'label' => trim((string) ($item['label'] ?? '')),
+                        'url' => trim((string) ($item['url'] ?? '')),
+                        'badge' => trim((string) ($item['badge'] ?? '')),
+                    ];
+                })
+                ->filter(fn ($item) => $item['label'] !== '')
+                ->values()
+                ->all();
+        }
+
+        if (array_key_exists('menu_strip_cta', $payload) && is_array($payload['menu_strip_cta'])) {
+            $payload['menu_strip_cta'] = [
+                'label' => trim((string) ($payload['menu_strip_cta']['label'] ?? '')),
+                'url' => trim((string) ($payload['menu_strip_cta']['url'] ?? '')),
+            ];
+        }
+
+        return $payload;
     }
 
     private function ensureDefaults()

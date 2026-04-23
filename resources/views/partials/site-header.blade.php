@@ -2,75 +2,33 @@
     $header = $globalHeader ?? [];
     $showMenuStrip = $showMenuStrip ?? true;
     $logoUrl = $header['logo_url'] ?? null;
-    $menu = $header['menu'] ?? [];
-    $menu = array_values(array_filter($menu, static function ($item) {
-        $label = strtolower(trim((string) ($item['label'] ?? '')));
-        return !in_array($label, ['gift', 'gifts', 'kid', 'kids', 'sport', 'sports'], true);
-    }));
-    $hasJerseyLink = collect($menu)->contains(function ($item) {
-        return strtolower(trim((string) ($item['label'] ?? ''))) === 'jersey';
-    });
-    if (!$hasJerseyLink) {
-        $embroideryIndex = collect($menu)->search(function ($item) {
-            return strtolower(trim((string) ($item['label'] ?? ''))) === 'embroidery';
-        });
+    $menu = collect($header['menu'] ?? [])
+        ->filter(fn ($item) => is_array($item))
+        ->map(function ($item) {
+            $label = trim((string) ($item['label'] ?? ''));
+            $url = trim((string) ($item['url'] ?? ''));
 
-        $jerseyMenuItem = ['label' => 'Jersey', 'url' => '/jersey'];
-        if ($embroideryIndex === false) {
-            $menu[] = $jerseyMenuItem;
-        } else {
-            array_splice($menu, $embroideryIndex + 1, 0, [$jerseyMenuItem]);
-        }
-    }
-    $hasDesigner3dLink = collect($menu)->contains(function ($item) {
-        return strtolower(trim((string) ($item['label'] ?? ''))) === '3d designer';
-    });
-    if (!$hasDesigner3dLink) {
-        $jerseyIndex = collect($menu)->search(function ($item) {
-            return strtolower(trim((string) ($item['label'] ?? ''))) === 'jersey';
-        });
-
-        $designerMenuItem = ['label' => '3D Designer', 'url' => '/3d-designer'];
-        if ($jerseyIndex === false) {
-            $menu[] = $designerMenuItem;
-        } else {
-            array_splice($menu, $jerseyIndex + 1, 0, [$designerMenuItem]);
-        }
-    }
-    $hasRemoveBackgroundLink = collect($menu)->contains(function ($item) {
-        $label = strtolower(trim((string) ($item['label'] ?? '')));
-        $url = strtolower(trim((string) ($item['url'] ?? '')));
-        return $label === 'remove background' || $url === '/remove-background';
-    });
-    if (!$hasRemoveBackgroundLink) {
-        $mockupIndex = collect($menu)->search(function ($item) {
-            return strtolower(trim((string) ($item['label'] ?? ''))) === 'mockup';
-        });
-        $removeBackgroundMenuItem = ['label' => 'Remove Background', 'url' => '/remove-background'];
-        if ($mockupIndex === false) {
-            $menu[] = $removeBackgroundMenuItem;
-        } else {
-            array_splice($menu, $mockupIndex + 1, 0, [$removeBackgroundMenuItem]);
-        }
-    }
-    $contactItem = null;
-    $menu = array_values(array_filter($menu, function ($item) use (&$contactItem) {
-        $isContact = strtolower(trim((string) ($item['label'] ?? ''))) === 'contact';
-        if ($isContact && $contactItem === null) {
-            $contactItem = [
-                'label' => 'Contact',
-                'url' => (string) (($item['url'] ?? '') ?: '/contact'),
+            return [
+                'label' => $label,
+                'url' => $url !== '' ? $url : '#',
             ];
-        }
-
-        return !$isContact;
-    }));
-    $menu[] = $contactItem ?? ['label' => 'Contact', 'url' => '/contact'];
-    $menuStrip = $header['menu_strip'] ?? [];
-    $menuStrip = array_values(array_filter($menuStrip, static function ($item) {
-        $label = strtolower(trim((string) ($item['label'] ?? '')));
-        return !in_array($label, ['sport', 'sports'], true);
-    }));
+        })
+        ->filter(fn ($item) => $item['label'] !== '')
+        ->values()
+        ->all();
+    $menuStrip = collect($header['menu_strip'] ?? [])
+        ->filter(fn ($item) => is_array($item))
+        ->map(function ($item) {
+            return [
+                'icon' => trim((string) ($item['icon'] ?? '')),
+                'label' => trim((string) ($item['label'] ?? '')),
+                'url' => trim((string) ($item['url'] ?? '')) ?: '#',
+                'badge' => trim((string) ($item['badge'] ?? '')),
+            ];
+        })
+        ->filter(fn ($item) => $item['label'] !== '')
+        ->values()
+        ->all();
     $menuStripCta = $header['menu_strip_cta'] ?? null;
     $ctaPosition = $header['menu_strip_cta_position'] ?? 8;
     $announcementItems = $header['announcement_items'] ?? [];

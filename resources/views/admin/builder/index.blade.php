@@ -29,6 +29,7 @@
                 <h2 class="text-xl font-semibold">Global Header</h2>
                 <form method="POST" action="{{ route('admin.builder.globals') }}" class="mt-4 space-y-4">
                     @csrf
+                    <input type="hidden" name="header[_menu_managed]" value="1">
                     <div>
                         <label class="text-sm font-semibold text-slate-700">Logo URL</label>
                         <input type="text" name="header[logo_url]" value="{{ $header->content['logo_url'] ?? '' }}" class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-brand focus:outline-none">
