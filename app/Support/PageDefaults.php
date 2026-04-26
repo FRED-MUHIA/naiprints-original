@@ -671,6 +671,7 @@ class PageDefaults
                         ['label' => 'Production', 'url' => '#'],
                         ['label' => 'Wholesale', 'url' => '#'],
                         ['label' => 'Careers', 'url' => '#'],
+                        ['label' => 'Ethical Policies', 'url' => '/ethical-policies'],
                     ],
                 ],
                 [
