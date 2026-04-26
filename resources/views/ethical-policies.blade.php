@@ -11,7 +11,7 @@
         <div class="min-h-screen">
             @include('partials.site-header', ['globalHeader' => $globalHeader ?? []])
 
-            <main class="mx-auto max-w-6xl px-4 py-12">
+            <main class="mx-auto max-w-6xl px-4 py-6">
                 <section class="hero-card ethical-policy-hero">
                     <p class="pill">Ethical Policies</p>
                     <h1 class="mt-6 text-4xl font-semibold leading-tight text-white md:text-5xl">
@@ -20,7 +20,7 @@
                     <p class="mt-4 max-w-3xl text-sm text-white/85 md:text-base">
                         Standards for transparency, professionalism, accountability, and ethical conduct in all client engagements.
                     </p>
-                    <div class="mt-8 flex flex-wrap gap-3">
+                    <div class="mt-5 flex flex-wrap gap-3">
                         <a
                             href="/documents/nai-prints-ethical-policy-client-agreement.pdf"
                             download
@@ -36,7 +36,7 @@
                     </div>
                 </section>
 
-                <section class="mt-10 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-10">
+                <section class="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-10">
                     <div class="prose max-w-none text-justify prose-slate prose-headings:text-left prose-headings:text-[#0b1f4d] prose-a:text-brand">
                         <h2>Ethical Policy & Client Agreement</h2>
                         <p>

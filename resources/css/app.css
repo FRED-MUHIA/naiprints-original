@@ -628,7 +628,9 @@
     }
 
     .ethical-policy-hero {
-        @apply min-h-0 py-6 md:py-8;
+        @apply h-auto min-h-0 py-5 md:py-6;
+        height: auto !important;
+        min-height: 0 !important;
     }
 
     .hero-tile {
