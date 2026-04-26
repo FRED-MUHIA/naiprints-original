@@ -590,6 +590,20 @@ Route::get('/ethical-policies', function () {
     ]);
 })->name('ethical-policies');
 
+Route::get('/data-protection-policies', function () {
+    $header = GlobalSection::ensure('header', PageDefaults::header());
+    $footer = GlobalSection::ensure('footer', PageDefaults::footer());
+    $purchasePopups = GlobalSection::ensure('purchase_popups', PageDefaults::purchasePopups());
+    $purchasePopupProducts = resolvePurchasePopupProducts($purchasePopups->content ?? []);
+
+    return view('data-protection-policies', [
+        'globalHeader' => $header->content,
+        'globalFooter' => $footer->content,
+        'globalPurchasePopups' => $purchasePopups->content,
+        'globalPurchasePopupProducts' => $purchasePopupProducts,
+    ]);
+})->name('data-protection-policies');
+
 Route::get('/remove-background', function () {
     $header = GlobalSection::ensure('header', PageDefaults::header());
     $footer = GlobalSection::ensure('footer', PageDefaults::footer());
