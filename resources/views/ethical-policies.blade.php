@@ -12,7 +12,7 @@
             @include('partials.site-header', ['globalHeader' => $globalHeader ?? []])
 
             <main class="mx-auto max-w-6xl px-4 py-12">
-                <section class="hero-card">
+                <section class="hero-card ethical-policy-hero">
                     <p class="pill">Ethical Policies</p>
                     <h1 class="mt-6 text-4xl font-semibold leading-tight text-white md:text-5xl">
                         Nai Prints Corporation Ethical Policy & Client Agreement
@@ -20,10 +20,24 @@
                     <p class="mt-4 max-w-3xl text-sm text-white/85 md:text-base">
                         Standards for transparency, professionalism, accountability, and ethical conduct in all client engagements.
                     </p>
+                    <div class="mt-8 flex flex-wrap gap-3">
+                        <a
+                            href="/documents/nai-prints-ethical-policy-client-agreement.pdf"
+                            download
+                            class="btn-brand">
+                            Download PDF
+                        </a>
+                        <a
+                            href="/documents/nai-prints-ethical-policy-client-agreement.docx"
+                            download
+                            class="btn-secondary">
+                            Download Word
+                        </a>
+                    </div>
                 </section>
 
                 <section class="mt-10 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-10">
-                    <div class="prose max-w-none prose-slate prose-headings:text-[#0b1f4d] prose-a:text-brand">
+                    <div class="prose max-w-none text-justify prose-slate prose-headings:text-left prose-headings:text-[#0b1f4d] prose-a:text-brand">
                         <h2>Ethical Policy & Client Agreement</h2>
                         <p>
                             This Ethical Policy and Client Agreement (“Agreement”) sets out the principles, standards, and conditions governing all business engagements between <strong>Nai Prints Corporation</strong> (hereinafter referred to as “Nai Prints”, “Service Provider”, or “the Company”) and its clients, including companies, organizations, and individuals (hereinafter referred to as “Client”). This document is intended to promote transparency, professionalism, accountability, and ethical conduct in all contractual relationships.
