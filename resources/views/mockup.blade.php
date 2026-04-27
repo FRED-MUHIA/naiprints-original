@@ -810,6 +810,7 @@
                             { name: 'Sand', value: '#f5e9d8' },
                         ],
                         printArea: { x: 260, y: 260, w: 300, h: 360 },
+                        imageFit: { scale: 1.32, offsetX: 96, offsetY: 18 },
                     },
                     hoodie: {
                         label: 'Hoodie',
@@ -819,6 +820,7 @@
                             { name: 'Storm', value: '#334155' },
                         ],
                         printArea: { x: 250, y: 300, w: 320, h: 320 },
+                        imageFit: { scale: 1.18, offsetX: 0, offsetY: 18 },
                     },
                     polo: {
                         label: 'Polo',
@@ -828,6 +830,7 @@
                             { name: 'Olive', value: '#4b5d4a' },
                         ],
                         printArea: { x: 270, y: 260, w: 280, h: 320 },
+                        imageFit: { scale: 1.2, offsetX: 0, offsetY: 12 },
                     },
                     cap: {
                         label: 'Caps',
@@ -2082,6 +2085,10 @@
                     setBackgroundTheme(color);
 
                     fabric.Image.fromURL(url, (img) => {
+                        const imageFit = config.imageFit || {};
+                        const imageScale = Number.isFinite(imageFit.scale) ? imageFit.scale : 1;
+                        const imageOffsetX = Number.isFinite(imageFit.offsetX) ? imageFit.offsetX * SCALE_X : 0;
+                        const imageOffsetY = Number.isFinite(imageFit.offsetY) ? imageFit.offsetY * SCALE_Y : 0;
                         let scaleX = 1;
                         let scaleY = 1;
                         let left = 0;
@@ -2089,11 +2096,11 @@
                         let originX = 'left';
                         let originY = 'top';
                         if (img.width > 0 && img.height > 0) {
-                            const scale = Math.min(CANVAS_WIDTH / img.width, CANVAS_HEIGHT / img.height);
+                            const scale = Math.min(CANVAS_WIDTH / img.width, CANVAS_HEIGHT / img.height) * imageScale;
                             scaleX = scale;
                             scaleY = scale;
-                            left = CANVAS_WIDTH / 2;
-                            top = CANVAS_HEIGHT / 2;
+                            left = CANVAS_WIDTH / 2 + imageOffsetX;
+                            top = CANVAS_HEIGHT / 2 + imageOffsetY;
                             originX = 'center';
                             originY = 'center';
                         }
