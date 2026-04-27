@@ -810,7 +810,7 @@
                             { name: 'Sand', value: '#f5e9d8' },
                         ],
                         printArea: { x: 260, y: 260, w: 300, h: 360 },
-                        imageFit: { scale: 1.32, offsetX: 96, offsetY: 18 },
+                        mobileImageFit: { scale: 1.35, offsetX: 100, offsetY: 42 },
                     },
                     hoodie: {
                         label: 'Hoodie',
@@ -820,7 +820,7 @@
                             { name: 'Storm', value: '#334155' },
                         ],
                         printArea: { x: 250, y: 300, w: 320, h: 320 },
-                        imageFit: { scale: 1.18, offsetX: 0, offsetY: 18 },
+                        mobileImageFit: { scale: 1.2, offsetX: 0, offsetY: 28 },
                     },
                     polo: {
                         label: 'Polo',
@@ -830,7 +830,7 @@
                             { name: 'Olive', value: '#4b5d4a' },
                         ],
                         printArea: { x: 270, y: 260, w: 280, h: 320 },
-                        imageFit: { scale: 1.2, offsetX: 0, offsetY: 12 },
+                        mobileImageFit: { scale: 1.2, offsetX: 0, offsetY: 24 },
                     },
                     cap: {
                         label: 'Caps',
@@ -2085,10 +2085,12 @@
                     setBackgroundTheme(color);
 
                     fabric.Image.fromURL(url, (img) => {
-                        const imageFit = config.imageFit || {};
-                        const imageScale = Number.isFinite(imageFit.scale) ? imageFit.scale : 1;
-                        const imageOffsetX = Number.isFinite(imageFit.offsetX) ? imageFit.offsetX * SCALE_X : 0;
-                        const imageOffsetY = Number.isFinite(imageFit.offsetY) ? imageFit.offsetY * SCALE_Y : 0;
+                        const mobileImageFit = window.matchMedia('(max-width: 640px)').matches
+                            ? (config.mobileImageFit || null)
+                            : null;
+                        const imageScale = Number.isFinite(mobileImageFit?.scale) ? mobileImageFit.scale : 1;
+                        const imageOffsetX = Number.isFinite(mobileImageFit?.offsetX) ? mobileImageFit.offsetX * SCALE_X : 0;
+                        const imageOffsetY = Number.isFinite(mobileImageFit?.offsetY) ? mobileImageFit.offsetY * SCALE_Y : 0;
                         let scaleX = 1;
                         let scaleY = 1;
                         let left = 0;
