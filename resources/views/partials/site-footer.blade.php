@@ -6,6 +6,33 @@
     }
     $footer = array_replace($footerDefaults, $footer);
     $columns = $footer['columns'] ?? [];
+    $policyLinks = [
+        ['label' => 'Ethical Policies', 'url' => route('ethical-policies')],
+        ['label' => 'Data Protection Policies', 'url' => route('data-protection-policies')],
+    ];
+    $companyColumnIndex = null;
+
+    foreach ($columns as $index => $column) {
+        if (strcasecmp((string) ($column['title'] ?? ''), 'Company') === 0) {
+            $companyColumnIndex = $index;
+            break;
+        }
+    }
+
+    if ($companyColumnIndex === null) {
+        $columns[] = ['title' => 'Company', 'links' => []];
+        $companyColumnIndex = array_key_last($columns);
+    }
+
+    foreach ($policyLinks as $policyLink) {
+        $hasPolicyLink = collect($columns[$companyColumnIndex]['links'] ?? [])
+            ->contains(fn ($link) => strcasecmp((string) ($link['label'] ?? ''), $policyLink['label']) === 0);
+
+        if (!$hasPolicyLink) {
+            $columns[$companyColumnIndex]['links'][] = $policyLink;
+        }
+    }
+
     $hours = $footer['hours'] ?? [];
     $logoUrl = !empty($footer['logo_url']) ? $footer['logo_url'] : '/images/logo.svg';
 @endphp

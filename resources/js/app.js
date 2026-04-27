@@ -154,6 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const searchInput = searchRoot.querySelector('[data-site-search-input]');
         const searchResults = searchRoot.querySelector('[data-site-search-results]');
         const searchEmpty = searchRoot.querySelector('[data-site-search-empty]');
+        const searchAllBtn = searchRoot.querySelector('[data-site-search-all]');
         const sourceNode = searchRoot.querySelector('[data-site-search-source]');
 
         let allEntries = [];
@@ -240,13 +241,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        const findMatches = (rawQuery) => {
+        const findMatches = (rawQuery, showAll = false) => {
             const query = normalize(rawQuery);
             if (!query) {
-                return allEntries.slice(0, 14);
+                return showAll ? allEntries : allEntries.slice(0, 14);
             }
 
-            return allEntries
+            const matches = allEntries
                 .map((entry) => ({ entry, score: scoreEntry(entry, query) }))
                 .filter((item) => item.score > 0)
                 .sort((a, b) => {
@@ -254,9 +255,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         return b.score - a.score;
                     }
                     return a.entry.title.localeCompare(b.entry.title);
-                })
-                .slice(0, 18)
-                .map((item) => item.entry);
+                });
+
+            return (showAll ? matches : matches.slice(0, 18)).map((item) => item.entry);
         };
 
         const closeSearch = () => {
@@ -284,6 +285,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         searchInput?.addEventListener('input', () => {
             renderEntries(findMatches(searchInput.value));
+        });
+
+        searchAllBtn?.addEventListener('click', () => {
+            renderEntries(findMatches(searchInput?.value || '', true));
         });
 
         searchRoot.addEventListener('click', (event) => {

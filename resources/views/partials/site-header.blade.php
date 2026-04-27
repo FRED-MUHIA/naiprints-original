@@ -175,7 +175,10 @@
             autocomplete="off"
             data-site-search-input
         >
-        <p class="site-search-hint">Suggestions update as you type.</p>
+        <div class="site-search-tools">
+            <p class="site-search-hint">Suggestions update as you type.</p>
+            <button class="site-search-all" type="button" data-site-search-all>All results</button>
+        </div>
         <ul class="site-search-results" data-site-search-results>
             @foreach ($initialSearchEntries as $entry)
                 <li>

@@ -190,7 +190,8 @@
     }
 
     .nav-link {
-        @apply shrink-0 whitespace-nowrap text-[0.94rem] font-semibold text-slate-700 transition;
+        @apply shrink-0 whitespace-nowrap text-[0.94rem] font-semibold transition;
+        color: #000000;
         line-height: 1.1;
     }
 
@@ -246,8 +247,20 @@
         @apply w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-800 transition focus:border-red-500 focus:outline-none;
     }
 
+    .site-search-tools {
+        @apply mt-2 flex items-center justify-between gap-3;
+    }
+
     .site-search-hint {
-        @apply mt-2 text-xs text-slate-500;
+        @apply text-xs text-slate-500;
+    }
+
+    .site-search-all {
+        @apply shrink-0 text-sm font-semibold text-slate-900 transition;
+    }
+
+    .site-search-all:hover {
+        color: var(--brand-red);
     }
 
     .site-search-results {
@@ -893,12 +906,38 @@
     }
 
     .corporate-step {
-        @apply rounded-[24px] border border-black/5 bg-white p-6;
+        @apply rounded-[24px] border p-6;
         box-shadow: 0 20px 50px -38px rgba(15, 23, 42, 0.45);
     }
 
+    .corporate-step:nth-child(1) {
+        background: #fef2f2;
+        border-color: #fecaca;
+    }
+
+    .corporate-step:nth-child(2) {
+        background: #eff6ff;
+        border-color: #bfdbfe;
+    }
+
+    .corporate-step:nth-child(3) {
+        background: #ecfdf5;
+        border-color: #bbf7d0;
+    }
+
+    .corporate-step:nth-child(4) {
+        background: #fffbeb;
+        border-color: #fde68a;
+    }
+
     .corporate-step-index {
-        @apply text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-400;
+        @apply text-[11px] font-semibold uppercase tracking-[0.3em];
+        color: #334155;
+    }
+
+    .corporate-step h3,
+    .corporate-step p {
+        color: #000000 !important;
     }
 
     .corporate-logo-strip {
@@ -3928,6 +3967,7 @@
             radial-gradient(circle at 85% 10%, rgba(11, 16, 38, 0.12), transparent 45%),
             var(--brand-sand);
         animation: mockup-fade 0.6s ease both;
+        overflow-x: hidden;
     }
 
     .mockup-topbar {
@@ -6006,16 +6046,26 @@
             align-items: stretch;
             gap: 10px;
             padding: 12px;
+            width: 100%;
+            overflow: hidden;
         }
 
         .mockup-stage-tabs {
             width: 100%;
-            justify-content: center;
-            flex-wrap: wrap;
+            justify-content: flex-start;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .mockup-stage-tabs::-webkit-scrollbar {
+            display: none;
         }
 
         .mockup-stage-tab {
-            padding: 6px 12px;
+            flex: 0 0 auto;
+            padding: 8px 14px;
+            white-space: nowrap;
         }
 
         .mockup-stage-actions {
@@ -6054,12 +6104,28 @@
         }
 
         .mockup-canvas-panel {
-            padding: 0 12px 12px;
-            --artboard-size: 600px;
+            width: 100%;
+            padding: 0 10px 12px;
+            --artboard-gap: 10px;
+            --artboard-size: min(600px, calc(100vw - 44px));
         }
 
         .mockup-canvas-wrap {
             border-radius: 16px;
+            width: 100%;
+            max-width: calc(100vw - 20px);
+            overflow: hidden;
+            touch-action: pan-y;
+        }
+
+        .mockup-artboard {
+            overflow: hidden;
+        }
+
+        .mockup-artboard .canvas-container,
+        .mockup-artboard canvas {
+            max-width: 100% !important;
+            max-height: 100% !important;
         }
 
         .mockup-flip-arrows {
@@ -6101,7 +6167,8 @@
         }
 
         .mockup-canvas-panel {
-            --artboard-size: 600px;
+            --artboard-gap: 8px;
+            --artboard-size: min(600px, calc(100vw - 32px));
         }
     }
 
