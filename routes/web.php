@@ -29,6 +29,8 @@ use App\Models\Blog;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\GlobalSection;
+use App\Models\Invoice;
+use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Size;
 use App\Models\Tag;
@@ -42,6 +44,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use App\Http\Controllers\CorporateQuoteController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ContactController;
@@ -823,6 +826,7 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
         $categories = Category::orderBy('name')->get();
         $brands = Brand::orderBy('name')->get();
         $isTaskModuleReady = Schema::hasTable('tasks');
+        $isPaymentModuleReady = Schema::hasTable('payments') && Schema::hasTable('invoices');
         $taskStats = [
             'total' => 0,
             'assigned' => 0,
@@ -831,6 +835,133 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
             'delivered' => 0,
         ];
         $recentTasks = collect();
+        $analyticsPeriod = request('analytics_period', 'monthly');
+        $allowedAnalyticsPeriods = ['daily', 'weekly', 'monthly', 'yearly', 'custom'];
+        $analyticsPeriod = in_array($analyticsPeriod, $allowedAnalyticsPeriods, true) ? $analyticsPeriod : 'monthly';
+        $today = Carbon::today();
+        $customStart = request('analytics_start');
+        $customEnd = request('analytics_end');
+        $parseAnalyticsDate = function ($value, Carbon $fallback): Carbon {
+            if (!is_string($value) || trim($value) === '') {
+                return $fallback->copy();
+            }
+
+            try {
+                return Carbon::parse($value);
+            } catch (Throwable) {
+                return $fallback->copy();
+            }
+        };
+
+        [$analyticsStart, $analyticsEnd, $analyticsGroup] = match ($analyticsPeriod) {
+            'daily' => [$today->copy()->startOfDay(), $today->copy()->endOfDay(), 'hour'],
+            'weekly' => [$today->copy()->startOfWeek(), $today->copy()->endOfWeek(), 'day'],
+            'yearly' => [$today->copy()->startOfYear(), $today->copy()->endOfYear(), 'month'],
+            'custom' => [
+                $parseAnalyticsDate($customStart, $today->copy()->subDays(29))->startOfDay(),
+                $parseAnalyticsDate($customEnd, $today)->endOfDay(),
+                'day',
+            ],
+            default => [$today->copy()->startOfMonth(), $today->copy()->endOfMonth(), 'day'],
+        };
+
+        if ($analyticsStart->greaterThan($analyticsEnd)) {
+            [$analyticsStart, $analyticsEnd] = [$analyticsEnd->copy()->startOfDay(), $analyticsStart->copy()->endOfDay()];
+        }
+
+        if ($analyticsPeriod === 'custom' && $analyticsStart->diffInDays($analyticsEnd) > 90) {
+            $analyticsGroup = 'month';
+        }
+
+        $analyticsCurrency = 'KES';
+        $analyticsRows = collect();
+        $analyticsSummary = [
+            'revenue' => 0,
+            'orders' => 0,
+            'transactions' => 0,
+            'average_transaction' => 0,
+        ];
+        $analyticsTrend = [];
+
+        if ($isPaymentModuleReady) {
+            $analyticsRows = Payment::with('invoice:id,currency')
+                ->where(function ($query) use ($analyticsStart, $analyticsEnd) {
+                    $query->whereBetween('payment_date', [$analyticsStart->toDateString(), $analyticsEnd->toDateString()])
+                        ->orWhere(function ($createdAtQuery) use ($analyticsStart, $analyticsEnd) {
+                            $createdAtQuery->whereNull('payment_date')
+                                ->whereBetween('created_at', [$analyticsStart, $analyticsEnd]);
+                        });
+                })
+                ->get();
+
+            $analyticsCurrency = $analyticsRows
+                ->pluck('invoice.currency')
+                ->filter()
+                ->first() ?? Invoice::query()->latest()->value('currency') ?? 'KES';
+
+            $analyticsSummary['revenue'] = round((float) $analyticsRows->sum('amount'), 2);
+            $analyticsSummary['orders'] = $analyticsRows->pluck('invoice_id')->filter()->unique()->count();
+            $analyticsSummary['transactions'] = $analyticsRows->count();
+            $analyticsSummary['average_transaction'] = $analyticsSummary['transactions'] > 0
+                ? round($analyticsSummary['revenue'] / $analyticsSummary['transactions'], 2)
+                : 0;
+        }
+
+        $cursor = $analyticsStart->copy();
+        while ($cursor->lessThanOrEqualTo($analyticsEnd)) {
+            $key = match ($analyticsGroup) {
+                'hour' => $cursor->format('Y-m-d H'),
+                'month' => $cursor->format('Y-m'),
+                default => $cursor->format('Y-m-d'),
+            };
+
+            $label = match ($analyticsGroup) {
+                'hour' => $cursor->format('g A'),
+                'month' => $cursor->format('M Y'),
+                default => $cursor->format('M j'),
+            };
+
+            $analyticsTrend[$key] = [
+                'label' => $label,
+                'value' => 0,
+            ];
+
+            match ($analyticsGroup) {
+                'hour' => $cursor->addHour(),
+                'month' => $cursor->addMonthNoOverflow()->startOfMonth(),
+                default => $cursor->addDay(),
+            };
+        }
+
+        if ($isPaymentModuleReady) {
+            foreach ($analyticsRows as $payment) {
+                $paymentDate = $payment->payment_date
+                    ? Carbon::parse($payment->payment_date)
+                    : Carbon::parse($payment->created_at);
+                $key = match ($analyticsGroup) {
+                    'hour' => $paymentDate->format('Y-m-d H'),
+                    'month' => $paymentDate->format('Y-m'),
+                    default => $paymentDate->format('Y-m-d'),
+                };
+
+                if (isset($analyticsTrend[$key])) {
+                    $analyticsTrend[$key]['value'] += (float) $payment->amount;
+                }
+            }
+        }
+
+        $analyticsTrend = array_values($analyticsTrend);
+        $analytics = [
+            'period' => $analyticsPeriod,
+            'start' => $analyticsStart->toDateString(),
+            'end' => $analyticsEnd->toDateString(),
+            'group' => $analyticsGroup,
+            'currency' => $analyticsCurrency,
+            'locale' => str_replace('_', '-', app()->getLocale()),
+            'summary' => $analyticsSummary,
+            'trend' => $analyticsTrend,
+            'is_ready' => $isPaymentModuleReady,
+        ];
 
         if ($isTaskModuleReady) {
             $taskStats = [
@@ -846,7 +977,7 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
                 ->get();
         }
 
-        return view('admin.dashboard', compact('products', 'featuredProduct', 'categories', 'brands', 'taskStats', 'recentTasks', 'isTaskModuleReady'));
+        return view('admin.dashboard', compact('products', 'featuredProduct', 'categories', 'brands', 'taskStats', 'recentTasks', 'isTaskModuleReady', 'analytics'));
     })->name('dashboard')->middleware('admin.can:admin');
 
     Route::middleware('admin.can:admin,editor')->group(function () {

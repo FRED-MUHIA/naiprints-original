@@ -9,6 +9,145 @@
         </div>
     @endif
 
+    @php
+        $analytics = $analytics ?? [
+            'period' => 'monthly',
+            'start' => now()->startOfMonth()->toDateString(),
+            'end' => now()->endOfMonth()->toDateString(),
+            'currency' => 'KES',
+            'locale' => str_replace('_', '-', app()->getLocale()),
+            'summary' => ['revenue' => 0, 'orders' => 0, 'transactions' => 0, 'average_transaction' => 0],
+            'trend' => [],
+            'is_ready' => false,
+        ];
+        $formatCurrency = function ($amount) use ($analytics) {
+            if (class_exists(NumberFormatter::class)) {
+                $formatter = new NumberFormatter($analytics['locale'], NumberFormatter::CURRENCY);
+                return $formatter->formatCurrency((float) $amount, $analytics['currency']);
+            }
+
+            return $analytics['currency'].' '.number_format((float) $amount, 2);
+        };
+        $trendValues = collect($analytics['trend'])->pluck('value')->map(fn ($value) => (float) $value);
+        $trendMax = max(1, $trendValues->max() ?? 0);
+        $chartWidth = 720;
+        $chartHeight = 210;
+        $chartPadding = 18;
+        $plotWidth = $chartWidth - ($chartPadding * 2);
+        $plotHeight = $chartHeight - ($chartPadding * 2);
+        $trendCount = max(1, count($analytics['trend']) - 1);
+        $chartPoints = collect($analytics['trend'])->map(function ($point, $index) use ($chartPadding, $plotWidth, $plotHeight, $trendCount, $trendMax) {
+            $x = $chartPadding + (($plotWidth / $trendCount) * $index);
+            $y = $chartPadding + ($plotHeight - (((float) $point['value'] / $trendMax) * $plotHeight));
+            return round($x, 2).','.round($y, 2);
+        })->join(' ');
+        $areaPoints = $chartPoints
+            ? $chartPadding.','.($chartHeight - $chartPadding).' '.$chartPoints.' '.($chartWidth - $chartPadding).','.($chartHeight - $chartPadding)
+            : '';
+        $periodOptions = [
+            'daily' => 'Daily',
+            'weekly' => 'Weekly',
+            'monthly' => 'Monthly',
+            'yearly' => 'Yearly',
+            'custom' => 'Custom',
+        ];
+    @endphp
+
+    <section class="admin-card" data-performance-dashboard>
+        <div class="flex flex-wrap items-start justify-between gap-4">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Performance</p>
+                <h2 class="mt-2 text-2xl font-semibold">Business activity</h2>
+            </div>
+
+            <form method="GET" action="{{ route('admin.dashboard') }}" class="flex flex-wrap items-center gap-2" data-performance-filter>
+                @if (request('category'))
+                    <input type="hidden" name="category" value="{{ request('category') }}">
+                @endif
+                <select name="analytics_period" class="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 focus:border-brand focus:outline-none" data-performance-period>
+                    @foreach ($periodOptions as $value => $label)
+                        <option value="{{ $value }}" @selected($analytics['period'] === $value)>{{ $label }}</option>
+                    @endforeach
+                </select>
+                <div class="{{ $analytics['period'] === 'custom' ? 'flex' : 'hidden' }} flex-wrap items-center gap-2" data-performance-custom>
+                    <input type="date" name="analytics_start" value="{{ $analytics['start'] }}" class="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 focus:border-brand focus:outline-none">
+                    <input type="date" name="analytics_end" value="{{ $analytics['end'] }}" class="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 focus:border-brand focus:outline-none">
+                    <button type="submit" class="admin-btn-outline">Apply</button>
+                </div>
+            </form>
+        </div>
+
+        @if (!$analytics['is_ready'])
+            <div class="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                Payment analytics will appear after the invoicing tables are migrated.
+            </div>
+        @endif
+
+        <div class="mt-6 grid gap-6 xl:grid-cols-[minmax(280px,0.95fr)_minmax(0,1.45fr)]">
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Total revenue</p>
+                <p class="mt-3 text-4xl font-semibold tracking-tight text-slate-950">{{ $formatCurrency($analytics['summary']['revenue']) }}</p>
+                <p class="mt-2 text-sm text-slate-500">{{ \Illuminate\Support\Carbon::parse($analytics['start'])->format('M d, Y') }} - {{ \Illuminate\Support\Carbon::parse($analytics['end'])->format('M d, Y') }}</p>
+
+                <div class="mt-6 grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+                    <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Orders</p>
+                        <p class="mt-2 text-2xl font-semibold">{{ number_format($analytics['summary']['orders']) }}</p>
+                    </div>
+                    <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Transactions</p>
+                        <p class="mt-2 text-2xl font-semibold">{{ number_format($analytics['summary']['transactions']) }}</p>
+                    </div>
+                    <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Average</p>
+                        <p class="mt-2 text-2xl font-semibold">{{ $formatCurrency($analytics['summary']['average_transaction']) }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="min-w-0 rounded-2xl border border-slate-200 bg-white p-5">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h3 class="text-lg font-semibold">Revenue trend</h3>
+                        <p class="text-xs text-slate-500">Grouped by {{ $analytics['group'] }}</p>
+                    </div>
+                    <a href="{{ route('admin.payments.index') }}" class="admin-btn-outline">Detailed analytics</a>
+                </div>
+
+                <div class="mt-5 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                    <svg viewBox="0 0 {{ $chartWidth }} {{ $chartHeight }}" role="img" aria-label="Revenue trend chart" class="h-64 w-full">
+                        <defs>
+                            <linearGradient id="performanceArea" x1="0" x2="0" y1="0" y2="1">
+                                <stop offset="0%" stop-color="#e11d2e" stop-opacity="0.18" />
+                                <stop offset="100%" stop-color="#e11d2e" stop-opacity="0.02" />
+                            </linearGradient>
+                        </defs>
+                        <line x1="{{ $chartPadding }}" y1="{{ $chartHeight - $chartPadding }}" x2="{{ $chartWidth - $chartPadding }}" y2="{{ $chartHeight - $chartPadding }}" stroke="#cbd5e1" stroke-width="1" />
+                        @if ($chartPoints)
+                            <polygon points="{{ $areaPoints }}" fill="url(#performanceArea)" />
+                            <polyline points="{{ $chartPoints }}" fill="none" stroke="#e11d2e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+                            @foreach ($analytics['trend'] as $point)
+                                @continue((float) $point['value'] <= 0)
+                                @php
+                                    $dotIndex = $loop->index;
+                                    $dotX = $chartPadding + (($plotWidth / $trendCount) * $dotIndex);
+                                    $dotY = $chartPadding + ($plotHeight - (((float) $point['value'] / $trendMax) * $plotHeight));
+                                @endphp
+                                <circle cx="{{ round($dotX, 2) }}" cy="{{ round($dotY, 2) }}" r="4" fill="#ffffff" stroke="#e11d2e" stroke-width="3">
+                                    <title>{{ $point['label'] }}: {{ $formatCurrency($point['value']) }}</title>
+                                </circle>
+                            @endforeach
+                        @endif
+                    </svg>
+                    <div class="mt-2 flex justify-between gap-3 text-xs font-semibold text-slate-400">
+                        <span>{{ $analytics['trend'][0]['label'] ?? '' }}</span>
+                        <span>{{ $analytics['trend'][count($analytics['trend']) - 1]['label'] ?? '' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <div class="admin-card">
         <div class="flex flex-wrap items-center justify-between gap-4">
             <div>
@@ -295,3 +434,27 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        (function () {
+            const form = document.querySelector('[data-performance-filter]');
+            if (!form) {
+                return;
+            }
+
+            const period = form.querySelector('[data-performance-period]');
+            const customFields = form.querySelector('[data-performance-custom]');
+
+            period?.addEventListener('change', () => {
+                const isCustom = period.value === 'custom';
+                customFields?.classList.toggle('hidden', !isCustom);
+                customFields?.classList.toggle('flex', isCustom);
+
+                if (!isCustom) {
+                    form.submit();
+                }
+            });
+        })();
+    </script>
+@endpush

@@ -6,42 +6,15 @@
     }
     $footer = array_replace($footerDefaults, $footer);
     $columns = $footer['columns'] ?? [];
-    $ethicalPolicyUrl = route('ethical-policies');
-    $dataProtectionPolicyUrl = route('data-protection-policies');
-    $hasEthicalPolicyLink = false;
-    $hasDataProtectionPolicyLink = false;
-    foreach ($columns as $column) {
-        foreach (($column['links'] ?? []) as $link) {
-            if (($link['url'] ?? '') === $ethicalPolicyUrl || strcasecmp((string) ($link['label'] ?? ''), 'Ethical Policies') === 0) {
-                $hasEthicalPolicyLink = true;
-            }
-            if (($link['url'] ?? '') === $dataProtectionPolicyUrl || strcasecmp((string) ($link['label'] ?? ''), 'Data Protection Policies') === 0) {
-                $hasDataProtectionPolicyLink = true;
-            }
-            if ($hasEthicalPolicyLink && $hasDataProtectionPolicyLink) {
-                break 2;
-            }
-        }
-    }
-    if (!$hasEthicalPolicyLink || !$hasDataProtectionPolicyLink) {
-        $companyColumnIndex = null;
-        foreach ($columns as $index => $column) {
-            if (strcasecmp((string) ($column['title'] ?? ''), 'Company') === 0) {
-                $companyColumnIndex = $index;
-                break;
-            }
-        }
-        if ($companyColumnIndex === null) {
-            $columns[] = ['title' => 'Company', 'links' => []];
-            $companyColumnIndex = array_key_last($columns);
-        }
-        if (!$hasEthicalPolicyLink) {
-            $columns[$companyColumnIndex]['links'][] = ['label' => 'Ethical Policies', 'url' => $ethicalPolicyUrl];
-        }
-        if (!$hasDataProtectionPolicyLink) {
-            $columns[$companyColumnIndex]['links'][] = ['label' => 'Data Protection Policies', 'url' => $dataProtectionPolicyUrl];
-        }
-    }
+    $hiddenFooterLabels = ['ethical policies', 'data protection policies'];
+    $columns = array_map(function ($column) use ($hiddenFooterLabels) {
+        $column['links'] = collect($column['links'] ?? [])
+            ->reject(fn ($link) => in_array(strtolower((string) ($link['label'] ?? '')), $hiddenFooterLabels, true))
+            ->values()
+            ->all();
+
+        return $column;
+    }, $columns);
     $hours = $footer['hours'] ?? [];
     $logoUrl = !empty($footer['logo_url']) ? $footer['logo_url'] : '/images/logo.svg';
 @endphp
@@ -74,10 +47,6 @@
     </div>
     <div class="border-t border-white/10 py-4 text-center text-xs text-white/90">
         <span>{{ $footer['copyright'] ?? '' }}</span>
-        <span class="mx-2 text-white/40">|</span>
-        <a class="text-white hover:text-brand-sun" href="{{ $ethicalPolicyUrl }}">Ethical Policies</a>
-        <span class="mx-2 text-white/40">|</span>
-        <a class="text-white hover:text-brand-sun" href="{{ $dataProtectionPolicyUrl }}">Data Protection Policies</a>
     </div>
 </footer>
 <div class="toast" data-cart-toast aria-hidden="true">
