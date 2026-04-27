@@ -33,7 +33,7 @@
             $logoUrl = trim((string) ($logoUrl ?? url('/images/logo.svg')));
             $supportEmail = $supportEmail ?? config('mail.support.address', config('mail.from.address', ''));
             $supportPhone = $supportPhone ?? '';
-            $supportWebsite = $supportWebsite ?? config('app.url');
+            $supportWebsite = 'https://naiprints.co.ke/';
             $preheader = trim($__env->yieldContent('preheader'));
             $heroEyebrow = trim($__env->yieldContent('hero_eyebrow'));
             $heroTitle = trim($__env->yieldContent('hero_title'));
