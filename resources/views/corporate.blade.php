@@ -73,12 +73,12 @@
                             </div>
                         @endif
                         @if (!empty($hero['title']))
-                            <h1 class="mt-6 text-4xl font-semibold leading-tight text-white md:text-5xl">
+                            <h1 class="mt-4 text-4xl font-semibold leading-tight text-white md:text-5xl">
                                 {{ $hero['title'] }}
                             </h1>
                         @endif
                         @if (!empty($hero['body']))
-                            <p class="mt-4 text-sm text-white/80 md:text-base">
+                            <p class="mt-3 text-sm text-white/80 md:text-base">
                                 {{ $hero['body'] }}
                             </p>
                         @endif

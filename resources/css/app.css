@@ -6028,17 +6028,55 @@
 
     @media (max-width: 640px) {
         .mockup-topbar {
-            padding: 10px 12px;
-            gap: 10px;
+            grid-template-columns: auto 1fr auto;
+            grid-template-areas:
+                "menu title brand"
+                "version version version";
+            align-items: center;
+            justify-items: stretch;
+            gap: 8px 12px;
+            padding: 12px 14px 14px;
         }
 
         .mockup-topbar-left {
-            gap: 8px;
+            grid-area: menu;
+            width: auto;
+            justify-content: flex-start;
+            gap: 0;
             flex-wrap: nowrap;
         }
 
+        .mockup-topbar-center {
+            grid-area: version;
+            justify-self: center;
+            width: 100%;
+            font-size: 0.82rem;
+            line-height: 1.2;
+            text-align: center;
+        }
+
+        .mockup-logo {
+            grid-area: brand;
+            justify-self: end;
+            gap: 8px;
+        }
+
         .mockup-logo-text {
-            font-size: 0.95rem;
+            font-size: 1rem;
+            line-height: 1;
+        }
+
+        .mockup-logo-image,
+        .mockup-logo-mark {
+            width: 34px;
+            height: 34px;
+            border-radius: 14px;
+        }
+
+        .mockup-mobile-toggle {
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
         }
 
         .mockup-stage-toolbar {
