@@ -10,28 +10,15 @@
         ['label' => 'Ethical Policies', 'url' => route('ethical-policies')],
         ['label' => 'Data Protection Policies', 'url' => route('data-protection-policies')],
     ];
-    $companyColumnIndex = null;
+    $policyLabels = collect($policyLinks)->pluck('label')->map(fn ($label) => strtolower($label))->all();
+    $columns = array_map(function ($column) use ($policyLabels) {
+        $column['links'] = collect($column['links'] ?? [])
+            ->reject(fn ($link) => in_array(strtolower((string) ($link['label'] ?? '')), $policyLabels, true))
+            ->values()
+            ->all();
 
-    foreach ($columns as $index => $column) {
-        if (strcasecmp((string) ($column['title'] ?? ''), 'Company') === 0) {
-            $companyColumnIndex = $index;
-            break;
-        }
-    }
-
-    if ($companyColumnIndex === null) {
-        $columns[] = ['title' => 'Company', 'links' => []];
-        $companyColumnIndex = array_key_last($columns);
-    }
-
-    foreach ($policyLinks as $policyLink) {
-        $hasPolicyLink = collect($columns[$companyColumnIndex]['links'] ?? [])
-            ->contains(fn ($link) => strcasecmp((string) ($link['label'] ?? ''), $policyLink['label']) === 0);
-
-        if (!$hasPolicyLink) {
-            $columns[$companyColumnIndex]['links'][] = $policyLink;
-        }
-    }
+        return $column;
+    }, $columns);
 
     $hours = $footer['hours'] ?? [];
     $logoUrl = !empty($footer['logo_url']) ? $footer['logo_url'] : '/images/logo.svg';
@@ -65,6 +52,10 @@
     </div>
     <div class="border-t border-white/10 py-4 text-center text-xs text-white/90">
         <span>{{ $footer['copyright'] ?? '' }}</span>
+        @foreach ($policyLinks as $policyLink)
+            <span class="mx-2 text-white/40">|</span>
+            <a class="text-white hover:text-brand-sun" href="{{ $policyLink['url'] }}">{{ $policyLink['label'] }}</a>
+        @endforeach
     </div>
 </footer>
 <div class="toast" data-cart-toast aria-hidden="true">
