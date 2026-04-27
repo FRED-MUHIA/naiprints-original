@@ -22,7 +22,7 @@
     }
 
     html {
-        font-size: clamp(15px, 0.9vw + 11px, 17px);
+        font-size: clamp(15.5px, 0.9vw + 11.5px, 17.5px);
         -webkit-text-size-adjust: 100%;
         text-rendering: optimizeLegibility;
         font-kerning: normal;

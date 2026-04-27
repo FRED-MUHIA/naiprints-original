@@ -6,15 +6,6 @@
     }
     $footer = array_replace($footerDefaults, $footer);
     $columns = $footer['columns'] ?? [];
-    $hiddenFooterLabels = ['ethical policies', 'data protection policies'];
-    $columns = array_map(function ($column) use ($hiddenFooterLabels) {
-        $column['links'] = collect($column['links'] ?? [])
-            ->reject(fn ($link) => in_array(strtolower((string) ($link['label'] ?? '')), $hiddenFooterLabels, true))
-            ->values()
-            ->all();
-
-        return $column;
-    }, $columns);
     $hours = $footer['hours'] ?? [];
     $logoUrl = !empty($footer['logo_url']) ? $footer['logo_url'] : '/images/logo.svg';
 @endphp
