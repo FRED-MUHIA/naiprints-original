@@ -16,9 +16,22 @@
             'end' => now()->endOfMonth()->toDateString(),
             'currency' => 'KES',
             'locale' => str_replace('_', '-', app()->getLocale()),
-            'summary' => ['revenue' => 0, 'orders' => 0, 'transactions' => 0, 'average_transaction' => 0],
+            'summary' => [
+                'revenue' => 0,
+                'orders' => 0,
+                'transactions' => 0,
+                'average_transaction' => 0,
+                'credits' => 0,
+                'debits' => 0,
+                'net' => 0,
+                'production_cost' => 0,
+                'materials_bought' => 0,
+                'petty_cash' => 0,
+            ],
             'trend' => [],
             'is_ready' => false,
+            'finance_is_ready' => false,
+            'recent_finance_entries' => collect(),
         ];
         $formatCurrency = function ($amount) use ($analytics) {
             if (class_exists(NumberFormatter::class)) {
@@ -82,6 +95,11 @@
                 Payment analytics will appear after the invoicing tables are migrated.
             </div>
         @endif
+        @if (!$analytics['finance_is_ready'])
+            <div class="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                Debit tracking requires migration. Run <code>php artisan migrate</code> to enable production, materials, and petty cash entries.
+            </div>
+        @endif
 
         <div class="mt-6 grid gap-6 xl:grid-cols-[minmax(280px,0.95fr)_minmax(0,1.45fr)]">
             <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
@@ -101,6 +119,21 @@
                     <div class="rounded-2xl border border-slate-200 bg-white p-4">
                         <p class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Average</p>
                         <p class="mt-2 text-2xl font-semibold">{{ $formatCurrency($analytics['summary']['average_transaction']) }}</p>
+                    </div>
+                </div>
+
+                <div class="mt-4 grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+                    <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Credits</p>
+                        <p class="mt-2 text-2xl font-semibold text-emerald-700">{{ $formatCurrency($analytics['summary']['credits']) }}</p>
+                    </div>
+                    <div class="rounded-2xl border border-red-200 bg-red-50 p-4">
+                        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-red-700">Debits</p>
+                        <p class="mt-2 text-2xl font-semibold text-red-700">{{ $formatCurrency($analytics['summary']['debits']) }}</p>
+                    </div>
+                    <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                        <p class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Net</p>
+                        <p class="mt-2 text-2xl font-semibold {{ $analytics['summary']['net'] < 0 ? 'text-red-700' : 'text-emerald-700' }}">{{ $formatCurrency($analytics['summary']['net']) }}</p>
                     </div>
                 </div>
             </div>
@@ -143,6 +176,98 @@
                         <span>{{ $analytics['trend'][0]['label'] ?? '' }}</span>
                         <span>{{ $analytics['trend'][count($analytics['trend']) - 1]['label'] ?? '' }}</span>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-6 grid gap-6 xl:grid-cols-[minmax(280px,0.95fr)_minmax(0,1.45fr)]">
+            <form method="POST" action="{{ route('admin.financial-entries.store') }}" class="rounded-2xl border border-slate-200 bg-white p-5">
+                @csrf
+                <input type="hidden" name="analytics_period" value="{{ $analytics['period'] }}">
+                <input type="hidden" name="analytics_start" value="{{ $analytics['start'] }}">
+                <input type="hidden" name="analytics_end" value="{{ $analytics['end'] }}">
+                @if (request('category'))
+                    <input type="hidden" name="dashboard_category" value="{{ request('category') }}">
+                @endif
+
+                <div>
+                    <h3 class="text-lg font-semibold">Record debit</h3>
+                    <p class="text-xs text-slate-500">Production, materials, and petty cash costs.</p>
+                </div>
+
+                <div class="mt-4 grid gap-3">
+                    <div>
+                        <label class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Cost type</label>
+                        <select name="category" class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm focus:border-brand focus:outline-none" @disabled(!$analytics['finance_is_ready'])>
+                            <option value="production_cost">Production Cost</option>
+                            <option value="materials_bought">Materials Bought</option>
+                            <option value="petty_cash">Petty Cash</option>
+                        </select>
+                    </div>
+                    <div class="grid gap-3 sm:grid-cols-2">
+                        <div>
+                            <label class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Amount</label>
+                            <input type="number" name="amount" min="0.01" step="0.01" placeholder="0.00" class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm focus:border-brand focus:outline-none" @disabled(!$analytics['finance_is_ready'])>
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Date</label>
+                            <input type="date" name="entry_date" value="{{ now()->toDateString() }}" class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm focus:border-brand focus:outline-none" @disabled(!$analytics['finance_is_ready'])>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Note</label>
+                        <input type="text" name="description" placeholder="Optional detail" class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm focus:border-brand focus:outline-none" @disabled(!$analytics['finance_is_ready'])>
+                    </div>
+                    <button type="submit" class="admin-btn-primary justify-self-start" @disabled(!$analytics['finance_is_ready'])>Save Cost</button>
+                </div>
+            </form>
+
+            <div class="rounded-2xl border border-slate-200 bg-white p-5">
+                <div class="grid gap-3 sm:grid-cols-3">
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Production</p>
+                        <p class="mt-2 text-xl font-semibold">{{ $formatCurrency($analytics['summary']['production_cost']) }}</p>
+                    </div>
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Materials</p>
+                        <p class="mt-2 text-xl font-semibold">{{ $formatCurrency($analytics['summary']['materials_bought']) }}</p>
+                    </div>
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Petty Cash</p>
+                        <p class="mt-2 text-xl font-semibold">{{ $formatCurrency($analytics['summary']['petty_cash']) }}</p>
+                    </div>
+                </div>
+
+                <div class="mt-4 overflow-hidden rounded-2xl border border-slate-200">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Cost</th>
+                                <th>Date</th>
+                                <th>Debit</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse (($analytics['recent_finance_entries'] ?? collect()) as $entry)
+                                <tr>
+                                    <td>
+                                        <span class="font-semibold text-slate-700">{{ $entry->category_label }}</span>
+                                        @if ($entry->description)
+                                            <span class="block text-xs text-slate-500">{{ $entry->description }}</span>
+                                        @endif
+                                    </td>
+                                    <td>{{ optional($entry->entry_date)->format('M d, Y') }}</td>
+                                    <td class="font-semibold text-red-700">{{ $formatCurrency($entry->amount) }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="3">
+                                        <div class="admin-empty">No debit entries for this period.</div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

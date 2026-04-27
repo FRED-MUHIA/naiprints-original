@@ -28,6 +28,7 @@ use App\Models\Attribute;
 use App\Models\Blog;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\FinancialEntry;
 use App\Models\GlobalSection;
 use App\Models\Invoice;
 use App\Models\Payment;
@@ -803,6 +804,29 @@ Route::post('/admin/logout', function (Request $request) {
 })->name('admin.logout');
 
 Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function () {
+    Route::post('/financial-entries', function (Request $request) {
+        abort_unless(session('admin_role') === 'admin', 403);
+        abort_unless(Schema::hasTable('financial_entries'), 404);
+
+        $validated = $request->validate([
+            'entry_date' => ['required', 'date'],
+            'category' => ['required', 'in:production_cost,materials_bought,petty_cash'],
+            'amount' => ['required', 'numeric', 'min:0.01'],
+            'description' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        FinancialEntry::create($validated);
+
+        $dashboardQuery = $request->only(['analytics_period', 'analytics_start', 'analytics_end']);
+        if ($request->filled('dashboard_category')) {
+            $dashboardQuery['category'] = $request->input('dashboard_category');
+        }
+
+        return redirect()
+            ->route('admin.dashboard', $dashboardQuery)
+            ->with('success', 'Cost entry recorded.');
+    })->name('financial-entries.store')->middleware('admin.can:admin');
+
     Route::get('/', function () {
         if (session('admin_role') === 'editor') {
             return redirect()->route('admin.products.index');
@@ -827,6 +851,7 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
         $brands = Brand::orderBy('name')->get();
         $isTaskModuleReady = Schema::hasTable('tasks');
         $isPaymentModuleReady = Schema::hasTable('payments') && Schema::hasTable('invoices');
+        $isFinanceModuleReady = Schema::hasTable('financial_entries');
         $taskStats = [
             'total' => 0,
             'assigned' => 0,
@@ -875,11 +900,18 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
 
         $analyticsCurrency = 'KES';
         $analyticsRows = collect();
+        $financeRows = collect();
         $analyticsSummary = [
             'revenue' => 0,
             'orders' => 0,
             'transactions' => 0,
             'average_transaction' => 0,
+            'credits' => 0,
+            'debits' => 0,
+            'net' => 0,
+            'production_cost' => 0,
+            'materials_bought' => 0,
+            'petty_cash' => 0,
         ];
         $analyticsTrend = [];
 
@@ -906,6 +938,22 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
                 ? round($analyticsSummary['revenue'] / $analyticsSummary['transactions'], 2)
                 : 0;
         }
+
+        if ($isFinanceModuleReady) {
+            $financeRows = FinancialEntry::query()
+                ->whereBetween('entry_date', [$analyticsStart->toDateString(), $analyticsEnd->toDateString()])
+                ->orderByDesc('entry_date')
+                ->orderByDesc('created_at')
+                ->get();
+
+            $analyticsSummary['production_cost'] = round((float) $financeRows->where('category', 'production_cost')->sum('amount'), 2);
+            $analyticsSummary['materials_bought'] = round((float) $financeRows->where('category', 'materials_bought')->sum('amount'), 2);
+            $analyticsSummary['petty_cash'] = round((float) $financeRows->where('category', 'petty_cash')->sum('amount'), 2);
+            $analyticsSummary['debits'] = round((float) $financeRows->sum('amount'), 2);
+        }
+
+        $analyticsSummary['credits'] = $analyticsSummary['revenue'];
+        $analyticsSummary['net'] = round($analyticsSummary['credits'] - $analyticsSummary['debits'], 2);
 
         $cursor = $analyticsStart->copy();
         while ($cursor->lessThanOrEqualTo($analyticsEnd)) {
@@ -961,6 +1009,8 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
             'summary' => $analyticsSummary,
             'trend' => $analyticsTrend,
             'is_ready' => $isPaymentModuleReady,
+            'finance_is_ready' => $isFinanceModuleReady,
+            'recent_finance_entries' => $financeRows->take(6),
         ];
 
         if ($isTaskModuleReady) {
