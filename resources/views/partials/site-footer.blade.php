@@ -21,14 +21,12 @@
     }, $columns);
 
     $hours = $footer['hours'] ?? [];
-    $logoUrl = !empty($footer['logo_url']) ? $footer['logo_url'] : '/images/logo.svg';
 @endphp
 
 <footer class="border-t border-white/10 bg-[#0b1f4d] text-white">
     <div class="mx-auto grid max-w-6xl gap-8 px-4 py-10 md:grid-cols-4">
         <div>
-            <img src="{{ $logoUrl }}" alt="{{ $footer['brand'] ?? 'Nai Prints' }} logo" class="h-10 w-10 rounded-full object-cover">
-            <p class="mt-2 text-sm text-white">{{ $footer['description'] ?? '' }}</p>
+            <p class="text-sm text-white">{{ $footer['description'] ?? '' }}</p>
             @if (!empty($hours))
                 <div class="mt-4 flex gap-3 text-sm text-white/90">
                     @foreach ($hours as $value)
