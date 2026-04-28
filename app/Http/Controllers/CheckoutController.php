@@ -11,6 +11,7 @@ use App\Models\InvoiceSetting;
 use App\Models\MpesaTransaction;
 use App\Services\MailDispatchService;
 use App\Services\MpesaService;
+use App\Support\DocumentSequence;
 use App\Support\PageDefaults;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -75,7 +76,7 @@ class CheckoutController extends Controller
             ]);
             $client->save();
 
-            $sequence = (int) Invoice::max('sequence') + 1;
+            $sequence = DocumentSequence::next(Invoice::class);
             $invoice = Invoice::create([
                 'client_id' => $client->id,
                 'sequence' => $sequence,

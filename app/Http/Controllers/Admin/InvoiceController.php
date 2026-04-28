@@ -10,6 +10,7 @@ use App\Models\InvoiceItem;
 use App\Models\InvoiceSetting;
 use App\Services\InvoicePaymentService;
 use App\Services\MailDispatchService;
+use App\Support\DocumentSequence;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -50,7 +51,7 @@ class InvoiceController extends Controller
     {
         $clients = Client::orderBy('name')->get();
         $settings = InvoiceSetting::first() ?? new InvoiceSetting(InvoiceSetting::defaults());
-        $nextSequence = (int) Invoice::max('sequence') + 1;
+        $nextSequence = DocumentSequence::next(Invoice::class, lock: false);
         $nextNumber = $this->formatInvoiceNumber($nextSequence);
 
         return view('admin.invoices.create', compact('clients', 'settings', 'nextNumber'));
@@ -76,7 +77,7 @@ class InvoiceController extends Controller
                 $this->syncSelectedClientDetails((int) $clientId, $clientDraft);
             }
 
-            $sequence = (int) Invoice::max('sequence') + 1;
+            $sequence = DocumentSequence::next(Invoice::class);
             $invoice = Invoice::create([
                 'client_id' => $clientId,
                 'sequence' => $sequence,

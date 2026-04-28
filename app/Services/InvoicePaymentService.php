@@ -6,6 +6,7 @@ use App\Mail\ReceiptMail;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Receipt;
+use App\Support\DocumentSequence;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -27,7 +28,7 @@ class InvoicePaymentService
             $invoice->refreshStatus();
             $invoice->save();
 
-            $receiptSequence = (int) Receipt::max('sequence') + 1;
+            $receiptSequence = DocumentSequence::next(Receipt::class);
             $receipt = Receipt::create([
                 'invoice_id' => $invoice->id,
                 'payment_id' => $payment->id,

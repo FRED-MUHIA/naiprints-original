@@ -8,6 +8,7 @@ use App\Models\Client;
 use App\Models\InvoiceSetting;
 use App\Models\Quotation;
 use App\Services\MailDispatchService;
+use App\Support\DocumentSequence;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -46,7 +47,7 @@ class QuotationController extends Controller
     public function create()
     {
         $clients = Client::orderBy('name')->get();
-        $nextSequence = (int) Quotation::max('sequence') + 1;
+        $nextSequence = DocumentSequence::next(Quotation::class, lock: false);
         $nextNumber = $this->formatQuotationNumber($nextSequence);
 
         return view('admin.quotations.create', compact('clients', 'nextNumber'));
@@ -63,7 +64,7 @@ class QuotationController extends Controller
                 $clientId = $client->id;
             }
 
-            $sequence = (int) Quotation::max('sequence') + 1;
+            $sequence = DocumentSequence::next(Quotation::class);
             $quotation = Quotation::create([
                 'client_id' => $clientId,
                 'sequence' => $sequence,
