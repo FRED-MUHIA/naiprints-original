@@ -52,4 +52,27 @@
             <td align="right" style="padding:12px 14px;font-size:16px;color:#0f172a;font-weight:700;">KES {{ number_format((float) $receipt->balance_after, 2) }}</td>
         </tr>
     </table>
+
+    @if ($invoice?->items?->isNotEmpty())
+        <h2 style="margin:24px 0 10px;font-size:16px;line-height:1.4;color:#0f172a;">Purchased Items</h2>
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #dbe3ee;border-radius:12px;overflow:hidden;background:#ffffff;">
+            <tr>
+                <td style="padding:10px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#64748b;background:#f8fafc;border-bottom:1px solid #eef2f7;">Item</td>
+                <td align="right" style="padding:10px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#64748b;background:#f8fafc;border-bottom:1px solid #eef2f7;">Qty</td>
+                <td align="right" style="padding:10px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#64748b;background:#f8fafc;border-bottom:1px solid #eef2f7;">Total</td>
+            </tr>
+            @foreach ($invoice->items as $item)
+                <tr>
+                    <td style="padding:12px;font-size:13px;color:#0f172a;border-bottom:1px solid #eef2f7;">
+                        <strong>{{ $item->name }}</strong>
+                        @if ($item->description)
+                            <div style="margin-top:3px;font-size:12px;color:#64748b;">{{ $item->description }}</div>
+                        @endif
+                    </td>
+                    <td align="right" style="padding:12px;font-size:13px;color:#0f172a;border-bottom:1px solid #eef2f7;">{{ rtrim(rtrim(number_format((float) $item->quantity, 2), '0'), '.') }}</td>
+                    <td align="right" style="padding:12px;font-size:13px;color:#0f172a;font-weight:700;border-bottom:1px solid #eef2f7;">KES {{ number_format((float) $item->total, 2) }}</td>
+                </tr>
+            @endforeach
+        </table>
+    @endif
 @endsection

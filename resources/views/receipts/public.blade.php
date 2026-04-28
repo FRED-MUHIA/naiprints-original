@@ -59,6 +59,36 @@
                 </div>
             </div>
 
+            @if ($receipt->invoice?->items?->isNotEmpty())
+                <div class="mt-6 overflow-hidden rounded-2xl border border-slate-200">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                            <tr>
+                                <th class="px-4 py-3 font-semibold">Item</th>
+                                <th class="px-4 py-3 text-right font-semibold">Qty</th>
+                                <th class="px-4 py-3 text-right font-semibold">Unit Price</th>
+                                <th class="px-4 py-3 text-right font-semibold">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 bg-white text-slate-700">
+                            @foreach ($receipt->invoice->items as $item)
+                                <tr>
+                                    <td class="px-4 py-3">
+                                        <div class="font-semibold text-slate-900">{{ $item->name }}</div>
+                                        @if ($item->description)
+                                            <div class="mt-1 text-xs text-slate-500">{{ $item->description }}</div>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-3 text-right">{{ rtrim(rtrim(number_format((float) $item->quantity, 2), '0'), '.') }}</td>
+                                    <td class="px-4 py-3 text-right">KES {{ number_format((float) $item->unit_price, 2) }}</td>
+                                    <td class="px-4 py-3 text-right font-semibold text-slate-900">KES {{ number_format((float) $item->total, 2) }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+
             @if ($settings->footer_text)
                 <p class="mt-6 text-sm text-slate-500">{{ $settings->footer_text }}</p>
             @endif

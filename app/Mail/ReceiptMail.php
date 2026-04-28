@@ -19,7 +19,7 @@ class ReceiptMail extends Mailable
      */
     public function __construct(Receipt $receipt)
     {
-        $this->receipt = $receipt;
+        $this->receipt = $receipt->loadMissing(['invoice.client', 'invoice.items']);
     }
 
     /**

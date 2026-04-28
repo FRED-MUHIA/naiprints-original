@@ -10,7 +10,7 @@ class PublicReceiptController extends Controller
 {
     public function show(Receipt $receipt)
     {
-        $receipt->load(['invoice.client', 'payment']);
+        $receipt->load(['invoice.client', 'invoice.items', 'payment']);
         $settings = InvoiceSetting::first() ?? new InvoiceSetting(InvoiceSetting::defaults());
 
         return view('receipts.public', compact('receipt', 'settings'));
@@ -18,7 +18,7 @@ class PublicReceiptController extends Controller
 
     public function pdf(Receipt $receipt)
     {
-        $receipt->load(['invoice.client', 'payment']);
+        $receipt->load(['invoice.client', 'invoice.items', 'payment']);
         $settings = InvoiceSetting::first() ?? new InvoiceSetting(InvoiceSetting::defaults());
         $pdf = Pdf::loadView('receipts.pdf', compact('receipt', 'settings'))
             ->setOption('isRemoteEnabled', true);
