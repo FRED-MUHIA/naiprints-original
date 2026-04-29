@@ -56,7 +56,10 @@
                                         <p class="font-semibold">{{ $product->name }}</p>
                                         <p class="text-xs text-slate-500">KES {{ number_format((float) $product->price, 2) }}</p>
                                     </div>
-                                    <button class="admin-btn-outline" type="button" onclick="navigator.clipboard.writeText(document.getElementById('{{ $inputId }}').value)">Copy</button>
+                                    <div class="flex gap-2">
+                                        <a class="admin-btn-outline" href="{{ $productReferralUrl }}" target="_blank" rel="noopener">Open</a>
+                                        <button class="admin-btn-outline" type="button" onclick="navigator.clipboard.writeText(document.getElementById('{{ $inputId }}').value)">Copy</button>
+                                    </div>
                                 </div>
                                 <input id="{{ $inputId }}" class="checkout-input mt-3 text-xs" readonly value="{{ $productReferralUrl }}">
                             </div>
