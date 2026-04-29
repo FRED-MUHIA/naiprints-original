@@ -45,7 +45,11 @@ class AffiliateController extends Controller
             'rejected_at' => null,
         ])->save();
         $affiliate->ensureReferralCode();
-        $affiliateService->notify($affiliate, 'Affiliate account approved', 'Your affiliate account is active. Your referral link is ' . $affiliate->referral_url);
+        $affiliateService->notify(
+            $affiliate,
+            'Affiliate account approved',
+            'Your affiliate account is active. You can now log in at ' . route('affiliate.login') . ' and copy your referral link from your dashboard. Your referral link is ' . $affiliate->referral_url
+        );
 
         return back()->with('success', 'Affiliate approved.');
     }

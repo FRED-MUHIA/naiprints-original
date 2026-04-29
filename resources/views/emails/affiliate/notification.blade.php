@@ -16,8 +16,8 @@
     </p>
     @if ($affiliate?->isApproved())
         <p style="margin:0;">
-            <a href="{{ route('affiliate.dashboard') }}" style="display:inline-block;padding:12px 18px;border-radius:999px;background:#e11d2e;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;">
-                Open Affiliate Dashboard
+            <a href="{{ route('affiliate.login') }}" style="display:inline-block;padding:12px 18px;border-radius:999px;background:#e11d2e;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;">
+                Login To Affiliate Account
             </a>
         </p>
     @endif
