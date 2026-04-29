@@ -356,7 +356,7 @@
                             <label class="text-sm font-semibold text-slate-700">Rotation Interval (seconds)</label>
                             <input type="number"
                                    min="4"
-                                   max="60"
+                                   max="300"
                                    step="1"
                                    name="purchase_popups[interval]"
                                    value="{{ $popupInterval }}"

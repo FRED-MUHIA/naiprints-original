@@ -11,6 +11,9 @@ class Invoice extends Model
 
     protected $fillable = [
         'client_id',
+        'affiliate_id',
+        'affiliate_click_id',
+        'affiliate_code',
         'sequence',
         'number',
         'public_id',
@@ -40,6 +43,21 @@ class Invoice extends Model
     public function client()
     {
         return $this->belongsTo(Client::class);
+    }
+
+    public function affiliate()
+    {
+        return $this->belongsTo(Affiliate::class);
+    }
+
+    public function affiliateClick()
+    {
+        return $this->belongsTo(AffiliateClick::class);
+    }
+
+    public function affiliateCommission()
+    {
+        return $this->hasOne(AffiliateCommission::class);
     }
 
     public function items()

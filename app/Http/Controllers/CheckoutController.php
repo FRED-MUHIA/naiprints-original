@@ -10,6 +10,7 @@ use App\Models\Invoice;
 use App\Models\InvoiceSetting;
 use App\Models\MpesaTransaction;
 use App\Services\MailDispatchService;
+use App\Services\AffiliateService;
 use App\Services\MpesaService;
 use App\Support\DocumentSequence;
 use App\Support\PageDefaults;
@@ -19,7 +20,7 @@ use Illuminate\Support\Str;
 
 class CheckoutController extends Controller
 {
-    public function submit(Request $request, MailDispatchService $mailDispatch)
+    public function submit(Request $request, MailDispatchService $mailDispatch, AffiliateService $affiliateService)
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:120'],
@@ -67,7 +68,9 @@ class CheckoutController extends Controller
             0.0
         );
 
-        $invoice = DB::transaction(function () use ($validated, $cleanItems) {
+        $referral = $affiliateService->resolveReferral($request, $validated['email'], $validated['phone']);
+
+        $invoice = DB::transaction(function () use ($validated, $cleanItems, $referral) {
             $client = Client::firstOrNew(['email' => $validated['email']]);
             $client->fill([
                 'name' => $validated['name'],
@@ -79,6 +82,9 @@ class CheckoutController extends Controller
             $sequence = DocumentSequence::next(Invoice::class);
             $invoice = Invoice::create([
                 'client_id' => $client->id,
+                'affiliate_id' => $referral['affiliate_id'] ?? null,
+                'affiliate_click_id' => $referral['affiliate_click_id'] ?? null,
+                'affiliate_code' => $referral['affiliate_code'] ?? null,
                 'sequence' => $sequence,
                 'number' => 'INV-' . str_pad((string) $sequence, 4, '0', STR_PAD_LEFT),
                 'public_id' => (string) Str::uuid(),

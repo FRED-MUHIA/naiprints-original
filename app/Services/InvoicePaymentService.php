@@ -12,7 +12,10 @@ use Illuminate\Support\Str;
 
 class InvoicePaymentService
 {
-    public function __construct(private MailDispatchService $mailDispatch)
+    public function __construct(
+        private MailDispatchService $mailDispatch,
+        private AffiliateService $affiliateService
+    )
     {
     }
 
@@ -46,6 +49,8 @@ class InvoicePaymentService
 
         $payment->setRelation('receipt', $receipt);
         $invoice->loadMissing('client');
+
+        $this->affiliateService->createCommissionForPaidInvoice($invoice->fresh(['affiliate']), $payment);
 
         if ($receipt) {
             $this->mailDispatch->sendToRecipients(

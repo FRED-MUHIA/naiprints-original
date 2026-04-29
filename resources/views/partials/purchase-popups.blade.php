@@ -2,7 +2,7 @@
     $popupConfig = $globalPurchasePopups ?? [];
     $popupEnabled = $popupConfig['enabled'] ?? true;
     $popupInterval = (int) ($popupConfig['interval'] ?? 12);
-    $popupInterval = max(4, min(60, $popupInterval));
+    $popupInterval = max(4, min(300, $popupInterval));
     $popupItems = $popupConfig['items'] ?? [];
     $popupProductMap = $globalPurchasePopupProducts ?? [];
     $popupItems = collect($popupItems)

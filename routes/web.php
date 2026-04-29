@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AttributeController;
+use App\Http\Controllers\Admin\AffiliateController as AdminAffiliateController;
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\BlogCategoryController;
 use App\Http\Controllers\Admin\BlogController as AdminBlogController;
@@ -54,6 +55,8 @@ use App\Http\Controllers\JerseyDesignController;
 use App\Http\Controllers\JerseyLogoController;
 use App\Http\Controllers\JerseyOrderController;
 use App\Http\Controllers\BlogController;
+use App\Http\Controllers\Affiliate\AuthController as AffiliateAuthController;
+use App\Http\Controllers\Affiliate\DashboardController as AffiliateDashboardController;
 
 if (!function_exists('resolvePurchasePopupProducts')) {
     function resolvePurchasePopupProducts(array $popupContent): array
@@ -561,6 +564,19 @@ Route::get('/checkout', function () {
 Route::post('/checkout/submit', [CheckoutController::class, 'submit'])
     ->name('checkout.submit');
 
+Route::prefix('affiliate')->name('affiliate.')->group(function () {
+    Route::get('/register', [AffiliateAuthController::class, 'showRegister'])->name('register');
+    Route::post('/register', [AffiliateAuthController::class, 'register'])->name('register.submit');
+    Route::get('/login', [AffiliateAuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [AffiliateAuthController::class, 'login'])->name('login.submit');
+    Route::post('/logout', [AffiliateAuthController::class, 'logout'])->name('logout');
+
+    Route::middleware('affiliate.auth')->group(function () {
+        Route::get('/dashboard', [AffiliateDashboardController::class, 'index'])->name('dashboard');
+        Route::post('/payouts', [AffiliateDashboardController::class, 'requestPayout'])->name('payouts.store');
+    });
+});
+
 Route::get('/corporate', function () {
     $page = Page::ensure('corporate', 'Corporate', PageDefaults::corporate());
     $header = GlobalSection::ensure('header', PageDefaults::header());
@@ -1052,6 +1068,15 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
         Route::resource('media', MediaAssetController::class)->only(['index', 'store', 'update', 'destroy']);
 
         Route::resource('clients', ClientController::class)->except(['show']);
+        Route::get('affiliates/export', [AdminAffiliateController::class, 'export'])->name('affiliates.export');
+        Route::post('affiliates/settings', [AdminAffiliateController::class, 'settings'])->name('affiliates.settings');
+        Route::post('affiliates/{affiliate}/approve', [AdminAffiliateController::class, 'approve'])->name('affiliates.approve');
+        Route::post('affiliates/{affiliate}/reject', [AdminAffiliateController::class, 'reject'])->name('affiliates.reject');
+        Route::put('affiliates/{affiliate}', [AdminAffiliateController::class, 'update'])->name('affiliates.update');
+        Route::post('affiliate-commissions/{commission}', [AdminAffiliateController::class, 'updateCommission'])->name('affiliate-commissions.update');
+        Route::post('affiliate-payouts/{payout}', [AdminAffiliateController::class, 'updatePayout'])->name('affiliate-payouts.update');
+        Route::get('affiliates/{affiliate}', [AdminAffiliateController::class, 'show'])->name('affiliates.show');
+        Route::get('affiliates', [AdminAffiliateController::class, 'index'])->name('affiliates.index');
         Route::get('tasks/{task}/work-note', [TaskController::class, 'downloadWorkNote'])->name('tasks.work-note');
         Route::post('tasks/{task}/next-stage', [TaskController::class, 'nextStage'])->name('tasks.next-stage');
         Route::resource('tasks', TaskController::class)->except(['show']);

@@ -118,7 +118,7 @@ class PageBuilderController extends Controller
             'purchase_popups.items.*.url' => ['nullable', 'string', 'max:2048'],
             'purchase_popups.items.*.product_id' => ['nullable', 'integer', 'exists:products,id'],
             'purchase_popups.enabled' => ['nullable'],
-            'purchase_popups.interval' => ['nullable', 'numeric', 'min:4', 'max:60'],
+            'purchase_popups.interval' => ['nullable', 'numeric', 'min:4', 'max:300'],
         ]);
         $validator->excludeUnvalidatedArrayKeys = false;
         $data = $validator->validate();
@@ -147,7 +147,7 @@ class PageBuilderController extends Controller
             $purchasePayload['enabled'] = !empty($purchasePayload['enabled']);
             $interval = $purchasePayload['interval'] ?? ($purchasePopups->content['interval'] ?? 12);
             $interval = is_numeric($interval) ? (int) $interval : 12;
-            $purchasePayload['interval'] = max(4, min(60, $interval));
+            $purchasePayload['interval'] = max(4, min(300, $interval));
 
             $items = collect($purchasePayload['items'] ?? [])
                 ->filter(fn ($item) => is_array($item))

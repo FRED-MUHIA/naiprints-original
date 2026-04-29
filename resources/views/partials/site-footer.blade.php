@@ -10,15 +10,24 @@
         ['label' => 'Ethical Policies', 'url' => route('ethical-policies')],
         ['label' => 'Data Protection Policies', 'url' => route('data-protection-policies')],
     ];
+    $accountLinks = [
+        ['label' => 'Create Affiliate Account', 'url' => route('affiliate.register')],
+        ['label' => 'Affiliate Login', 'url' => route('affiliate.login')],
+    ];
     $policyLabels = collect($policyLinks)->pluck('label')->map(fn ($label) => strtolower($label))->all();
-    $columns = array_map(function ($column) use ($policyLabels) {
+    $accountLabels = collect($accountLinks)->pluck('label')->map(fn ($label) => strtolower($label))->all();
+    $columns = array_map(function ($column) use ($policyLabels, $accountLabels) {
         $column['links'] = collect($column['links'] ?? [])
-            ->reject(fn ($link) => in_array(strtolower((string) ($link['label'] ?? '')), $policyLabels, true))
+            ->reject(fn ($link) => in_array(strtolower((string) ($link['label'] ?? '')), array_merge($policyLabels, $accountLabels), true))
             ->values()
             ->all();
 
         return $column;
     }, $columns);
+    $columns[] = [
+        'title' => 'Affiliate Account',
+        'links' => $accountLinks,
+    ];
 
     $hours = $footer['hours'] ?? [];
 @endphp

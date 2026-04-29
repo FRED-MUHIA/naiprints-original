@@ -9,6 +9,7 @@ use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\InvoiceSetting;
 use App\Services\InvoicePaymentService;
+use App\Services\AffiliateService;
 use App\Services\MailDispatchService;
 use App\Support\DocumentSequence;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -212,8 +213,9 @@ class InvoiceController extends Controller
             ->with('success', 'Invoice updated successfully.');
     }
 
-    public function destroy(Invoice $invoice)
+    public function destroy(Invoice $invoice, AffiliateService $affiliateService)
     {
+        $affiliateService->rejectCommissionForInvoice($invoice, 'Invoice was cancelled or deleted by admin.');
         $invoice->delete();
 
         return redirect()->route('admin.invoices.index')
