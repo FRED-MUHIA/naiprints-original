@@ -245,11 +245,12 @@
                                 <th>Cost</th>
                                 <th>Date</th>
                                 <th>Debit</th>
+                                <th></th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse (($analytics['recent_finance_entries'] ?? collect()) as $entry)
-                                <tr>
+                                <tr data-finance-row="{{ $entry->id }}">
                                     <td>
                                         <span class="font-semibold text-slate-700">{{ $entry->category_label }}</span>
                                         @if ($entry->description)
@@ -258,10 +259,39 @@
                                     </td>
                                     <td>{{ optional($entry->entry_date)->format('M d, Y') }}</td>
                                     <td class="font-semibold text-red-700">{{ $formatCurrency($entry->amount) }}</td>
+                                    <td class="text-right">
+                                        <button type="button" class="admin-btn-outline" data-finance-edit="{{ $entry->id }}">Edit</button>
+                                    </td>
+                                </tr>
+                                <tr class="hidden bg-slate-50" data-finance-edit-row="{{ $entry->id }}">
+                                    <td colspan="4">
+                                        <form method="POST" action="{{ route('admin.financial-entries.update', $entry) }}" class="grid gap-3 p-3 md:grid-cols-[1fr_1fr_1fr_1.2fr_auto]">
+                                            @csrf
+                                            @method('PUT')
+                                            <input type="hidden" name="analytics_period" value="{{ $analytics['period'] }}">
+                                            <input type="hidden" name="analytics_start" value="{{ $analytics['start'] }}">
+                                            <input type="hidden" name="analytics_end" value="{{ $analytics['end'] }}">
+                                            @if (request('category'))
+                                                <input type="hidden" name="dashboard_category" value="{{ request('category') }}">
+                                            @endif
+                                            <select name="category" class="rounded-2xl border border-slate-200 px-3 py-2 text-sm focus:border-brand focus:outline-none">
+                                                <option value="production_cost" @selected($entry->category === 'production_cost')>Production Cost</option>
+                                                <option value="materials_bought" @selected($entry->category === 'materials_bought')>Materials Bought</option>
+                                                <option value="petty_cash" @selected($entry->category === 'petty_cash')>Petty Cash</option>
+                                            </select>
+                                            <input type="date" name="entry_date" value="{{ optional($entry->entry_date)->toDateString() }}" class="rounded-2xl border border-slate-200 px-3 py-2 text-sm focus:border-brand focus:outline-none">
+                                            <input type="number" name="amount" min="0.01" step="0.01" value="{{ $entry->amount }}" class="rounded-2xl border border-slate-200 px-3 py-2 text-sm focus:border-brand focus:outline-none">
+                                            <input type="text" name="description" value="{{ $entry->description }}" placeholder="Optional detail" class="rounded-2xl border border-slate-200 px-3 py-2 text-sm focus:border-brand focus:outline-none">
+                                            <div class="flex gap-2">
+                                                <button type="submit" class="admin-btn-primary">Save</button>
+                                                <button type="button" class="admin-btn-outline" data-finance-cancel="{{ $entry->id }}">Cancel</button>
+                                            </div>
+                                        </form>
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="3">
+                                    <td colspan="4">
                                         <div class="admin-empty">No debit entries for this period.</div>
                                     </td>
                                 </tr>
@@ -579,6 +609,20 @@
                 if (!isCustom) {
                     form.submit();
                 }
+            });
+
+            document.querySelectorAll('[data-finance-edit]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const id = button.getAttribute('data-finance-edit');
+                    document.querySelector(`[data-finance-edit-row="${id}"]`)?.classList.remove('hidden');
+                });
+            });
+
+            document.querySelectorAll('[data-finance-cancel]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const id = button.getAttribute('data-finance-cancel');
+                    document.querySelector(`[data-finance-edit-row="${id}"]`)?.classList.add('hidden');
+                });
             });
         })();
     </script>

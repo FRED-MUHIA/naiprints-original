@@ -843,6 +843,29 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
             ->with('success', 'Cost entry recorded.');
     })->name('financial-entries.store')->middleware('admin.can:admin');
 
+    Route::put('/financial-entries/{financialEntry}', function (Request $request, FinancialEntry $financialEntry) {
+        abort_unless(session('admin_role') === 'admin', 403);
+        abort_unless(Schema::hasTable('financial_entries'), 404);
+
+        $validated = $request->validate([
+            'entry_date' => ['required', 'date'],
+            'category' => ['required', 'in:production_cost,materials_bought,petty_cash'],
+            'amount' => ['required', 'numeric', 'min:0.01'],
+            'description' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $financialEntry->update($validated);
+
+        $dashboardQuery = $request->only(['analytics_period', 'analytics_start', 'analytics_end']);
+        if ($request->filled('dashboard_category')) {
+            $dashboardQuery['category'] = $request->input('dashboard_category');
+        }
+
+        return redirect()
+            ->route('admin.dashboard', $dashboardQuery)
+            ->with('success', 'Cost entry updated.');
+    })->name('financial-entries.update')->middleware('admin.can:admin');
+
     Route::get('/', function () {
         if (session('admin_role') === 'editor') {
             return redirect()->route('admin.products.index');
