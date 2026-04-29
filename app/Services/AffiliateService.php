@@ -10,6 +10,7 @@ use App\Models\Invoice;
 use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\Schema;
 
 class AffiliateService
 {
@@ -23,6 +24,10 @@ class AffiliateService
 
     public function captureClick(Request $request): void
     {
+        if (!$this->tablesReady()) {
+            return;
+        }
+
         $code = trim((string) $request->query('ref', ''));
         if ($code === '') {
             return;
@@ -52,6 +57,10 @@ class AffiliateService
 
     public function resolveReferral(Request $request, ?string $customerEmail = null, ?string $customerPhone = null): ?array
     {
+        if (!$this->tablesReady()) {
+            return null;
+        }
+
         $code = trim((string) $request->cookie(self::COOKIE_CODE, ''));
         if ($code === '') {
             return null;
@@ -80,6 +89,10 @@ class AffiliateService
 
     public function createCommissionForPaidInvoice(Invoice $invoice, ?Payment $payment = null): ?AffiliateCommission
     {
+        if (!$this->tablesReady()) {
+            return null;
+        }
+
         $invoice->loadMissing('affiliate');
 
         if (!$invoice->affiliate || $invoice->status !== 'paid') {
@@ -117,6 +130,10 @@ class AffiliateService
 
     public function rejectCommissionForInvoice(Invoice $invoice, string $reason): void
     {
+        if (!Schema::hasTable('affiliate_commissions')) {
+            return;
+        }
+
         $commission = AffiliateCommission::query()->where('invoice_id', $invoice->id)->first();
         if (!$commission || $commission->status === AffiliateCommission::STATUS_PAID) {
             return;
@@ -150,5 +167,13 @@ class AffiliateService
         $affiliatePhone = $normalizePhone($affiliate->phone);
 
         return $buyerPhone !== '' && $affiliatePhone !== '' && $buyerPhone === $affiliatePhone;
+    }
+
+    private function tablesReady(): bool
+    {
+        return Schema::hasTable('affiliates')
+            && Schema::hasTable('affiliate_clicks')
+            && Schema::hasTable('affiliate_commissions')
+            && Schema::hasTable('affiliate_settings');
     }
 }

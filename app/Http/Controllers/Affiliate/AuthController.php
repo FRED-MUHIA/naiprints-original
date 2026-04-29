@@ -7,16 +7,29 @@ use App\Models\Affiliate;
 use App\Services\AffiliateService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 
 class AuthController extends Controller
 {
     public function showRegister()
     {
+        if (!$this->affiliateTablesReady()) {
+            return view('affiliate.register')->withErrors([
+                'setup' => 'Affiliate registration is being set up. Please run the database migrations, then try again.',
+            ]);
+        }
+
         return view('affiliate.register');
     }
 
     public function register(Request $request, AffiliateService $affiliateService)
     {
+        if (!$this->affiliateTablesReady()) {
+            return back()->withErrors([
+                'setup' => 'Affiliate registration is not ready yet. Run php artisan migrate to create the affiliate tables.',
+            ])->withInput();
+        }
+
         $data = $request->validate([
             'full_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:affiliates,email'],
@@ -40,11 +53,23 @@ class AuthController extends Controller
 
     public function showLogin()
     {
+        if (!$this->affiliateTablesReady()) {
+            return view('affiliate.login')->withErrors([
+                'setup' => 'Affiliate login is being set up. Please run the database migrations, then try again.',
+            ]);
+        }
+
         return view('affiliate.login');
     }
 
     public function login(Request $request)
     {
+        if (!$this->affiliateTablesReady()) {
+            return back()->withErrors([
+                'setup' => 'Affiliate login is not ready yet. Run php artisan migrate to create the affiliate tables.',
+            ])->withInput();
+        }
+
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
@@ -72,5 +97,10 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('affiliate.login');
+    }
+
+    private function affiliateTablesReady(): bool
+    {
+        return Schema::hasTable('affiliates') && Schema::hasTable('affiliate_settings');
     }
 }
