@@ -16,6 +16,7 @@ use App\Support\DocumentSequence;
 use App\Support\PageDefaults;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class CheckoutController extends Controller
@@ -45,8 +46,12 @@ class CheckoutController extends Controller
             ->map(function ($item) {
                 $qty = (int) ($item['qty'] ?? 0);
                 $price = (float) ($item['price'] ?? 0);
+                $productId = $item['baseId'] ?? $item['product_id'] ?? $item['id'] ?? null;
+                $productId = is_numeric($productId) ? (int) $productId : null;
+
                 return [
                     'id' => (string) ($item['id'] ?? ''),
+                    'product_id' => $productId,
                     'name' => trim((string) ($item['name'] ?? 'Product')),
                     'price' => max(0, $price),
                     'qty' => max(0, $qty),
@@ -96,7 +101,8 @@ class CheckoutController extends Controller
                 'terms' => null,
             ]);
 
-            $items = $cleanItems->values()->map(function ($item, $index) {
+            $invoiceItemsHaveProductId = Schema::hasColumn('invoice_items', 'product_id');
+            $items = $cleanItems->values()->map(function ($item, $index) use ($invoiceItemsHaveProductId) {
                 $descriptionParts = [];
                 if (!empty($item['color'])) {
                     $descriptionParts[] = 'Color: ' . $item['color'];
@@ -108,7 +114,7 @@ class CheckoutController extends Controller
                 $qty = (float) $item['qty'];
                 $unitPrice = (float) $item['price'];
 
-                return [
+                $row = [
                     'name' => $item['name'],
                     'description' => $description,
                     'quantity' => $qty,
@@ -116,6 +122,12 @@ class CheckoutController extends Controller
                     'total' => round($qty * $unitPrice, 2),
                     'position' => $index,
                 ];
+
+                if ($invoiceItemsHaveProductId) {
+                    $row['product_id'] = $item['product_id'] ?? null;
+                }
+
+                return $row;
             });
 
             $invoice->items()->createMany($items->all());
@@ -310,6 +322,7 @@ class CheckoutController extends Controller
                 ->map(function (array $item) {
                     return [
                         'id' => $item['id'] ?? null,
+                        'product_id' => $item['product_id'] ?? null,
                         'name' => $item['name'] ?? null,
                         'price' => (float) ($item['price'] ?? 0),
                         'qty' => (float) ($item['qty'] ?? 0),

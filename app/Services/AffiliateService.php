@@ -93,39 +93,59 @@ class AffiliateService
             return null;
         }
 
-        $invoice->loadMissing('affiliate');
+        $invoice->loadMissing('affiliate', 'items');
 
         if (!$invoice->affiliate || $invoice->status !== 'paid') {
             return null;
         }
 
-        $existing = AffiliateCommission::query()->where('invoice_id', $invoice->id)->first();
-        if ($existing) {
-            return $existing;
-        }
-
         $affiliate = $invoice->affiliate;
         $type = $affiliate->commissionType();
         $value = $affiliate->commissionValue();
-        $orderTotal = (float) $invoice->total;
-        $amount = $type === 'fixed'
-            ? $value
-            : round($orderTotal * ($value / 100), 2);
+        $created = collect();
 
-        $commission = AffiliateCommission::create([
-            'affiliate_id' => $affiliate->id,
-            'invoice_id' => $invoice->id,
-            'payment_id' => $payment?->id,
-            'order_total' => $orderTotal,
-            'commission_type' => $type,
-            'commission_value' => $value,
-            'amount' => max(0, $amount),
-            'status' => AffiliateCommission::STATUS_PENDING,
-        ]);
+        foreach ($invoice->items as $item) {
+            if ((float) $item->total <= 0) {
+                continue;
+            }
 
-        $this->notify($affiliate, 'New commission earned', 'A new pending commission of KES ' . number_format((float) $commission->amount, 2) . ' was created for invoice ' . $invoice->number . '.');
+            $existing = AffiliateCommission::query()
+                ->where('invoice_item_id', $item->id)
+                ->first();
+            if ($existing) {
+                continue;
+            }
 
-        return $commission;
+            $lineTotal = (float) $item->total;
+            $amount = $type === 'fixed'
+                ? $value
+                : round($lineTotal * ($value / 100), 2);
+
+            $created->push(AffiliateCommission::create([
+                'affiliate_id' => $affiliate->id,
+                'invoice_id' => $invoice->id,
+                'invoice_item_id' => $item->id,
+                'product_id' => $item->product_id,
+                'payment_id' => $payment?->id,
+                'order_total' => $lineTotal,
+                'commission_type' => $type,
+                'commission_value' => $value,
+                'amount' => max(0, $amount),
+                'status' => AffiliateCommission::STATUS_PENDING,
+            ]));
+        }
+
+        if ($created->isEmpty()) {
+            return AffiliateCommission::query()->where('invoice_id', $invoice->id)->first();
+        }
+
+        $this->notify(
+            $affiliate,
+            'New product commission earned',
+            'New pending product-based commission totaling KES ' . number_format((float) $created->sum('amount'), 2) . ' was created for invoice ' . $invoice->number . '.'
+        );
+
+        return $created->first();
     }
 
     public function rejectCommissionForInvoice(Invoice $invoice, string $reason): void
@@ -174,6 +194,9 @@ class AffiliateService
         return Schema::hasTable('affiliates')
             && Schema::hasTable('affiliate_clicks')
             && Schema::hasTable('affiliate_commissions')
+            && Schema::hasTable('invoice_items')
+            && Schema::hasColumn('affiliate_commissions', 'invoice_item_id')
+            && Schema::hasColumn('invoice_items', 'product_id')
             && Schema::hasTable('affiliate_settings');
     }
 }

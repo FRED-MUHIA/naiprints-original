@@ -14,6 +14,8 @@ class AffiliateCommission extends Model
     protected $fillable = [
         'affiliate_id',
         'invoice_id',
+        'invoice_item_id',
+        'product_id',
         'payment_id',
         'order_total',
         'commission_type',
@@ -43,6 +45,16 @@ class AffiliateCommission extends Model
     public function invoice()
     {
         return $this->belongsTo(Invoice::class);
+    }
+
+    public function invoiceItem()
+    {
+        return $this->belongsTo(InvoiceItem::class);
+    }
+
+    public function product()
+    {
+        return $this->belongsTo(Product::class);
     }
 
     public function payment()

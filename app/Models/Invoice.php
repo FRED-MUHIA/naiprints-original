@@ -60,6 +60,11 @@ class Invoice extends Model
         return $this->hasOne(AffiliateCommission::class);
     }
 
+    public function affiliateCommissions()
+    {
+        return $this->hasMany(AffiliateCommission::class);
+    }
+
     public function items()
     {
         return $this->hasMany(InvoiceItem::class)->orderBy('position');

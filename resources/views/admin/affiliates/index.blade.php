@@ -90,7 +90,7 @@
                 @forelse ($pendingCommissions as $commission)
                     <div class="rounded-2xl border border-slate-200 p-4">
                         <div class="flex flex-wrap items-center justify-between gap-3 text-sm">
-                            <span><strong>{{ $commission->affiliate?->full_name }}</strong> · {{ $commission->invoice?->number }} · KES {{ number_format((float) $commission->amount, 2) }}</span>
+                            <span><strong>{{ $commission->affiliate?->full_name }}</strong> · {{ $commission->invoice?->number }} · {{ $commission->product?->name ?? 'Product line' }} · KES {{ number_format((float) $commission->amount, 2) }}</span>
                             <div class="flex gap-2">
                                 @foreach (['approved' => 'Approve', 'rejected' => 'Reject'] as $state => $label)
                                     <form method="POST" action="{{ route('admin.affiliate-commissions.update', $commission) }}">

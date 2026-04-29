@@ -64,12 +64,13 @@
         <div class="mt-4 overflow-x-auto">
             <table class="w-full min-w-[760px] text-left text-sm">
                 <thead class="text-xs uppercase tracking-[0.2em] text-slate-400">
-                    <tr><th class="py-3">Invoice</th><th>Customer</th><th>Order total</th><th>Commission</th><th>Status</th><th>Actions</th></tr>
+                    <tr><th class="py-3">Invoice</th><th>Product</th><th>Customer</th><th>Product total</th><th>Commission</th><th>Status</th><th>Actions</th></tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                     @forelse ($affiliate->commissions as $commission)
                         <tr>
                             <td class="py-3">{{ $commission->invoice?->number }}</td>
+                            <td>{{ $commission->product?->name ?? $commission->invoiceItem?->name ?? '-' }}</td>
                             <td>{{ $commission->invoice?->client?->display_name }}</td>
                             <td>KES {{ number_format((float) $commission->order_total, 2) }}</td>
                             <td>KES {{ number_format((float) $commission->amount, 2) }}</td>
@@ -85,7 +86,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td class="py-4 text-slate-500" colspan="6">No commissions yet.</td></tr>
+                        <tr><td class="py-4 text-slate-500" colspan="7">No commissions yet.</td></tr>
                     @endforelse
                 </tbody>
             </table>

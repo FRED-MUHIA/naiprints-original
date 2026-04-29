@@ -36,6 +36,35 @@
                 </div>
             </section>
 
+            @if ($referralProducts->isNotEmpty())
+                <section class="mb-6 rounded-[24px] bg-white p-6 shadow-lg">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <h2 class="text-xl font-bold">Product referral links</h2>
+                            <p class="mt-1 text-sm text-slate-600">Copy a link for the exact product you want to promote.</p>
+                        </div>
+                    </div>
+                    <div class="mt-5 grid gap-3 md:grid-cols-2">
+                        @foreach ($referralProducts as $product)
+                            @php
+                                $productReferralUrl = route('products.show', ['product' => $product->slug ?: $product->id]) . '?ref=' . urlencode($affiliate->referral_code);
+                                $inputId = 'product-referral-' . $product->id;
+                            @endphp
+                            <div class="rounded-2xl border border-slate-200 p-4">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p class="font-semibold">{{ $product->name }}</p>
+                                        <p class="text-xs text-slate-500">KES {{ number_format((float) $product->price, 2) }}</p>
+                                    </div>
+                                    <button class="admin-btn-outline" type="button" onclick="navigator.clipboard.writeText(document.getElementById('{{ $inputId }}').value)">Copy</button>
+                                </div>
+                                <input id="{{ $inputId }}" class="checkout-input mt-3 text-xs" readonly value="{{ $productReferralUrl }}">
+                            </div>
+                        @endforeach
+                    </div>
+                </section>
+            @endif
+
             <section class="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
                 @foreach ([
                     'Clicks' => $clicks,
@@ -67,7 +96,18 @@
                                         <td>{{ $order->client?->display_name }}</td>
                                         <td>{{ ucfirst(str_replace('_', ' ', $order->status)) }}</td>
                                         <td>KES {{ number_format((float) $order->total, 2) }}</td>
-                                        <td>{{ $order->affiliateCommission ? 'KES ' . number_format((float) $order->affiliateCommission->amount, 2) . ' / ' . $order->affiliateCommission->status : '-' }}</td>
+                                        <td>
+                                            @if ($order->affiliateCommissions->isNotEmpty())
+                                                <div class="grid gap-1">
+                                                    <span>KES {{ number_format((float) $order->affiliateCommissions->sum('amount'), 2) }}</span>
+                                                    <span class="text-xs text-slate-500">
+                                                        {{ $order->affiliateCommissions->pluck('product.name')->filter()->join(', ') ?: 'Product referral' }}
+                                                    </span>
+                                                </div>
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
                                         <td>{{ $order->created_at?->format('M d, Y') }}</td>
                                     </tr>
                                 @empty

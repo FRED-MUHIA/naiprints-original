@@ -20,7 +20,17 @@ class AffiliateNotificationMail extends Mailable
 
     public function build(): self
     {
-        return $this->subject($this->subjectLine)
+        $mail = $this->subject($this->subjectLine)
             ->view('emails.affiliate.notification');
+
+        $logoPath = public_path('images/logo.svg');
+        if (is_file($logoPath)) {
+            $mail->attach($logoPath, [
+                'as' => 'nai-prints-logo.svg',
+                'mime' => 'image/svg+xml',
+            ]);
+        }
+
+        return $mail;
     }
 }

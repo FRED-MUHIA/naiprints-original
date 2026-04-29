@@ -24,7 +24,7 @@ class AffiliateController extends Controller
 
         $settings = AffiliateSetting::current();
         $pendingPayouts = AffiliatePayout::with('affiliate')->where('status', AffiliatePayout::STATUS_PENDING)->latest()->take(8)->get();
-        $pendingCommissions = AffiliateCommission::with(['affiliate', 'invoice'])->where('status', AffiliateCommission::STATUS_PENDING)->latest()->take(10)->get();
+        $pendingCommissions = AffiliateCommission::with(['affiliate', 'invoice', 'product'])->where('status', AffiliateCommission::STATUS_PENDING)->latest()->take(10)->get();
 
         return view('admin.affiliates.index', compact('affiliates', 'settings', 'status', 'pendingPayouts', 'pendingCommissions'));
     }
@@ -32,7 +32,7 @@ class AffiliateController extends Controller
     public function show(Affiliate $affiliate)
     {
         $affiliate->loadCount(['clicks', 'invoices'])
-            ->load(['commissions.invoice.client', 'payouts']);
+            ->load(['commissions.invoice.client', 'commissions.product', 'commissions.invoiceItem', 'payouts']);
 
         return view('admin.affiliates.show', compact('affiliate'));
     }

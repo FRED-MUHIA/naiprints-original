@@ -16,18 +16,23 @@
     ];
     $policyLabels = collect($policyLinks)->pluck('label')->map(fn ($label) => strtolower($label))->all();
     $accountLabels = collect($accountLinks)->pluck('label')->map(fn ($label) => strtolower($label))->all();
-    $columns = array_map(function ($column) use ($policyLabels, $accountLabels) {
+    $hasAccountColumn = false;
+    $columns = array_map(function ($column) use ($policyLabels, $accountLabels, $accountLinks, &$hasAccountColumn) {
         $column['links'] = collect($column['links'] ?? [])
             ->reject(fn ($link) => in_array(strtolower((string) ($link['label'] ?? '')), array_merge($policyLabels, $accountLabels), true))
             ->values()
             ->all();
 
+        if (strtolower((string) ($column['title'] ?? '')) === 'company') {
+            $column['links'] = array_merge($column['links'], $accountLinks);
+            $hasAccountColumn = true;
+        }
+
         return $column;
     }, $columns);
-    $columns[] = [
-        'title' => 'Affiliate Account',
-        'links' => $accountLinks,
-    ];
+    if (!$hasAccountColumn && !empty($columns)) {
+        $columns[0]['links'] = array_merge($columns[0]['links'] ?? [], $accountLinks);
+    }
 
     $hours = $footer['hours'] ?? [];
 @endphp

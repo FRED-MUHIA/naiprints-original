@@ -7,8 +7,10 @@ use App\Models\Affiliate;
 use App\Models\AffiliateCommission;
 use App\Models\AffiliatePayout;
 use App\Models\AffiliateSetting;
+use App\Models\Product;
 use App\Services\AffiliateService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class DashboardController extends Controller
 {
@@ -27,7 +29,7 @@ class DashboardController extends Controller
             ->pluck('total', 'status');
 
         $referredOrders = $affiliate->invoices()
-            ->with(['client', 'affiliateCommission'])
+            ->with(['client', 'affiliateCommissions.product'])
             ->latest()
             ->paginate(10, ['*'], 'orders_page');
 
@@ -38,6 +40,9 @@ class DashboardController extends Controller
             ->sum('amount');
         $availableBalance = max(0, $approvedBalance - $reservedPayouts);
         $minimumPayout = (float) AffiliateSetting::current()->minimum_payout_amount;
+        $referralProducts = Schema::hasTable('products')
+            ? Product::query()->where('status', 'active')->orderBy('name')->take(24)->get(['id', 'name', 'slug', 'price'])
+            : collect();
 
         return view('affiliate.dashboard', compact(
             'affiliate',
@@ -48,7 +53,8 @@ class DashboardController extends Controller
             'referredOrders',
             'payouts',
             'availableBalance',
-            'minimumPayout'
+            'minimumPayout',
+            'referralProducts'
         ));
     }
 
