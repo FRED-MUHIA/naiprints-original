@@ -4,14 +4,21 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         @php
-            $faviconUrl = '/images/logo.svg';
             $supportEmail = $support['email'] ?? 'info@naiprints.co.ke';
             $supportPhone = $support['phone'] ?? '0700 000 000';
             $supportBrand = $support['brand'] ?? 'Nai Prints';
         @endphp
-        <link rel="icon" href="{{ $faviconUrl }}">
-        <title>Contact Us | Nai Prints</title>
-        <meta name="description" content="Contact Nai Prints for custom printing, branding, and bulk orders in Kenya.">
+        @include('partials.seo', [
+            'title' => 'Contact Nai Prints | Custom Printing & Branding in Kenya',
+            'description' => 'Contact Nai Prints for custom printing, embroidery, jerseys, branded merchandise, and bulk corporate orders in Kenya.',
+            'canonical' => route('contact.show'),
+            'schema' => [
+                '@context' => 'https://schema.org',
+                '@type' => 'ContactPage',
+                'name' => 'Contact Nai Prints',
+                'url' => route('contact.show'),
+            ],
+        ])
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="bg-sand text-ink">

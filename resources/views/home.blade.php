@@ -3,12 +3,27 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        @php
-            $faviconUrl = '/images/logo.svg';
-        @endphp
-        <link rel="icon" href="{{ $faviconUrl }}">
-        <title>Nai Prints | T-Shirt & Garment Printing</title>
-        <meta name="description" content="Nai Prints creates bold, custom t-shirts, hoodies, and uniforms for every vibe. Design online or order in bulk.">
+        @include('partials.seo', [
+            'title' => 'Nai Prints | Custom T-Shirt, Hoodie & Garment Printing in Kenya',
+            'description' => 'Order custom t-shirts, hoodies, uniforms, jerseys, embroidery, and branded merchandise from Nai Prints in Kenya. Design online or request a bulk quote.',
+            'canonical' => url('/'),
+            'schema' => [
+                [
+                    '@context' => 'https://schema.org',
+                    '@type' => 'Organization',
+                    'name' => 'Nai Prints',
+                    'url' => url('/'),
+                    'logo' => url('/images/logo.svg'),
+                    'email' => 'info@naiprints.co.ke',
+                ],
+                [
+                    '@context' => 'https://schema.org',
+                    '@type' => 'WebSite',
+                    'name' => 'Nai Prints',
+                    'url' => url('/'),
+                ],
+            ],
+        ])
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="bg-sand text-ink">

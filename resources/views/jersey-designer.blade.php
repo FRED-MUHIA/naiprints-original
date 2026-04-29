@@ -3,13 +3,12 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        @php
-            $faviconUrl = '/images/logo.svg';
-        @endphp
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <link rel="icon" href="{{ $faviconUrl }}">
-        <title>3D Jersey Designer | Nai Prints</title>
-        <meta name="description" content="Professional 3D sports jersey designer for football, basketball, rugby, and esports kits.">
+        @include('partials.seo', [
+            'title' => '3D Jersey Designer | Nai Prints',
+            'description' => 'Design football, basketball, rugby, and esports jerseys online with the Nai Prints 3D jersey designer.',
+            'canonical' => route('designer.3d'),
+        ])
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap">
         <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
         <script>

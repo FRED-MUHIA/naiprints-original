@@ -3,9 +3,11 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="icon" href="/images/logo.svg">
-        <title>Ethical Policies | Nai Prints</title>
-        <meta name="description" content="Read the Nai Prints Corporation ethical policy and client agreement for transparent, professional printing and branding engagements.">
+        @include('partials.seo', [
+            'title' => 'Ethical Policies | Nai Prints',
+            'description' => 'Read the Nai Prints ethical policy and client agreement for transparent, professional printing and branding engagements.',
+            'canonical' => route('ethical-policies'),
+        ])
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="bg-sand text-ink">

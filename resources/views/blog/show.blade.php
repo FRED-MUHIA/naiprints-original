@@ -4,23 +4,16 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         @php
-            $faviconUrl = '/images/logo.svg';
-            $canonicalUrl = request()->url();
+            $canonicalUrl = route('blogs.show', $blog->slug);
             $publishedDateIso = optional($blog->published_at ?? $blog->created_at)->toIso8601String();
         @endphp
-        <link rel="icon" href="{{ $faviconUrl }}">
-        <title>{{ $metaTitle }}</title>
-        <meta name="description" content="{{ \Illuminate\Support\Str::limit($metaDescription, 155, '') }}">
-        <link rel="canonical" href="{{ $canonicalUrl }}">
-        <meta property="og:type" content="article">
-        <meta property="og:title" content="{{ $metaTitle }}">
-        <meta property="og:description" content="{{ \Illuminate\Support\Str::limit($metaDescription, 155, '') }}">
-        <meta property="og:url" content="{{ $canonicalUrl }}">
-        @if ($blog->cover_image_url)
-            <meta property="og:image" content="{{ $blog->cover_image_url }}">
-        @endif
-        <script type="application/ld+json">
-            {!! json_encode([
+        @include('partials.seo', [
+            'title' => $metaTitle,
+            'description' => \Illuminate\Support\Str::limit($metaDescription, 155, ''),
+            'canonical' => $canonicalUrl,
+            'type' => 'article',
+            'image' => $blog->cover_image_url,
+            'schema' => [
                 '@context' => 'https://schema.org',
                 '@type' => 'BlogPosting',
                 'headline' => $blog->title,
@@ -28,10 +21,18 @@
                 'datePublished' => $publishedDateIso,
                 'dateModified' => optional($blog->updated_at)->toIso8601String(),
                 'mainEntityOfPage' => $canonicalUrl,
-                'image' => $blog->cover_image_url ? [$blog->cover_image_url] : [],
+                'image' => $blog->cover_image_url ? [url($blog->cover_image_url)] : [],
                 'articleSection' => $blog->category?->name,
-            ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
-        </script>
+                'publisher' => [
+                    '@type' => 'Organization',
+                    'name' => 'Nai Prints',
+                    'logo' => [
+                        '@type' => 'ImageObject',
+                        'url' => url('/images/logo.svg'),
+                    ],
+                ],
+            ],
+        ])
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="bg-sand text-ink">

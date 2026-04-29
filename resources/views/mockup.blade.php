@@ -3,12 +3,11 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        @php
-            $faviconUrl = '/images/logo.svg';
-        @endphp
-        <link rel="icon" href="{{ $faviconUrl }}">
-        <title>Nai Prints | Mockup Studio</title>
-        <meta name="description" content="Create product mockups with simple, Canva-inspired controls. Upload artwork, place it, and export realistic previews.">
+        @include('partials.seo', [
+            'title' => 'Product Mockup Studio | Nai Prints',
+            'description' => 'Create product mockups for print, ecommerce, and social media. Upload artwork, place it, and export realistic previews.',
+            'canonical' => route('mockup'),
+        ])
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">

@@ -3,12 +3,11 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        @php
-            $faviconUrl = '/images/logo.svg';
-        @endphp
-        <link rel="icon" href="{{ $faviconUrl }}">
-        <title>Embroidery Branding | Nai Prints</title>
-        <meta name="description" content="Professional embroidery branding in Nairobi. Embroidered patches, uniforms, caps, and custom apparel tailored for your business.">
+        @include('partials.seo', [
+            'title' => 'Embroidery Branding in Nairobi | Nai Prints',
+            'description' => 'Professional embroidery branding in Nairobi for uniforms, caps, patches, polos, and corporate apparel tailored for your business.',
+            'canonical' => route('embroidery'),
+        ])
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="bg-sand text-ink">

@@ -4,11 +4,42 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         @php
-            $faviconUrl = '/images/logo.svg';
+            $seoImage = $product->image_url;
+            if (!$seoImage && $product->galleryImages->first()?->image_path) {
+                $seoImage = \Illuminate\Support\Facades\Storage::url($product->galleryImages->first()->image_path);
+            }
+            if (!$seoImage && $product->alternateImages->first()?->image_path) {
+                $seoImage = \Illuminate\Support\Facades\Storage::url($product->alternateImages->first()->image_path);
+            }
+            $seoImageAbsolute = $seoImage && str_starts_with((string) $seoImage, 'http') ? $seoImage : ($seoImage ? url($seoImage) : null);
+            $seoPrice = is_numeric($product->price ?? null) ? (float) $product->price : 0;
         @endphp
-        <link rel="icon" href="{{ $faviconUrl }}">
-        <title>{{ $product->name }} | Nai Prints</title>
-        <meta name="description" content="{{ $product->meta_description ?? $product->description ?? 'Shop premium custom prints.' }}">
+        @include('partials.seo', [
+            'title' => ($product->meta_title ?: $product->name . ' | Nai Prints'),
+            'description' => $product->meta_description ?: ($product->description ?: 'Shop premium custom prints from Nai Prints in Kenya.'),
+            'canonical' => route('products.show', ['product' => $product->slug ?: $product->id]),
+            'type' => 'product',
+            'image' => $seoImage,
+            'schema' => [
+                '@context' => 'https://schema.org',
+                '@type' => 'Product',
+                'name' => $product->name,
+                'description' => strip_tags((string) ($product->meta_description ?: $product->description)),
+                'image' => $seoImageAbsolute ? [$seoImageAbsolute] : [],
+                'sku' => $product->sku ?: (string) $product->id,
+                'brand' => [
+                    '@type' => 'Brand',
+                    'name' => $product->brand?->name ?: 'Nai Prints',
+                ],
+                'offers' => [
+                    '@type' => 'Offer',
+                    'url' => route('products.show', ['product' => $product->slug ?: $product->id]),
+                    'priceCurrency' => 'KES',
+                    'price' => number_format($seoPrice, 2, '.', ''),
+                    'availability' => ((int) ($product->stock ?? 0)) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/PreOrder',
+                ],
+            ],
+        ])
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="bg-sand text-ink">

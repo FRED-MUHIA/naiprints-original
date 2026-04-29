@@ -3,12 +3,11 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        @php
-            $faviconUrl = '/images/logo.svg';
-        @endphp
-        <link rel="icon" href="{{ $faviconUrl }}">
-        <title>Corporate Merch | Nai Prints</title>
-        <meta name="description" content="Corporate merch and uniform printing for teams. Dedicated account managers, fast turnaround, and consistent branding.">
+        @include('partials.seo', [
+            'title' => 'Corporate Merchandise & Uniform Printing in Kenya | Nai Prints',
+            'description' => 'Corporate merchandise, staff uniforms, event apparel, and branded gifts for Kenyan teams. Get consistent branding, bulk pricing, and fast turnaround.',
+            'canonical' => route('corporate'),
+        ])
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="bg-sand text-ink">

@@ -3,12 +3,11 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        @php
-            $faviconUrl = '/images/logo.svg';
-        @endphp
-        <link rel="icon" href="{{ $faviconUrl }}">
-        <title>Jersey Catalogue | Nai Prints</title>
-        <meta name="description" content="Jersey sales and custom jersey branding/printing in Kenya for teams, schools, and football academies.">
+        @include('partials.seo', [
+            'title' => 'Custom Jersey Printing in Kenya | Nai Prints',
+            'description' => 'Shop and customize team jerseys in Kenya for football clubs, schools, academies, events, and sports brands.',
+            'canonical' => route('jersey'),
+        ])
         <style>
             .jersey-slider-track::-webkit-scrollbar {
                 display: none;

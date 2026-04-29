@@ -6,6 +6,7 @@
     <link rel="icon" type="image/svg+xml" href="/images/logo.svg">
     <link rel="shortcut icon" href="/images/logo.svg">
     <title>Invoice Verification - Nai Prints</title>
+    <meta name="robots" content="noindex, nofollow">
     @vite(['resources/css/app.css'])
 </head>
 <body class="bg-slate-100 text-slate-900">

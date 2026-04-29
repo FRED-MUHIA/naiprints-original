@@ -9,6 +9,7 @@
     $policyLinks = [
         ['label' => 'Ethical Policies', 'url' => route('ethical-policies')],
         ['label' => 'Data Protection Policies', 'url' => route('data-protection-policies')],
+        ['label' => 'Sitemap', 'url' => route('sitemap')],
     ];
     $accountLinks = [
         ['label' => 'Create Affiliate Account', 'url' => route('affiliate.register')],

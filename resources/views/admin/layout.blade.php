@@ -6,6 +6,7 @@
         <link rel="icon" type="image/svg+xml" href="/images/logo.svg">
         <link rel="shortcut icon" href="/images/logo.svg">
         <title>Nai Prints Admin</title>
+        <meta name="robots" content="noindex, nofollow">
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="min-h-screen bg-slate-100 text-slate-900">

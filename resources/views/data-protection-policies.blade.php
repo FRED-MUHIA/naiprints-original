@@ -3,9 +3,11 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="icon" href="/images/logo.svg">
-        <title>Data Protection Policies | Nai Prints</title>
-        <meta name="description" content="Read the Nai Prints data protection policies for how client information, artwork, and order data are handled.">
+        @include('partials.seo', [
+            'title' => 'Data Protection Policies | Nai Prints',
+            'description' => 'Read the Nai Prints data protection policies for how client information, artwork, and order data are handled.',
+            'canonical' => route('data-protection-policies'),
+        ])
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="bg-sand text-ink">

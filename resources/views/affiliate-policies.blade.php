@@ -3,8 +3,11 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Affiliate Policies | Nai Prints</title>
-        <meta name="description" content="Nai Prints affiliate program policies, acceptable use, anti-scam rules, commissions, payouts, and data protection commitments.">
+        @include('partials.seo', [
+            'title' => 'Affiliate Policies | Nai Prints',
+            'description' => 'Nai Prints affiliate program policies, acceptable use, anti-scam rules, commissions, payouts, and data protection commitments.',
+            'canonical' => route('affiliate-policies'),
+        ])
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="bg-sand text-ink">

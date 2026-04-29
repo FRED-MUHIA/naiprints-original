@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Mail\AffiliateNotificationMail;
 use App\Mail\InvoiceMail;
 use App\Mail\OrderPlaced;
 use App\Mail\QuotationMail;
@@ -181,6 +182,20 @@ class EmailSystemTest extends TestCase
         $response->assertSessionHas('success', 'Quotation email sent successfully.');
 
         Mail::assertSent(QuotationMail::class, fn (QuotationMail $mail) => $mail->hasTo('quotation.customer@example.com'));
+    }
+
+    public function test_affiliate_notification_email_does_not_attach_logo_file(): void
+    {
+        $mail = (new AffiliateNotificationMail(
+            'Affiliate Approved',
+            'Your affiliate account has been approved.'
+        ))->build();
+
+        $this->assertSame([], $mail->attachments);
+        $this->assertFalse($mail->hasAttachment(public_path('images/logo.svg'), [
+            'as' => 'nai-prints-logo.svg',
+            'mime' => 'image/svg+xml',
+        ]));
     }
 
     private function createInvoice(string $email): Invoice

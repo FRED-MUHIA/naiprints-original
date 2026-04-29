@@ -1,2 +1,11 @@
 User-agent: *
-Disallow:
+Disallow: /admin/
+Disallow: /checkout
+Disallow: /invoice/
+Disallow: /receipt/
+Disallow: /affiliate/dashboard
+Disallow: /affiliate/login
+Disallow: /mpesa/
+Disallow: /api/
+
+Sitemap: https://naiprints.co.ke/sitemap.xml

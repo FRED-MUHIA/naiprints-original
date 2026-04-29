@@ -4,17 +4,15 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         @php
-            $faviconUrl = '/images/logo.svg';
-            $canonicalUrl = request()->fullUrl();
+            $canonicalUrl = $selectedCategory
+                ? route('blogs.index', ['category' => $selectedCategory->slug])
+                : route('blogs.index');
         @endphp
-        <link rel="icon" href="{{ $faviconUrl }}">
-        <title>{{ $metaTitle }}</title>
-        <meta name="description" content="{{ $metaDescription }}">
-        <link rel="canonical" href="{{ $canonicalUrl }}">
-        <meta property="og:type" content="website">
-        <meta property="og:title" content="{{ $metaTitle }}">
-        <meta property="og:description" content="{{ $metaDescription }}">
-        <meta property="og:url" content="{{ $canonicalUrl }}">
+        @include('partials.seo', [
+            'title' => $metaTitle,
+            'description' => $metaDescription,
+            'canonical' => $canonicalUrl,
+        ])
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="bg-sand text-ink">

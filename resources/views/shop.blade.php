@@ -3,12 +3,13 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        @php
-            $faviconUrl = '/images/logo.svg';
-        @endphp
-        <link rel="icon" href="{{ $faviconUrl }}">
-        <title>Shop | Nai Prints</title>
-        <meta name="description" content="Browse custom tees, hoodies, polos, and more on Nai Prints.">
+        @include('partials.seo', [
+            'title' => ($selectedCategory?->name ? $selectedCategory->name . ' | ' : '') . 'Shop Custom Apparel | Nai Prints',
+            'description' => $selectedCategory?->name
+                ? 'Shop custom ' . $selectedCategory->name . ' printing from Nai Prints in Kenya. Browse products, compare prices, and order online.'
+                : 'Browse custom t-shirts, hoodies, polos, jerseys, gifts, and branded apparel from Nai Prints in Kenya.',
+            'canonical' => $selectedCategory ? route('shop', ['category' => $selectedCategory->slug ?: $selectedCategory->id]) : route('shop'),
+        ])
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="bg-sand text-ink">

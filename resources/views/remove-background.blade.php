@@ -3,12 +3,11 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        @php
-            $faviconUrl = '/images/logo.svg';
-        @endphp
-        <link rel="icon" href="{{ $faviconUrl }}">
-        <title>Remove Background | Nai Prints</title>
-        <meta name="description" content="Remove image backgrounds quickly. Upload a photo, generate a clean transparent result, and continue editing for print, social, and ecommerce use.">
+        @include('partials.seo', [
+            'title' => 'Remove Image Background Online | Nai Prints',
+            'description' => 'Remove image backgrounds quickly for print, ecommerce, social media, and product mockups with Nai Prints.',
+            'canonical' => route('remove-background'),
+        ])
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         <style>
             .rb-page {

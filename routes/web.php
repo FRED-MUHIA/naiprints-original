@@ -465,13 +465,16 @@ Route::get('/sitemap.xml', function () {
         ['slug' => 'shop', 'path' => '/shop', 'changefreq' => 'daily', 'priority' => '0.9'],
         ['slug' => 'embroidery', 'path' => '/embroidery', 'changefreq' => 'weekly', 'priority' => '0.8'],
         ['slug' => 'jersey', 'path' => '/jersey', 'changefreq' => 'weekly', 'priority' => '0.8'],
-        ['slug' => 'checkout', 'path' => '/checkout', 'changefreq' => 'weekly', 'priority' => '0.7'],
         ['slug' => 'corporate', 'path' => '/corporate', 'changefreq' => 'weekly', 'priority' => '0.8'],
         ['slug' => 'contact', 'path' => '/contact', 'changefreq' => 'monthly', 'priority' => '0.7'],
         ['slug' => 'mockup', 'path' => '/mockup', 'changefreq' => 'weekly', 'priority' => '0.8'],
+        ['slug' => null, 'path' => '/remove-background', 'changefreq' => 'weekly', 'priority' => '0.7'],
         ['slug' => null, 'path' => '/blogs', 'changefreq' => 'daily', 'priority' => '0.8'],
         ['slug' => null, 'path' => '/jerseys', 'changefreq' => 'weekly', 'priority' => '0.7'],
         ['slug' => null, 'path' => '/3d-designer', 'changefreq' => 'weekly', 'priority' => '0.7'],
+        ['slug' => null, 'path' => '/ethical-policies', 'changefreq' => 'yearly', 'priority' => '0.3'],
+        ['slug' => null, 'path' => '/data-protection-policies', 'changefreq' => 'yearly', 'priority' => '0.3'],
+        ['slug' => null, 'path' => '/affiliate-policies', 'changefreq' => 'yearly', 'priority' => '0.3'],
     ]);
 
     $pageUpdateMap = collect();

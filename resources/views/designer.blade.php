@@ -3,12 +3,11 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        @php
-            $faviconUrl = '/images/logo.svg';
-        @endphp
-        <link rel="icon" href="{{ $faviconUrl }}">
-        <title>Nai Prints | Design Studio</title>
-        <meta name="description" content="Design custom products with live mockups and print-ready exports.">
+        @include('partials.seo', [
+            'title' => 'Custom Product Design Studio | Nai Prints',
+            'description' => 'Design custom products with live mockups, print-ready exports, and easy artwork tools from Nai Prints.',
+            'canonical' => url('/designer'),
+        ])
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;600&family=Playfair+Display:wght@600&family=Pacifico&display=swap">
         <script src="https://unpkg.com/vue@3.4.38/dist/vue.global.prod.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>

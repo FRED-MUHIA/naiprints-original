@@ -11,6 +11,7 @@
     <link rel="icon" type="image/svg+xml" href="/images/logo.svg">
     <link rel="shortcut icon" href="/images/logo.svg">
     <title>{{ $receipt->number }} - Receipt</title>
+    <meta name="robots" content="noindex, nofollow">
     @vite(['resources/css/app.css'])
 </head>
 <body class="bg-slate-100 text-slate-900" style="--brand-red: {{ $settings->theme_color ?? '#e11d2e' }};">
