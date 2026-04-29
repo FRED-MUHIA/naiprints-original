@@ -624,6 +624,20 @@ Route::get('/data-protection-policies', function () {
     ]);
 })->name('data-protection-policies');
 
+Route::get('/affiliate-policies', function () {
+    $header = GlobalSection::ensure('header', PageDefaults::header());
+    $footer = GlobalSection::ensure('footer', PageDefaults::footer());
+    $purchasePopups = GlobalSection::ensure('purchase_popups', PageDefaults::purchasePopups());
+    $purchasePopupProducts = resolvePurchasePopupProducts($purchasePopups->content ?? []);
+
+    return view('affiliate-policies', [
+        'globalHeader' => $header->content,
+        'globalFooter' => $footer->content,
+        'globalPurchasePopups' => $purchasePopups->content,
+        'globalPurchasePopupProducts' => $purchasePopupProducts,
+    ]);
+})->name('affiliate-policies');
+
 Route::get('/remove-background', function () {
     $header = GlobalSection::ensure('header', PageDefaults::header());
     $footer = GlobalSection::ensure('footer', PageDefaults::footer());

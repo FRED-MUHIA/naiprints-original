@@ -53,6 +53,26 @@
                         <span class="checkout-label">Payment details</span>
                         <textarea class="checkout-input" name="payment_details" rows="4" required>{{ old('payment_details') }}</textarea>
                     </label>
+                    <div class="md:col-span-2 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                        <h2 class="text-base font-bold">Affiliate policies</h2>
+                        <p class="mt-2 text-sm leading-6 text-slate-700">
+                            Please read the affiliate terms before applying. Referral links must be used honestly and must not be used for scams,
+                            impersonation, misleading discounts, spam, fake orders, unlawful promotions, or any activity that damages Nai Prints,
+                            customers, or third parties.
+                        </p>
+                        <div class="mt-3 flex flex-wrap gap-3 text-sm font-semibold">
+                            <a class="text-brand underline underline-offset-4" href="{{ route('affiliate-policies') }}" target="_blank" rel="noopener">Read affiliate policies</a>
+                            <a class="text-brand underline underline-offset-4" href="{{ route('data-protection-policies') }}" target="_blank" rel="noopener">Read data protection policies</a>
+                            <a class="text-brand underline underline-offset-4" href="{{ route('ethical-policies') }}" target="_blank" rel="noopener">Read ethical policies</a>
+                        </div>
+                        <label class="mt-4 flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-semibold text-slate-800">
+                            <input class="mt-1" type="checkbox" name="policy_acceptance" value="1" required @checked(old('policy_acceptance'))>
+                            <span>
+                                I have read and accept the affiliate, data protection, and ethical policies. I agree not to use my affiliate link
+                                for scamming, misleading advertising, spam, fake purchases, or unlawful activity.
+                            </span>
+                        </label>
+                    </div>
                     <div class="md:col-span-2">
                         <button class="btn-brand" type="submit">Submit application</button>
                     </div>

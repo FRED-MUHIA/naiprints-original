@@ -37,6 +37,7 @@ class AuthController extends Controller
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'payment_method' => ['required', 'string', 'max:120'],
             'payment_details' => ['required', 'string', 'max:2000'],
+            'policy_acceptance' => ['accepted'],
         ]);
 
         $affiliate = Affiliate::create([
