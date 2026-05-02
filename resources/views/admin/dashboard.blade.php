@@ -239,9 +239,15 @@
                 </div>
 
                 <div class="mt-4 max-h-[420px] overflow-auto rounded-2xl border border-slate-200" data-finance-scroll>
-                    <table class="admin-table">
+                    <table class="admin-table finance-table">
+                        <colgroup>
+                            <col class="finance-cost-col">
+                            <col class="finance-date-col">
+                            <col class="finance-debit-col">
+                            <col class="finance-action-col">
+                        </colgroup>
                         <thead>
-                            <tr class="sticky top-0 z-10 bg-slate-50">
+                            <tr>
                                 <th>Cost</th>
                                 <th>Date</th>
                                 <th>Debit</th>
@@ -260,12 +266,12 @@
                                     <td>{{ optional($entry->entry_date)->format('M d, Y') }}</td>
                                     <td class="font-semibold text-red-700">{{ $formatCurrency($entry->amount) }}</td>
                                     <td class="text-right">
-                                        <button type="button" class="admin-btn-outline" data-finance-edit="{{ $entry->id }}">Edit</button>
+                                        <button type="button" class="admin-btn-outline finance-edit-btn" data-finance-edit="{{ $entry->id }}" aria-expanded="false">Edit</button>
                                     </td>
                                 </tr>
                                 <tr class="hidden bg-slate-50" data-finance-edit-row="{{ $entry->id }}">
                                     <td colspan="4">
-                                        <form method="POST" action="{{ route('admin.financial-entries.update', $entry) }}" class="grid gap-3 p-3 md:grid-cols-[1fr_1fr_1fr_1.2fr_auto]" data-finance-edit-form>
+                                        <form method="POST" action="{{ route('admin.financial-entries.update', $entry) }}" class="finance-edit-form" data-finance-edit-form>
                                             @csrf
                                             @method('PUT')
                                             <input type="hidden" name="analytics_period" value="{{ $analytics['period'] }}">
@@ -274,17 +280,17 @@
                                             @if (request('category'))
                                                 <input type="hidden" name="dashboard_category" value="{{ request('category') }}">
                                             @endif
-                                            <select name="category" class="rounded-2xl border border-slate-200 px-3 py-2 text-sm focus:border-brand focus:outline-none">
+                                            <select name="category" class="finance-edit-field rounded-2xl border border-slate-200 focus:border-brand focus:outline-none">
                                                 <option value="production_cost" @selected($entry->category === 'production_cost')>Production Cost</option>
                                                 <option value="materials_bought" @selected($entry->category === 'materials_bought')>Materials Bought</option>
                                                 <option value="petty_cash" @selected($entry->category === 'petty_cash')>Petty Cash</option>
                                             </select>
-                                            <input type="date" name="entry_date" value="{{ optional($entry->entry_date)->toDateString() }}" class="rounded-2xl border border-slate-200 px-3 py-2 text-sm focus:border-brand focus:outline-none">
-                                            <input type="number" name="amount" min="0.01" step="0.01" value="{{ $entry->amount }}" class="rounded-2xl border border-slate-200 px-3 py-2 text-sm focus:border-brand focus:outline-none">
-                                            <input type="text" name="description" value="{{ $entry->description }}" placeholder="Optional detail" class="rounded-2xl border border-slate-200 px-3 py-2 text-sm focus:border-brand focus:outline-none">
-                                            <div class="flex gap-2">
-                                                <button type="submit" class="admin-btn-primary">Save</button>
-                                                <button type="button" class="admin-btn-outline" data-finance-cancel="{{ $entry->id }}">Cancel</button>
+                                            <input type="date" name="entry_date" value="{{ optional($entry->entry_date)->toDateString() }}" class="finance-edit-field rounded-2xl border border-slate-200 focus:border-brand focus:outline-none">
+                                            <input type="number" name="amount" min="0.01" step="0.01" value="{{ $entry->amount }}" class="finance-edit-field rounded-2xl border border-slate-200 focus:border-brand focus:outline-none">
+                                            <input type="text" name="description" value="{{ $entry->description }}" placeholder="Optional detail" class="finance-edit-field finance-edit-note rounded-2xl border border-slate-200 focus:border-brand focus:outline-none">
+                                            <div class="finance-edit-actions">
+                                                <button type="submit" class="admin-btn-primary finance-save-btn">Save</button>
+                                                <button type="button" class="admin-btn-outline finance-save-btn" data-finance-cancel="{{ $entry->id }}">Cancel</button>
                                             </div>
                                         </form>
                                     </td>
