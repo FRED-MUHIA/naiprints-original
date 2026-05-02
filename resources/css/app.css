@@ -3625,6 +3625,128 @@
         }
     }
 
+    .dashboard-task-table {
+        table-layout: fixed;
+        min-width: 920px;
+        width: 100%;
+        font-size: 0.78rem;
+        line-height: 1.24;
+    }
+
+    .dashboard-task-table th,
+    .dashboard-task-table td {
+        padding: 0.38rem 0.48rem;
+        vertical-align: top;
+    }
+
+    .dashboard-task-table th {
+        font-size: 0.66rem;
+        line-height: 1;
+        letter-spacing: 0.24em;
+        white-space: nowrap;
+    }
+
+    .dashboard-task-table td {
+        overflow-wrap: anywhere;
+    }
+
+    .dashboard-task-name-col {
+        width: 34%;
+    }
+
+    .dashboard-task-client-col {
+        width: 15%;
+    }
+
+    .dashboard-task-time-col {
+        width: 14%;
+    }
+
+    .dashboard-task-progress-col {
+        width: 11%;
+    }
+
+    .dashboard-task-status-col {
+        width: 11%;
+    }
+
+    .dashboard-task-action-col {
+        width: 15%;
+    }
+
+    .dashboard-task-table td:nth-child(3),
+    .dashboard-task-table td:nth-child(4),
+    .dashboard-task-table td:nth-child(5) {
+        white-space: nowrap;
+    }
+
+    .dashboard-task-name {
+        max-width: 0;
+    }
+
+    .dashboard-task-table .admin-status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 1.6rem;
+        padding: 0.34rem 0.58rem;
+        font-size: 0.62rem;
+        letter-spacing: 0.18em;
+        line-height: 1;
+    }
+
+    .dashboard-task-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.38rem;
+    }
+
+    .dashboard-task-btn {
+        min-width: 3.7rem;
+        padding: 0.44rem 0.68rem;
+        font-size: 0.76rem;
+        line-height: 1;
+        white-space: nowrap;
+    }
+
+    .performance-dashboard-card {
+        padding: 1.75rem;
+    }
+
+    .performance-total {
+        font-size: clamp(2rem, 2.6vw, 3rem);
+        line-height: 1;
+    }
+
+    .performance-summary-panel,
+    .performance-chart-panel {
+        padding: 1.35rem;
+    }
+
+    .performance-stat-card {
+        min-height: 5.35rem;
+        padding: 1rem;
+    }
+
+    .performance-stat-card p:last-child {
+        font-size: clamp(1.35rem, 1.4vw, 1.75rem);
+        line-height: 1.1;
+    }
+
+    .performance-chart {
+        height: clamp(13rem, 21vw, 16rem);
+    }
+
+    @media (max-width: 768px) {
+        .performance-dashboard-card {
+            padding: 1rem;
+        }
+
+        .performance-summary-panel,
+        .performance-chart-panel {
+            padding: 1rem;
+        }
+    }
+
     .focus\:border-brand:focus {
         border-color: var(--brand-red);
     }

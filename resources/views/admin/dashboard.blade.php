@@ -66,11 +66,11 @@
         ];
     @endphp
 
-    <section class="admin-card" data-performance-dashboard>
+    <section class="admin-card performance-dashboard-card" data-performance-dashboard>
         <div class="flex flex-wrap items-start justify-between gap-4">
             <div>
                 <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Performance</p>
-                <h2 class="mt-2 text-2xl font-semibold">Business activity</h2>
+                <h2 class="mt-1 text-2xl font-semibold">Business activity</h2>
             </div>
 
             <form method="GET" action="{{ route('admin.dashboard') }}" class="flex flex-wrap items-center gap-2" data-performance-filter>
@@ -101,44 +101,44 @@
             </div>
         @endif
 
-        <div class="mt-6 grid gap-6 xl:grid-cols-[minmax(280px,0.95fr)_minmax(0,1.45fr)]">
-            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+        <div class="mt-5 grid gap-5 xl:grid-cols-[minmax(280px,0.9fr)_minmax(0,1.55fr)]">
+            <div class="performance-summary-panel rounded-2xl border border-slate-200 bg-slate-50 p-5">
                 <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Total revenue</p>
-                <p class="mt-3 text-4xl font-semibold tracking-tight text-slate-950">{{ $formatCurrency($analytics['summary']['revenue']) }}</p>
+                <p class="performance-total mt-3 text-4xl font-semibold tracking-tight text-slate-950">{{ $formatCurrency($analytics['summary']['revenue']) }}</p>
                 <p class="mt-2 text-sm text-slate-500">{{ \Illuminate\Support\Carbon::parse($analytics['start'])->format('M d, Y') }} - {{ \Illuminate\Support\Carbon::parse($analytics['end'])->format('M d, Y') }}</p>
 
-                <div class="mt-6 grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
-                    <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                <div class="mt-5 grid gap-3 sm:grid-cols-3 xl:grid-cols-2">
+                    <div class="performance-stat-card rounded-2xl border border-slate-200 bg-white p-4">
                         <p class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Orders</p>
                         <p class="mt-2 text-2xl font-semibold">{{ number_format($analytics['summary']['orders']) }}</p>
                     </div>
-                    <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                    <div class="performance-stat-card rounded-2xl border border-slate-200 bg-white p-4">
                         <p class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Transactions</p>
                         <p class="mt-2 text-2xl font-semibold">{{ number_format($analytics['summary']['transactions']) }}</p>
                     </div>
-                    <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                    <div class="performance-stat-card rounded-2xl border border-slate-200 bg-white p-4 xl:col-span-2">
                         <p class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Average</p>
                         <p class="mt-2 text-2xl font-semibold">{{ $formatCurrency($analytics['summary']['average_transaction']) }}</p>
                     </div>
                 </div>
 
-                <div class="mt-4 grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
-                    <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                <div class="mt-3 grid gap-3 sm:grid-cols-3 xl:grid-cols-2">
+                    <div class="performance-stat-card rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
                         <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Credits</p>
                         <p class="mt-2 text-2xl font-semibold text-emerald-700">{{ $formatCurrency($analytics['summary']['credits']) }}</p>
                     </div>
-                    <div class="rounded-2xl border border-red-200 bg-red-50 p-4">
+                    <div class="performance-stat-card rounded-2xl border border-red-200 bg-red-50 p-4">
                         <p class="text-xs font-semibold uppercase tracking-[0.22em] text-red-700">Debits</p>
                         <p class="mt-2 text-2xl font-semibold text-red-700">{{ $formatCurrency($analytics['summary']['debits']) }}</p>
                     </div>
-                    <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                    <div class="performance-stat-card rounded-2xl border border-slate-200 bg-white p-4 xl:col-span-2">
                         <p class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Net</p>
                         <p class="mt-2 text-2xl font-semibold {{ $analytics['summary']['net'] < 0 ? 'text-red-700' : 'text-emerald-700' }}">{{ $formatCurrency($analytics['summary']['net']) }}</p>
                     </div>
                 </div>
             </div>
 
-            <div class="min-w-0 rounded-2xl border border-slate-200 bg-white p-5">
+            <div class="performance-chart-panel min-w-0 rounded-2xl border border-slate-200 bg-white p-5">
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h3 class="text-lg font-semibold">Revenue trend</h3>
@@ -147,8 +147,8 @@
                     <a href="{{ route('admin.payments.index') }}" class="admin-btn-outline">Detailed analytics</a>
                 </div>
 
-                <div class="mt-5 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 p-3">
-                    <svg viewBox="0 0 {{ $chartWidth }} {{ $chartHeight }}" role="img" aria-label="Revenue trend chart" class="h-64 w-full">
+                <div class="mt-4 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                    <svg viewBox="0 0 {{ $chartWidth }} {{ $chartHeight }}" role="img" aria-label="Revenue trend chart" class="performance-chart h-64 w-full">
                         <defs>
                             <linearGradient id="performanceArea" x1="0" x2="0" y1="0" y2="1">
                                 <stop offset="0%" stop-color="#e11d2e" stop-opacity="0.18" />
@@ -180,7 +180,7 @@
             </div>
         </div>
 
-        <div class="mt-6 grid gap-6 xl:grid-cols-[minmax(280px,0.95fr)_minmax(0,1.45fr)]">
+        <div class="mt-5 grid gap-5 xl:grid-cols-[minmax(280px,0.9fr)_minmax(0,1.55fr)]">
             <form method="POST" action="{{ route('admin.financial-entries.store') }}" class="rounded-2xl border border-slate-200 bg-white p-5">
                 @csrf
                 <input type="hidden" name="analytics_period" value="{{ $analytics['period'] }}">
@@ -344,8 +344,16 @@
             </div>
         </div>
 
-        <div class="mt-6 overflow-hidden rounded-2xl border border-slate-200">
-            <table class="admin-table">
+        <div class="mt-6 overflow-auto rounded-2xl border border-slate-200">
+            <table class="admin-table dashboard-task-table">
+                <colgroup>
+                    <col class="dashboard-task-name-col">
+                    <col class="dashboard-task-client-col">
+                    <col class="dashboard-task-time-col">
+                    <col class="dashboard-task-progress-col">
+                    <col class="dashboard-task-status-col">
+                    <col class="dashboard-task-action-col">
+                </colgroup>
                 <thead>
                     <tr>
                         <th>Task</th>
@@ -367,7 +375,7 @@
                             };
                         @endphp
                         <tr>
-                            <td class="font-semibold text-slate-700">{{ $task->reference }} - {{ $task->title }}</td>
+                            <td class="dashboard-task-name font-semibold text-slate-700">{{ $task->reference }} - {{ $task->title }}</td>
                             <td>{{ $task->client?->display_name ?? '-' }}</td>
                             <td>{{ optional($task->assigned_at)->format('M d, Y h:i A') }}</td>
                             <td>
@@ -378,9 +386,9 @@
                                 <span class="admin-status {{ $statusClass }}">{{ $task->status_label }}</span>
                             </td>
                             <td class="text-right">
-                                <div class="flex justify-end gap-2">
-                                    <a href="{{ route('admin.tasks.edit', $task) }}" class="admin-btn-outline">Update</a>
-                                    <a href="{{ route('admin.tasks.work-note', $task) }}" class="admin-btn-outline">PDF</a>
+                                <div class="dashboard-task-actions">
+                                    <a href="{{ route('admin.tasks.edit', $task) }}" class="admin-btn-outline dashboard-task-btn">Update</a>
+                                    <a href="{{ route('admin.tasks.work-note', $task) }}" class="admin-btn-outline dashboard-task-btn">PDF</a>
                                 </div>
                             </td>
                         </tr>
