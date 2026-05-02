@@ -238,10 +238,10 @@
                     </div>
                 </div>
 
-                <div class="mt-4 overflow-hidden rounded-2xl border border-slate-200">
+                <div class="mt-4 max-h-[420px] overflow-auto rounded-2xl border border-slate-200" data-finance-scroll>
                     <table class="admin-table">
                         <thead>
-                            <tr>
+                            <tr class="sticky top-0 z-10 bg-slate-50">
                                 <th>Cost</th>
                                 <th>Date</th>
                                 <th>Debit</th>
@@ -265,7 +265,7 @@
                                 </tr>
                                 <tr class="hidden bg-slate-50" data-finance-edit-row="{{ $entry->id }}">
                                     <td colspan="4">
-                                        <form method="POST" action="{{ route('admin.financial-entries.update', $entry) }}" class="grid gap-3 p-3 md:grid-cols-[1fr_1fr_1fr_1.2fr_auto]">
+                                        <form method="POST" action="{{ route('admin.financial-entries.update', $entry) }}" class="grid gap-3 p-3 md:grid-cols-[1fr_1fr_1fr_1.2fr_auto]" data-finance-edit-form>
                                             @csrf
                                             @method('PUT')
                                             <input type="hidden" name="analytics_period" value="{{ $analytics['period'] }}">
@@ -614,7 +614,19 @@
             document.querySelectorAll('[data-finance-edit]').forEach((button) => {
                 button.addEventListener('click', () => {
                     const id = button.getAttribute('data-finance-edit');
-                    document.querySelector(`[data-finance-edit-row="${id}"]`)?.classList.remove('hidden');
+                    const displayRow = document.querySelector(`[data-finance-row="${id}"]`);
+                    const editRow = document.querySelector(`[data-finance-edit-row="${id}"]`);
+
+                    document.querySelectorAll('[data-finance-edit-row]').forEach((row) => {
+                        if (row !== editRow) {
+                            row.classList.add('hidden');
+                        }
+                    });
+
+                    editRow?.classList.remove('hidden');
+                    editRow?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                    displayRow?.querySelector('[data-finance-edit]')?.setAttribute('aria-expanded', 'true');
+                    editRow?.querySelector('input, select, textarea')?.focus({ preventScroll: true });
                 });
             });
 
@@ -622,6 +634,17 @@
                 button.addEventListener('click', () => {
                     const id = button.getAttribute('data-finance-cancel');
                     document.querySelector(`[data-finance-edit-row="${id}"]`)?.classList.add('hidden');
+                    document.querySelector(`[data-finance-row="${id}"] [data-finance-edit]`)?.setAttribute('aria-expanded', 'false');
+                });
+            });
+
+            document.querySelectorAll('[data-finance-edit-form]').forEach((editForm) => {
+                editForm.addEventListener('submit', () => {
+                    editForm.querySelector('button[type="submit"]')?.setAttribute('disabled', 'disabled');
+                    const saveButton = editForm.querySelector('button[type="submit"]');
+                    if (saveButton) {
+                        saveButton.textContent = 'Saving...';
+                    }
                 });
             });
         })();

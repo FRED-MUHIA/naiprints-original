@@ -1066,7 +1066,7 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
             'trend' => $analyticsTrend,
             'is_ready' => $isPaymentModuleReady,
             'finance_is_ready' => $isFinanceModuleReady,
-            'recent_finance_entries' => $financeRows->take(6),
+            'recent_finance_entries' => $financeRows,
         ];
 
         if ($isTaskModuleReady) {
