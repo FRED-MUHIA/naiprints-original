@@ -260,10 +260,10 @@ class InvoiceController extends Controller
             'note' => ['nullable', 'string'],
         ]);
 
-        $minDeposit = round(((float) $invoice->total) * 0.6, 2);
+        $minDeposit = round(((float) $invoice->total) * 0.5, 2);
         if ($invoice->amount_paid <= 0 && $data['amount'] < $minDeposit) {
             return back()->withErrors([
-                'amount' => 'The first payment must be at least 60% of the invoice total (KES ' . number_format($minDeposit, 2) . ').',
+                'amount' => 'The first payment must be at least 50% of the invoice total (KES ' . number_format($minDeposit, 2) . ').',
             ])->withInput();
         }
 
