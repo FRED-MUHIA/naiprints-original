@@ -3693,6 +3693,103 @@
                                 }
                             }
 
+                            const defringeEdgeStrokes = () => {
+                                const snapshot = new Uint8ClampedArray(pixels);
+                                const getSnapshotOffset = (idx) => idx * 4;
+                                const isCutPixel = (idx) => bgMask[idx] || snapshot[getSnapshotOffset(idx) + 3] < 16;
+
+                                for (let idx = 0; idx < pixelCount; idx += 1) {
+                                    const offset = getOffset(idx);
+                                    const alpha = snapshot[offset + 3];
+                                    if (alpha < 16 || bgMask[idx]) {
+                                        continue;
+                                    }
+
+                                    const x = idx % width;
+                                    const y = Math.floor(idx / width);
+                                    let cutNeighbors = 0;
+                                    let interiorCount = 0;
+                                    let interiorR = 0;
+                                    let interiorG = 0;
+                                    let interiorB = 0;
+                                    let interiorBrightness = 0;
+
+                                    for (let oy = -2; oy <= 2; oy += 1) {
+                                        for (let ox = -2; ox <= 2; ox += 1) {
+                                            if (ox === 0 && oy === 0) {
+                                                continue;
+                                            }
+
+                                            const nx = x + ox;
+                                            const ny = y + oy;
+                                            if (nx < 0 || ny < 0 || nx >= width || ny >= height) {
+                                                continue;
+                                            }
+
+                                            const neighbor = (ny * width) + nx;
+                                            const neighborOffset = getSnapshotOffset(neighbor);
+                                            const neighborAlpha = snapshot[neighborOffset + 3];
+
+                                            if (Math.abs(ox) <= 1 && Math.abs(oy) <= 1 && isCutPixel(neighbor)) {
+                                                cutNeighbors += 1;
+                                            }
+
+                                            if (!bgMask[neighbor] && neighborAlpha >= 96) {
+                                                const neighborDistance = colorDistanceToBg(neighbor, bgR, bgG, bgB);
+                                                if (neighborDistance > hardTolerance + 10) {
+                                                    const nr = snapshot[neighborOffset];
+                                                    const ng = snapshot[neighborOffset + 1];
+                                                    const nb = snapshot[neighborOffset + 2];
+                                                    interiorCount += 1;
+                                                    interiorR += nr;
+                                                    interiorG += ng;
+                                                    interiorB += nb;
+                                                    interiorBrightness += (nr + ng + nb) / 3;
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    if (cutNeighbors < 2 || interiorCount < 2) {
+                                        continue;
+                                    }
+
+                                    const r = snapshot[offset];
+                                    const g = snapshot[offset + 1];
+                                    const b = snapshot[offset + 2];
+                                    const brightness = (r + g + b) / 3;
+                                    const spread = Math.max(r, g, b) - Math.min(r, g, b);
+                                    const avgInteriorR = interiorR / interiorCount;
+                                    const avgInteriorG = interiorG / interiorCount;
+                                    const avgInteriorB = interiorB / interiorCount;
+                                    const avgInteriorBrightness = interiorBrightness / interiorCount;
+                                    const distance = colorDistanceToBg(idx, bgR, bgG, bgB);
+                                    const matchesOldBackground = distance <= softTolerance + 36;
+                                    const looksLikeDarkStroke = brightness + 18 < avgInteriorBrightness && spread <= 76;
+
+                                    if (!matchesOldBackground && !looksLikeDarkStroke) {
+                                        continue;
+                                    }
+
+                                    const strokeStrength = clamp(
+                                        Math.max((softTolerance + 36 - distance) / Math.max(1, softTolerance + 36), (avgInteriorBrightness - brightness) / 120),
+                                        0,
+                                        1
+                                    );
+                                    const blend = clamp(0.34 + strokeStrength * 0.5, 0.34, 0.84);
+                                    pixels[offset] = Math.round((r * (1 - blend)) + (avgInteriorR * blend));
+                                    pixels[offset + 1] = Math.round((g * (1 - blend)) + (avgInteriorG * blend));
+                                    pixels[offset + 2] = Math.round((b * (1 - blend)) + (avgInteriorB * blend));
+
+                                    const fade = cutNeighbors >= 5
+                                        ? clamp(0.38 + strokeStrength * 0.42, 0.38, 0.8)
+                                        : clamp(0.18 + strokeStrength * 0.3, 0.18, 0.48);
+                                    const nextAlpha = Math.round(alpha * (1 - fade));
+                                    pixels[offset + 3] = nextAlpha < 14 ? 0 : nextAlpha;
+                                }
+                            };
+
+                            defringeEdgeStrokes();
                             ctx.putImageData(imageData, 0, 0);
                             resolve(tempCanvas.toDataURL('image/png'));
                         } catch (error) {

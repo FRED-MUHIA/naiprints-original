@@ -3518,6 +3518,101 @@
         line-height: 1.2;
     }
 
+    .cost-analysis-panel {
+        display: grid;
+        gap: 0.7rem;
+        padding: 0.7rem;
+        border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+        background: #f8fafc;
+    }
+
+    .cost-analysis-metrics {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.55rem;
+    }
+
+    .cost-analysis-metrics > div {
+        min-width: 0;
+        border: 1px solid rgba(226, 232, 240, 0.95);
+        border-radius: 0.85rem;
+        background: #ffffff;
+        padding: 0.65rem;
+    }
+
+    .cost-analysis-metrics p,
+    .cost-analysis-row span,
+    .cost-analysis-row em {
+        color: #475569;
+        font-size: 0.66rem;
+        line-height: 1.15;
+    }
+
+    .cost-analysis-metrics p {
+        margin-bottom: 0.28rem;
+        font-weight: 800;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+    }
+
+    .cost-analysis-metrics strong {
+        display: block;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 0.92rem;
+        line-height: 1.15;
+    }
+
+    .cost-analysis-metrics span {
+        display: block;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: #64748b;
+        font-size: 0.68rem;
+    }
+
+    .cost-analysis-breakdown {
+        display: grid;
+        gap: 0.5rem;
+    }
+
+    .cost-analysis-row {
+        display: grid;
+        grid-template-columns: minmax(6.5rem, 0.8fr) minmax(5rem, 1fr) minmax(7rem, 0.85fr);
+        align-items: center;
+        gap: 0.55rem;
+    }
+
+    .cost-analysis-row strong {
+        display: block;
+        font-size: 0.74rem;
+        line-height: 1.1;
+    }
+
+    .cost-analysis-row em {
+        font-style: normal;
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .cost-analysis-bar {
+        height: 0.42rem;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #e2e8f0;
+    }
+
+    .cost-analysis-bar span {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+        background: var(--brand-red);
+    }
+
     .finance-table th,
     .finance-table td {
         padding: 0.34rem 0.42rem;

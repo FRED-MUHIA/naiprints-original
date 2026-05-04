@@ -970,6 +970,11 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
             'petty_cash' => 0,
         ];
         $analyticsTrend = [];
+        $categoryLabels = [
+            'production_cost' => 'Production Cost',
+            'materials_bought' => 'Materials Bought',
+            'petty_cash' => 'Petty Cash',
+        ];
 
         if ($isPaymentModuleReady) {
             $analyticsRows = Payment::with('invoice:id,currency')
@@ -1010,6 +1015,38 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
 
         $analyticsSummary['credits'] = $analyticsSummary['revenue'];
         $analyticsSummary['net'] = round($analyticsSummary['credits'] - $analyticsSummary['debits'], 2);
+        $largestCost = $financeRows->sortByDesc(fn ($entry) => (float) $entry->amount)->first();
+        $costBreakdown = collect($categoryLabels)
+            ->map(function ($label, $category) use ($financeRows, $analyticsSummary) {
+                $rows = $financeRows->where('category', $category);
+                $amount = round((float) $rows->sum('amount'), 2);
+
+                return [
+                    'category' => $category,
+                    'label' => $label,
+                    'amount' => $amount,
+                    'count' => $rows->count(),
+                    'percent' => $analyticsSummary['debits'] > 0
+                        ? round(($amount / $analyticsSummary['debits']) * 100, 1)
+                        : 0,
+                ];
+            })
+            ->values();
+        $highestCategory = $costBreakdown->sortByDesc('amount')->first();
+        $costAnalysis = [
+            'count' => $financeRows->count(),
+            'average' => $financeRows->count() > 0
+                ? round((float) $financeRows->sum('amount') / $financeRows->count(), 2)
+                : 0,
+            'highest_category' => $highestCategory,
+            'largest_entry' => $largestCost ? [
+                'label' => $largestCost->category_label,
+                'description' => $largestCost->description,
+                'amount' => round((float) $largestCost->amount, 2),
+                'date' => optional($largestCost->entry_date)->format('M d, Y'),
+            ] : null,
+            'breakdown' => $costBreakdown,
+        ];
 
         $cursor = $analyticsStart->copy();
         while ($cursor->lessThanOrEqualTo($analyticsEnd)) {
@@ -1067,6 +1104,7 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
             'is_ready' => $isPaymentModuleReady,
             'finance_is_ready' => $isFinanceModuleReady,
             'recent_finance_entries' => $financeRows,
+            'cost_analysis' => $costAnalysis,
         ];
 
         if ($isTaskModuleReady) {

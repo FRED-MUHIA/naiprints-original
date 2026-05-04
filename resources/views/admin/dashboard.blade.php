@@ -32,6 +32,13 @@
             'is_ready' => false,
             'finance_is_ready' => false,
             'recent_finance_entries' => collect(),
+            'cost_analysis' => [
+                'count' => 0,
+                'average' => 0,
+                'highest_category' => null,
+                'largest_entry' => null,
+                'breakdown' => collect(),
+            ],
         ];
         $formatCurrency = function ($amount) use ($analytics) {
             if (class_exists(NumberFormatter::class)) {
@@ -239,6 +246,53 @@
                 </div>
 
                 <div class="mt-4 max-h-[420px] overflow-auto rounded-2xl border border-slate-200" data-finance-scroll>
+                    @php
+                        $costAnalysis = $analytics['cost_analysis'] ?? [
+                            'count' => 0,
+                            'average' => 0,
+                            'highest_category' => null,
+                            'largest_entry' => null,
+                            'breakdown' => collect(),
+                        ];
+                    @endphp
+                    <div class="cost-analysis-panel">
+                        <div class="cost-analysis-metrics">
+                            <div>
+                                <p>Entries</p>
+                                <strong>{{ number_format($costAnalysis['count'] ?? 0) }}</strong>
+                            </div>
+                            <div>
+                                <p>Average Cost</p>
+                                <strong>{{ $formatCurrency($costAnalysis['average'] ?? 0) }}</strong>
+                            </div>
+                            <div>
+                                <p>Highest Category</p>
+                                <strong>{{ $costAnalysis['highest_category']['label'] ?? 'None' }}</strong>
+                                <span>{{ $formatCurrency($costAnalysis['highest_category']['amount'] ?? 0) }}</span>
+                            </div>
+                            <div>
+                                <p>Largest Cost</p>
+                                <strong>{{ $formatCurrency($costAnalysis['largest_entry']['amount'] ?? 0) }}</strong>
+                                <span>{{ $costAnalysis['largest_entry']['description'] ?? ($costAnalysis['largest_entry']['label'] ?? 'None') }}</span>
+                            </div>
+                        </div>
+
+                        <div class="cost-analysis-breakdown">
+                            @foreach (($costAnalysis['breakdown'] ?? collect()) as $costCategory)
+                                <div class="cost-analysis-row">
+                                    <div>
+                                        <strong>{{ $costCategory['label'] }}</strong>
+                                        <span>{{ $costCategory['count'] }} {{ \Illuminate\Support\Str::plural('entry', $costCategory['count']) }}</span>
+                                    </div>
+                                    <div class="cost-analysis-bar" aria-label="{{ $costCategory['label'] }} {{ $costCategory['percent'] }} percent">
+                                        <span style="width: {{ max(2, min(100, (float) $costCategory['percent'])) }}%"></span>
+                                    </div>
+                                    <em>{{ $formatCurrency($costCategory['amount']) }} · {{ $costCategory['percent'] }}%</em>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
                     <table class="admin-table finance-table">
                         <colgroup>
                             <col class="finance-cost-col">
