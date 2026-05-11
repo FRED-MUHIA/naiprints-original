@@ -52,24 +52,24 @@ class Page extends Model
 
             if (!in_array('product_steps', $types, true)) {
                 $insert = PageDefaults::section('product_steps');
-                $categoryIndex = array_search('category_carousel', $types, true);
-                if ($categoryIndex === false) {
+                $designStudioIndex = array_search('design_studio', $types, true);
+                if ($designStudioIndex === false) {
                     $sections[] = $insert;
                 } else {
-                    array_splice($sections, $categoryIndex + 1, 0, [$insert]);
+                    array_splice($sections, $designStudioIndex, 0, [$insert]);
                 }
                 $types = array_map(fn ($section) => $section['type'] ?? null, $sections);
                 $updated = true;
             }
 
             $productStepsIndex = array_search('product_steps', $types, true);
-            $categoryIndex = array_search('category_carousel', $types, true);
-            if ($productStepsIndex !== false && $categoryIndex !== false && $productStepsIndex < $categoryIndex) {
+            $designStudioIndex = array_search('design_studio', $types, true);
+            if ($productStepsIndex !== false && $designStudioIndex !== false && $productStepsIndex !== $designStudioIndex - 1) {
                 $productStepsSection = $sections[$productStepsIndex];
                 array_splice($sections, $productStepsIndex, 1);
                 $types = array_map(fn ($section) => $section['type'] ?? null, $sections);
-                $categoryIndex = array_search('category_carousel', $types, true);
-                array_splice($sections, $categoryIndex + 1, 0, [$productStepsSection]);
+                $designStudioIndex = array_search('design_studio', $types, true);
+                array_splice($sections, $designStudioIndex, 0, [$productStepsSection]);
                 $types = array_map(fn ($section) => $section['type'] ?? null, $sections);
                 $updated = true;
             }

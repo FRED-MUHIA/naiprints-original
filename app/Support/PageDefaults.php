@@ -52,28 +52,6 @@ class PageDefaults
                     ],
                 ],
                 [
-                    'type' => 'product_steps',
-                    'data' => [
-                        'steps' => [
-                            [
-                                'title' => 'Pick your product',
-                                'body' => 'From t-shirts to totes, select from our large range of high-quality clothing and accessories to print your design on.',
-                                'theme' => 'products',
-                            ],
-                            [
-                                'title' => 'Create your design',
-                                'body' => 'Our free online design tool makes creating simple. Choose from hundreds of fonts, premade designs, upload yours or import photos.',
-                                'theme' => 'design',
-                            ],
-                            [
-                                'title' => 'Leave the rest to us',
-                                'body' => "Once your masterpiece is complete, simply place your order. Your expertly printed item will arrive so quickly you'll wonder how we do it.",
-                                'theme' => 'delivery',
-                            ],
-                        ],
-                    ],
-                ],
-                [
                     'type' => 'collection_showcase',
                     'data' => [
                         'kicker' => 'Ethical suppliers',
@@ -167,6 +145,28 @@ class PageDefaults
                         'stats' => [
                             ['value' => '250+', 'label' => 'Corporate clients'],
                             ['value' => '5,000+', 'label' => 'Units weekly'],
+                        ],
+                    ],
+                ],
+                [
+                    'type' => 'product_steps',
+                    'data' => [
+                        'steps' => [
+                            [
+                                'title' => 'Pick your product',
+                                'body' => 'From t-shirts to totes, select from our large range of high-quality clothing and accessories to print your design on.',
+                                'theme' => 'products',
+                            ],
+                            [
+                                'title' => 'Create your design',
+                                'body' => 'Our free online design tool makes creating simple. Choose from hundreds of fonts, premade designs, upload yours or import photos.',
+                                'theme' => 'design',
+                            ],
+                            [
+                                'title' => 'Leave the rest to us',
+                                'body' => "Once your masterpiece is complete, simply place your order. Your expertly printed item will arrive so quickly you'll wonder how we do it.",
+                                'theme' => 'delivery',
+                            ],
                         ],
                     ],
                 ],
@@ -769,13 +769,13 @@ class PageDefaults
             'hero' => self::home()['sections'][0],
             'tiles' => self::home()['sections'][1],
             'category_carousel' => self::home()['sections'][2],
-            'product_steps' => self::home()['sections'][3],
-            'collection_showcase' => self::home()['sections'][4],
-            'best_sellers' => self::home()['sections'][5],
-            'sale_feature' => self::home()['sections'][6],
-            'gift_finder' => self::home()['sections'][7],
-            'how_it_works' => self::home()['sections'][8],
-            'cta' => self::home()['sections'][9],
+            'collection_showcase' => self::home()['sections'][3],
+            'best_sellers' => self::home()['sections'][4],
+            'sale_feature' => self::home()['sections'][5],
+            'gift_finder' => self::home()['sections'][6],
+            'how_it_works' => self::home()['sections'][7],
+            'cta' => self::home()['sections'][8],
+            'product_steps' => self::home()['sections'][9],
             'design_studio' => self::home()['sections'][10],
             'footer_notice' => self::home()['sections'][11],
             'shop_header' => self::shop()['sections'][0],

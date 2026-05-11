@@ -765,10 +765,6 @@
                                             </div>
                                         </div>
                                     @endif
-                                    <div class="sale-feature-repeat" aria-hidden="true">
-                                        <span>SALE SALE</span>
-                                        <span>SALE SALE</span>
-                                    </div>
                                     <a href="{{ $saleCtaUrl !== '' ? $saleCtaUrl : route('shop') }}" class="sale-feature-button">
                                         <span>{{ $saleCtaLabel !== '' ? $saleCtaLabel : 'Shop now' }}</span>
                                         <span aria-hidden="true">-&gt;</span>
