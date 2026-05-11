@@ -227,3 +227,38 @@
         </div>
     </div>
 @endif
+
+<nav class="mobile-bottom-nav" aria-label="Mobile quick navigation">
+    <a href="{{ route('shop') }}" class="mobile-bottom-item">
+        <svg class="mobile-bottom-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="4" y="4" width="6" height="6" rx="1.2"></rect>
+            <rect x="14" y="4" width="6" height="6" rx="1.2"></rect>
+            <rect x="4" y="14" width="6" height="6" rx="1.2"></rect>
+            <rect x="14" y="14" width="6" height="6" rx="1.2"></rect>
+        </svg>
+        <span>Shop</span>
+    </a>
+    <button type="button" class="mobile-bottom-item" data-site-search-toggle>
+        <svg class="mobile-bottom-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="10.8" cy="10.8" r="6.8"></circle>
+            <path d="m16 16 4.2 4.2"></path>
+        </svg>
+        <span>Search</span>
+    </button>
+    <a href="{{ route('affiliate.login') }}" class="mobile-bottom-item">
+        <svg class="mobile-bottom-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="7.2" r="3.8"></circle>
+            <path d="M4.8 21c.35-4 3-6.1 7.2-6.1s6.85 2.1 7.2 6.1"></path>
+        </svg>
+        <span>Account</span>
+    </a>
+    <button type="button" class="mobile-bottom-item">
+        <span class="mobile-bottom-icon-wrap">
+            <span class="mobile-bottom-badge" data-wishlist-count>0</span>
+            <svg class="mobile-bottom-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M20.4 5.8a5 5 0 0 0-7.1 0L12 7.1l-1.3-1.3a5 5 0 1 0-7.1 7.1L12 21l8.4-8.1a5 5 0 0 0 0-7.1Z"></path>
+            </svg>
+        </span>
+        <span>Wishlist</span>
+    </button>
+</nav>

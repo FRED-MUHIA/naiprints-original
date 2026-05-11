@@ -138,6 +138,42 @@
                                         @endif
                                     @endforeach
                                 </div>
+                            @elseif ($type === 'product_steps')
+                                @php
+                                    $steps = $data['steps'] ?? [];
+                                    if (empty($steps)) {
+                                        $steps = \App\Support\PageDefaults::section('product_steps')['data']['steps'] ?? [];
+                                    }
+                                    $stepThemes = [
+                                        'products' => 'Pick product artwork',
+                                        'design' => 'Create design artwork',
+                                        'delivery' => 'Leave the rest artwork',
+                                    ];
+                                @endphp
+                                <div class="grid gap-3">
+                                    @foreach ($steps as $stepIndex => $step)
+                                        <div class="rounded-xl border border-slate-200 p-4">
+                                            <p class="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Step {{ $stepIndex + 1 }}</p>
+                                            <div class="grid gap-3 sm:grid-cols-2">
+                                                <input type="text"
+                                                       name="sections[{{ $index }}][data][steps][{{ $stepIndex }}][title]"
+                                                       value="{{ $step['title'] ?? '' }}"
+                                                       placeholder="Step title"
+                                                       class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                <select name="sections[{{ $index }}][data][steps][{{ $stepIndex }}][theme]"
+                                                        class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                    @foreach ($stepThemes as $themeValue => $themeLabel)
+                                                        <option value="{{ $themeValue }}" @selected(($step['theme'] ?? '') === $themeValue)>{{ $themeLabel }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <textarea name="sections[{{ $index }}][data][steps][{{ $stepIndex }}][body]"
+                                                      rows="2"
+                                                      placeholder="Step description"
+                                                      class="mt-3 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">{{ $step['body'] ?? '' }}</textarea>
+                                        </div>
+                                    @endforeach
+                                </div>
                             @elseif ($type === 'category_carousel')
                                 <div class="grid gap-3 sm:grid-cols-2">
                                     <input type="text" name="sections[{{ $index }}][data][kicker]" value="{{ $data['kicker'] ?? '' }}" placeholder="Kicker" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
@@ -214,6 +250,70 @@
                                             <option value="{{ $category->id }}" @selected((string) $featuredCategoryId === (string) $category->id)>{{ $category->name }}</option>
                                         @endforeach
                                     </select>
+                                </div>
+                            @elseif ($type === 'sale_feature')
+                                @php
+                                    $saleCategoryId = $data['product_category_id'] ?? '';
+                                    $saleCategoryId = is_numeric($saleCategoryId) ? (int) $saleCategoryId : '';
+                                    $saleEndsAt = $data['ends_at'] ?? '';
+                                    try {
+                                        $saleEndsAt = $saleEndsAt ? \Carbon\Carbon::parse($saleEndsAt)->format('Y-m-d\TH:i') : '';
+                                    } catch (\Throwable $exception) {
+                                        $saleEndsAt = '';
+                                    }
+                                @endphp
+                                <div class="grid gap-3 sm:grid-cols-2">
+                                    <input type="text" name="sections[{{ $index }}][data][title]" value="{{ $data['title'] ?? '' }}" placeholder="Sale headline" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                    <input type="number" name="sections[{{ $index }}][data][discount_percent]" value="{{ $data['discount_percent'] ?? 30 }}" min="0" max="95" step="1" placeholder="Discount percent" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                </div>
+                                <textarea name="sections[{{ $index }}][data][body]" rows="2" placeholder="Sale description" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">{{ $data['body'] ?? '' }}</textarea>
+                                <div class="grid gap-3 sm:grid-cols-3">
+                                    <input type="datetime-local" name="sections[{{ $index }}][data][ends_at]" value="{{ $saleEndsAt }}" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                    <input type="text" name="sections[{{ $index }}][data][cta_label]" value="{{ $data['cta_label'] ?? '' }}" placeholder="CTA label" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                    <input type="text" name="sections[{{ $index }}][data][cta_url]" value="{{ $data['cta_url'] ?? '' }}" placeholder="CTA URL" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Sale product category</label>
+                                    <select name="sections[{{ $index }}][data][product_category_id]" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                        <option value="">Default featured products</option>
+                                        @foreach ($categories as $category)
+                                            <option value="{{ $category->id }}" @selected((string) $saleCategoryId === (string) $category->id)>{{ $category->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <p class="mt-1 text-xs text-slate-500">The timer counts down to the selected date and time.</p>
+                                </div>
+                                <div class="rounded-xl border border-slate-200 p-4">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Theme colors</p>
+                                    <div class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                        <label class="text-xs font-semibold text-slate-600">
+                                            Section background
+                                            <input type="color" name="sections[{{ $index }}][data][background_color]" value="{{ $data['background_color'] ?? '#ffffff' }}" class="mt-1 h-10 w-full rounded-xl border border-slate-200 px-2 py-1">
+                                        </label>
+                                        <label class="text-xs font-semibold text-slate-600">
+                                            Artwork background
+                                            <input type="color" name="sections[{{ $index }}][data][hero_background_color]" value="{{ $data['hero_background_color'] ?? '#f3f4f6' }}" class="mt-1 h-10 w-full rounded-xl border border-slate-200 px-2 py-1">
+                                        </label>
+                                        <label class="text-xs font-semibold text-slate-600">
+                                            Sale text color
+                                            <input type="color" name="sections[{{ $index }}][data][sale_text_color]" value="{{ $data['sale_text_color'] ?? '#e11d2e' }}" class="mt-1 h-10 w-full rounded-xl border border-slate-200 px-2 py-1">
+                                        </label>
+                                        <label class="text-xs font-semibold text-slate-600">
+                                            Sale alternate color
+                                            <input type="color" name="sections[{{ $index }}][data][sale_text_alt_color]" value="{{ $data['sale_text_alt_color'] ?? '#000000' }}" class="mt-1 h-10 w-full rounded-xl border border-slate-200 px-2 py-1">
+                                        </label>
+                                        <label class="text-xs font-semibold text-slate-600">
+                                            Text outline
+                                            <input type="color" name="sections[{{ $index }}][data][sale_outline_color]" value="{{ $data['sale_outline_color'] ?? '#000000' }}" class="mt-1 h-10 w-full rounded-xl border border-slate-200 px-2 py-1">
+                                        </label>
+                                        <label class="text-xs font-semibold text-slate-600">
+                                            Timer background
+                                            <input type="color" name="sections[{{ $index }}][data][countdown_background_color]" value="{{ $data['countdown_background_color'] ?? '#e11d2e' }}" class="mt-1 h-10 w-full rounded-xl border border-slate-200 px-2 py-1">
+                                        </label>
+                                        <label class="text-xs font-semibold text-slate-600">
+                                            Timer text
+                                            <input type="color" name="sections[{{ $index }}][data][countdown_text_color]" value="{{ $data['countdown_text_color'] ?? '#ffffff' }}" class="mt-1 h-10 w-full rounded-xl border border-slate-200 px-2 py-1">
+                                        </label>
+                                    </div>
                                 </div>
                             @elseif ($type === 'gift_finder')
                                 @php
@@ -1373,9 +1473,11 @@
                     <select name="add_section_type" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">
                         <option value="hero">Hero</option>
                         <option value="tiles">Tiles</option>
+                        <option value="product_steps">Product steps</option>
                         <option value="category_carousel">Category carousel</option>
                         <option value="collection_showcase">Collection showcase</option>
                         <option value="best_sellers">Best sellers</option>
+                        <option value="sale_feature">Sale feature</option>
                         <option value="gift_finder">Gift finder</option>
                         <option value="how_it_works">How it works</option>
                         <option value="cta">Call to action</option>

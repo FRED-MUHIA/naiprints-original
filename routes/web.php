@@ -230,6 +230,17 @@ Route::get('/', function () {
     $featuredCategoryId = data_get($bestSellersSection, 'data.product_category_id');
     $featuredCategoryId = is_numeric($featuredCategoryId) ? (int) $featuredCategoryId : null;
 
+    $saleFeatureSection = collect($homeSections)->first(function ($section) {
+        return ($section['type'] ?? '') === 'sale_feature';
+    });
+    $saleFeatureCategoryId = data_get($saleFeatureSection, 'data.product_category_id');
+    $saleFeatureCategoryId = is_numeric($saleFeatureCategoryId) ? (int) $saleFeatureCategoryId : null;
+    $promoCategoryId = Category::query()
+        ->whereRaw('LOWER(slug) = ?', ['promo'])
+        ->orWhereRaw('LOWER(name) = ?', ['promo'])
+        ->value('id');
+    $promoCategoryId = is_numeric($promoCategoryId) ? (int) $promoCategoryId : null;
+
     $giftFinderSection = collect($homeSections)->first(function ($section) {
         return ($section['type'] ?? '') === 'gift_finder';
     });
@@ -273,6 +284,16 @@ Route::get('/', function () {
     $applyHomeCategoryFilter($featuredProductsQuery, $featuredCategoryId);
     $featuredProducts = $featuredProductsQuery->take(8)->get();
 
+    $saleFeatureProductsQuery = Product::with($homeProductRelations)->orderByDesc('created_at');
+    $applyHomeCategoryFilter($saleFeatureProductsQuery, $saleFeatureCategoryId ?: $promoCategoryId);
+    $saleFeatureProducts = $saleFeatureProductsQuery->take(2)->get();
+    if ($saleFeatureProducts->isEmpty() && ($saleFeatureCategoryId || $promoCategoryId)) {
+        $saleFeatureProducts = Product::with($homeProductRelations)
+            ->orderByDesc('created_at')
+            ->take(2)
+            ->get();
+    }
+
     $giftFinderProductsQuery = Product::with($homeProductRelations)->orderByDesc('created_at');
     $applyHomeCategoryFilter($giftFinderProductsQuery, $giftFinderCategoryId);
     $giftFinderProducts = $giftFinderProductsQuery->take(8)->get();
@@ -288,6 +309,7 @@ Route::get('/', function () {
         'giftFinderCategories' => $giftFinderCategories,
         'products' => $products,
         'featuredProducts' => $featuredProducts,
+        'saleFeatureProducts' => $saleFeatureProducts,
         'giftFinderProducts' => $giftFinderProducts,
         'pageContent' => $page->content,
         'globalHeader' => $header->content,

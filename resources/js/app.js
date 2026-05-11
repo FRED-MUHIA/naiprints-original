@@ -146,9 +146,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const searchRoot = document.querySelector('[data-site-search]');
-    const searchToggle = document.querySelector('[data-site-search-toggle]');
+    const searchToggles = document.querySelectorAll('[data-site-search-toggle]');
 
-    if (searchRoot && searchToggle) {
+    if (searchRoot && searchToggles.length) {
         const searchBackdrop = searchRoot.querySelector('[data-site-search-backdrop]');
         const searchCloseBtn = searchRoot.querySelector('[data-site-search-close]');
         const searchInput = searchRoot.querySelector('[data-site-search-input]');
@@ -275,9 +275,11 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         };
 
-        searchToggle.addEventListener('click', (event) => {
-            event.preventDefault();
-            openSearch();
+        searchToggles.forEach((searchToggle) => {
+            searchToggle.addEventListener('click', (event) => {
+                event.preventDefault();
+                openSearch();
+            });
         });
 
         searchCloseBtn?.addEventListener('click', closeSearch);
@@ -923,6 +925,48 @@ document.addEventListener('DOMContentLoaded', () => {
         carousel.addEventListener('focusout', start);
 
         start();
+    });
+
+    document.querySelectorAll('[data-sale-countdown]').forEach((countdown) => {
+        const endAt = Date.parse(countdown.dataset.saleEndsAt || '');
+        const daysNode = countdown.querySelector('[data-sale-days]');
+        const hoursNode = countdown.querySelector('[data-sale-hours]');
+        const minutesNode = countdown.querySelector('[data-sale-minutes]');
+        const secondsNode = countdown.querySelector('[data-sale-seconds]');
+
+        if (
+            Number.isNaN(endAt) ||
+            !daysNode ||
+            !hoursNode ||
+            !minutesNode ||
+            !secondsNode
+        ) {
+            return;
+        }
+
+        const pad = (value) => String(Math.max(0, value)).padStart(2, '0');
+        let timer = null;
+
+        const update = () => {
+            const totalSeconds = Math.max(0, Math.floor((endAt - Date.now()) / 1000));
+            const days = Math.floor(totalSeconds / 86400);
+            const hours = Math.floor((totalSeconds % 86400) / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+
+            daysNode.textContent = pad(days);
+            hoursNode.textContent = pad(hours);
+            minutesNode.textContent = pad(minutes);
+            secondsNode.textContent = pad(seconds);
+
+            if (totalSeconds <= 0 && timer) {
+                window.clearInterval(timer);
+                timer = null;
+            }
+        };
+
+        update();
+        timer = window.setInterval(update, 1000);
     });
 
     document.querySelectorAll('[data-gift-category-select]').forEach((select) => {

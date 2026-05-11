@@ -313,6 +313,88 @@
                                 @endforeach
                             </section>
                         @endif
+                    @elseif ($type === 'product_steps')
+                        @php
+                            $data = $section['data'] ?? [];
+                            $productSteps = $data['steps'] ?? [];
+                            if (empty($productSteps)) {
+                                $productSteps = \App\Support\PageDefaults::section('product_steps')['data']['steps'] ?? [];
+                            }
+                        @endphp
+                            <section class="product-steps-section mx-auto max-w-6xl px-4 pb-10">
+                                <div class="product-steps-grid">
+                                    @foreach ($productSteps as $step)
+                                        @php
+                                            $stepTheme = $step['theme'] ?? 'products';
+                                            if (!in_array($stepTheme, ['products', 'design', 'delivery'], true)) {
+                                                $stepTheme = 'products';
+                                            }
+                                        @endphp
+                                        <article class="product-step">
+                                            <div class="product-step-media product-step-media-{{ $stepTheme }}" aria-hidden="true">
+                                                @if ($stepTheme === 'products')
+                                                    <svg class="product-step-art product-step-art-products" viewBox="0 0 420 280" role="img" aria-label="">
+                                                        <rect x="94" y="52" width="224" height="174" rx="24" fill="#50d09f" opacity="0.88" />
+                                                        <path d="M84 74 36 88 78 226 142 198 112 112Z" fill="#f8fafc" />
+                                                        <path d="M72 93c18 12 32 11 48-5" fill="none" stroke="#d7dee9" stroke-width="5" stroke-linecap="round" />
+                                                        <path d="M88 150c11-24 30-31 45-8 14 20 25 21 38 5" fill="none" stroke="#20b783" stroke-width="10" stroke-linecap="round" />
+                                                        <path d="M160 58 212 42 268 58 286 92 268 108v118H160V108l-18-16Z" fill="#ffffff" />
+                                                        <path d="M193 58c10 12 31 12 42 0" fill="none" stroke="#e2e8f0" stroke-width="5" stroke-linecap="round" />
+                                                        <path d="M205 136 225 104l42 60h-86l22-28Z" fill="none" stroke="#243b73" stroke-width="8" stroke-linejoin="round" />
+                                                        <path d="M216 102c-4-15 11-30 27-23 7 3 12 9 14 16" fill="none" stroke="#243b73" stroke-width="7" stroke-linecap="round" />
+                                                        <path d="M286 122 344 144 318 216 260 194Z" fill="#ffffff" />
+                                                        <path d="M286 166c19-35 46-35 63-5" fill="none" stroke="#d29f58" stroke-width="6" stroke-linecap="round" />
+                                                        <path d="M294 183h42" stroke="#d29f58" stroke-width="6" stroke-linecap="round" />
+                                                        <circle cx="334" cy="91" r="34" fill="#ffffff" opacity="0.94" />
+                                                        <circle cx="334" cy="91" r="23" fill="none" stroke="#1f2f60" stroke-width="4" />
+                                                        <path d="M324 93c6 8 19 8 25 0" fill="none" stroke="#e11d2e" stroke-width="4" stroke-linecap="round" />
+                                                        <circle cx="325" cy="83" r="3" fill="#1f2f60" />
+                                                        <circle cx="344" cy="83" r="3" fill="#1f2f60" />
+                                                    </svg>
+                                                @elseif ($stepTheme === 'design')
+                                                    <svg class="product-step-art product-step-art-design" viewBox="0 0 420 280" role="img" aria-label="">
+                                                        <rect x="0" y="0" width="420" height="280" fill="#37b95e" />
+                                                        <path d="M54 214c54-38 116-39 170 0" fill="#9ee0b0" opacity="0.62" />
+                                                        <path d="M116 206c-15-34 2-67 39-79 38-13 83 4 96 41 6 17 3 31-4 43Z" fill="#c9f1d2" opacity="0.55" />
+                                                        <path d="M168 38 214 24 260 38 280 74 260 94v162H168V94l-20-20Z" fill="#ffffff" />
+                                                        <path d="M196 38c8 10 28 10 36 0" fill="none" stroke="#111827" stroke-width="5" stroke-linecap="round" />
+                                                        <rect x="194" y="100" width="84" height="84" fill="none" stroke="#111827" stroke-width="5" />
+                                                        <path d="M207 162 227 140l15 14 12-18 14 26Z" fill="none" stroke="#111827" stroke-width="5" stroke-linejoin="round" />
+                                                        <circle cx="258" cy="122" r="6" fill="#111827" />
+                                                        <circle cx="292" cy="92" r="24" fill="#02ad63" />
+                                                        <path d="M292 78v28M278 92h28" stroke="#ffffff" stroke-width="8" stroke-linecap="round" />
+                                                        <path d="M90 236h80" stroke="#166534" stroke-width="8" stroke-linecap="round" opacity="0.8" />
+                                                        <path d="M72 226h86l-10 20H82Z" fill="#a7f3d0" opacity="0.75" />
+                                                    </svg>
+                                                @else
+                                                    <svg class="product-step-art product-step-art-delivery" viewBox="0 0 420 280" role="img" aria-label="">
+                                                        <rect x="0" y="0" width="420" height="280" fill="#52c4ba" />
+                                                        <ellipse cx="246" cy="232" rx="96" ry="24" fill="#2f7f8a" opacity="0.45" />
+                                                        <path d="M70 202 178 154 250 188 134 238Z" fill="#f5f7fa" />
+                                                        <path d="M96 216 94 254M194 188l18 52M146 210l-34 42" stroke="#9a6b40" stroke-width="8" stroke-linecap="round" />
+                                                        <rect x="122" y="88" width="68" height="44" rx="3" fill="#ffffff" />
+                                                        <rect x="130" y="98" width="52" height="28" fill="#dbeafe" />
+                                                        <path d="M138 118h12M158 118h12M138 108h30" stroke="#f59e0b" stroke-width="4" stroke-linecap="round" />
+                                                        <path d="M244 78c28 13 40 48 27 80l-16 39-60-26 19-44c-19-13-16-45 6-54 7-3 16-1 24 5Z" fill="#f4caa4" />
+                                                        <path d="M232 68c24 0 31 23 18 36-8 8-23 1-27 13-18-10-19-36 9-49Z" fill="#9a6238" />
+                                                        <path d="M252 126c34 11 51 42 49 89h-74l-18-42Z" fill="#dbeafe" />
+                                                        <rect x="322" y="36" width="10" height="188" rx="5" fill="#e8f7f6" />
+                                                        <path d="M326 64h62M326 192h66" stroke="#e8f7f6" stroke-width="8" stroke-linecap="round" />
+                                                        <path d="M346 62h34v70h-34Z" fill="#243b73" />
+                                                        <path d="M382 62h34v74h-34Z" fill="#e24a56" />
+                                                        <path d="M352 92h20M388 92h20" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity="0.7" />
+                                                        <path d="M292 106c8 15 8 32 0 50" stroke="#f4caa4" stroke-width="16" stroke-linecap="round" />
+                                                    </svg>
+                                                @endif
+                                            </div>
+                                            <div class="product-step-copy">
+                                                <h2>{{ $step['title'] }}</h2>
+                                                <p>{{ $step['body'] }}</p>
+                                            </div>
+                                        </article>
+                                    @endforeach
+                                </div>
+                            </section>
                     @elseif ($type === 'category_carousel')
                         @php
                             $data = $section['data'] ?? [];
@@ -600,6 +682,163 @@
                                         </div>
                                     </article>
                                 @endforeach
+                            </div>
+                        </section>
+                    @elseif ($type === 'sale_feature')
+                        @php
+                            $data = $section['data'] ?? [];
+                            $saleTitle = trim((string) ($data['title'] ?? 'Extra Sale 30% Off'));
+                            $saleBody = trim((string) ($data['body'] ?? "What's more, we do it right. A full administration printing background."));
+                            $saleDiscount = is_numeric($data['discount_percent'] ?? null) ? (float) $data['discount_percent'] : 30;
+                            $saleDiscount = max(0, min(95, $saleDiscount));
+                            $saleCtaLabel = trim((string) ($data['cta_label'] ?? 'Shop now'));
+                            $saleCtaUrl = trim((string) ($data['cta_url'] ?? '/shop'));
+                            $saleCategoryId = $data['product_category_id'] ?? null;
+                            $saleCategoryId = is_numeric($saleCategoryId) ? (int) $saleCategoryId : null;
+                            $sanitizeSaleColor = static function ($value, $fallback) {
+                                return is_string($value) && preg_match('/^#(?:[0-9a-fA-F]{3}){1,2}$/', $value)
+                                    ? $value
+                                    : $fallback;
+                            };
+                            $saleColors = [
+                                'background' => $sanitizeSaleColor($data['background_color'] ?? '', '#ffffff'),
+                                'heroBackground' => $sanitizeSaleColor($data['hero_background_color'] ?? '', '#f3f4f6'),
+                                'saleText' => $sanitizeSaleColor($data['sale_text_color'] ?? '', '#e11d2e'),
+                                'saleTextAlt' => $sanitizeSaleColor($data['sale_text_alt_color'] ?? '', '#000000'),
+                                'saleOutline' => $sanitizeSaleColor($data['sale_outline_color'] ?? '', '#000000'),
+                                'countdownBackground' => $sanitizeSaleColor($data['countdown_background_color'] ?? '', '#e11d2e'),
+                                'countdownText' => $sanitizeSaleColor($data['countdown_text_color'] ?? '', '#ffffff'),
+                            ];
+                            if ($saleCategoryId && ($saleCtaUrl === '/shop' || $saleCtaUrl === '')) {
+                                $saleCtaUrl = route('shop', ['category' => $saleCategoryId]);
+                            }
+                            $saleEndsAtRaw = trim((string) ($data['ends_at'] ?? ''));
+                            try {
+                                $saleEndsAt = $saleEndsAtRaw !== ''
+                                    ? \Carbon\Carbon::parse($saleEndsAtRaw)
+                                    : now()->addDays(30);
+                            } catch (\Throwable $exception) {
+                                $saleEndsAt = now()->addDays(30);
+                            }
+                            $saleEndsAtIso = $saleEndsAt->toIso8601String();
+                            $saleSecondsRemaining = max(0, now()->diffInSeconds($saleEndsAt, false));
+                            $saleDays = (int) floor($saleSecondsRemaining / 86400);
+                            $saleHours = (int) floor(($saleSecondsRemaining % 86400) / 3600);
+                            $saleMinutes = (int) floor(($saleSecondsRemaining % 3600) / 60);
+                            $saleSeconds = (int) ($saleSecondsRemaining % 60);
+                            $saleProductSource = !empty($saleFeatureProducts) && $saleFeatureProducts->count()
+                                ? $saleFeatureProducts
+                                : ($featuredProducts->count() ? $featuredProducts : collect($products ?? []));
+                            $saleProducts = $saleProductSource->take(2)->values();
+                        @endphp
+                        <section class="sale-feature mx-auto max-w-6xl px-4 pb-12"
+                                 style="--sale-feature-bg: {{ $saleColors['background'] }}; --sale-hero-bg: {{ $saleColors['heroBackground'] }}; --sale-word-color: {{ $saleColors['saleText'] }}; --sale-word-alt: {{ $saleColors['saleTextAlt'] }}; --sale-word-outline: {{ $saleColors['saleOutline'] }}; --sale-countdown-bg: {{ $saleColors['countdownBackground'] }}; --sale-countdown-text: {{ $saleColors['countdownText'] }};">
+                            <div class="sale-feature-grid">
+                                <div class="sale-feature-hero">
+                                    <div class="sale-feature-people" aria-hidden="true">
+                                        <div class="sale-person sale-person-left">
+                                            <div class="sale-person-head"></div>
+                                            <div class="sale-person-hair"></div>
+                                            <div class="sale-person-shirt">
+                                                <span></span>
+                                            </div>
+                                            <div class="sale-person-leg sale-person-leg-left"></div>
+                                            <div class="sale-person-leg sale-person-leg-right"></div>
+                                        </div>
+                                        <div class="sale-person sale-person-right">
+                                            <div class="sale-person-head"></div>
+                                            <div class="sale-person-hair"></div>
+                                            <div class="sale-person-shirt">
+                                                <span></span>
+                                            </div>
+                                            <div class="sale-person-leg sale-person-leg-left"></div>
+                                            <div class="sale-person-leg sale-person-leg-right"></div>
+                                        </div>
+                                    </div>
+                                    <div class="sale-feature-repeat" aria-hidden="true">
+                                        <span>SALE SALE</span>
+                                        <span>SALE SALE</span>
+                                    </div>
+                                    <a href="{{ $saleCtaUrl !== '' ? $saleCtaUrl : route('shop') }}" class="sale-feature-button">
+                                        <span>{{ $saleCtaLabel !== '' ? $saleCtaLabel : 'Shop now' }}</span>
+                                        <span aria-hidden="true">-&gt;</span>
+                                    </a>
+                                </div>
+                                <div class="sale-feature-content">
+                                    <div class="sale-feature-head">
+                                        <h2>{{ $saleTitle }}</h2>
+                                        <p>{{ $saleBody }}</p>
+                                        <div class="sale-countdown"
+                                             aria-label="Sale countdown"
+                                             data-sale-countdown
+                                             data-sale-ends-at="{{ $saleEndsAtIso }}">
+                                            <span data-sale-days>{{ str_pad((string) $saleDays, 2, '0', STR_PAD_LEFT) }}</span>
+                                            <b>:</b>
+                                            <span data-sale-hours>{{ str_pad((string) $saleHours, 2, '0', STR_PAD_LEFT) }}</span>
+                                            <b>:</b>
+                                            <span data-sale-minutes>{{ str_pad((string) $saleMinutes, 2, '0', STR_PAD_LEFT) }}</span>
+                                            <b>:</b>
+                                            <span data-sale-seconds>{{ str_pad((string) $saleSeconds, 2, '0', STR_PAD_LEFT) }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="sale-product-row">
+                                        <button class="sale-nav sale-nav-prev" type="button" aria-label="Previous sale product">
+                                            <span aria-hidden="true">&lt;</span>
+                                        </button>
+                                        @foreach ($saleProducts as $saleIndex => $product)
+                                            @php
+                                                $isModel = is_object($product);
+                                                $name = $product['title'] ?? $product['name'] ?? ($isModel ? $product->name : 'Product');
+                                                $price = $product['price'] ?? ($isModel ? $product->price : 0);
+                                                $rawPrice = is_numeric($price) ? (float) $price : (float) preg_replace('/[^\d.]/', '', (string) $price);
+                                                $salePrice = $rawPrice > 0 ? $rawPrice * (1 - ($saleDiscount / 100)) : 0;
+                                                $imageUrl = $isModel ? ($product->image_url ?? null) : ($product['image_url'] ?? null);
+                                                $detailUrl = $isModel && isset($product->id)
+                                                    ? route('products.show', ['product' => ($product->slug ?: $product->id)])
+                                                    : route('shop');
+                                                $colorOptions = $isModel ? ($product->color_options ?? []) : ($product['color_options'] ?? []);
+                                                if (is_string($colorOptions)) {
+                                                    $colorOptions = array_filter(array_map('trim', explode(',', $colorOptions)));
+                                                }
+                                                if (empty($colorOptions)) {
+                                                    $colorOptions = ['#111827', '#7ed957'];
+                                                }
+                                            @endphp
+                                            <article class="sale-mini-product">
+                                                <a href="{{ $detailUrl }}" class="sale-mini-media">
+                                                    <span class="sale-mini-badge">Sale!</span>
+                                                    @if ($imageUrl)
+                                                        <img src="{{ $imageUrl }}" alt="{{ $name }}" loading="lazy">
+                                                    @else
+                                                        <div class="sale-mini-placeholder">
+                                                            <span>{{ strtoupper(substr($name, 0, 1)) }}</span>
+                                                        </div>
+                                                    @endif
+                                                </a>
+                                                <div class="sale-mini-copy">
+                                                    <h3>{{ $name }}</h3>
+                                                    <p>
+                                                        @if ($salePrice > 0)
+                                                            <span>KSh {{ number_format($salePrice, 0) }}</span>
+                                                            <del>KSh {{ number_format($rawPrice, 0) }}</del>
+                                                        @else
+                                                            <span>Shop sale</span>
+                                                        @endif
+                                                    </p>
+                                                    <div class="sale-mini-swatches">
+                                                        @foreach (array_slice($colorOptions, 0, 2) as $color)
+                                                            <span style="--sale-swatch: {{ $color }};"></span>
+                                                        @endforeach
+                                                        <em>+5</em>
+                                                    </div>
+                                                </div>
+                                            </article>
+                                        @endforeach
+                                        <button class="sale-nav sale-nav-next" type="button" aria-label="Next sale product">
+                                            <span aria-hidden="true">&gt;</span>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </section>
                     @elseif ($type === 'gift_finder')
