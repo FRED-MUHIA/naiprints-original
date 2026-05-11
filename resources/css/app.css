@@ -2331,6 +2331,65 @@
         box-shadow: 0 0 0 2px #fff, 0 0 0 3px var(--brand-red);
     }
 
+    @media (max-width: 639px) {
+        .best-sellers-grid .product-card {
+            border-radius: 18px;
+            padding: 8px;
+        }
+
+        .best-sellers-grid .product-media {
+            border-radius: 16px;
+        }
+
+        .best-sellers-grid .product-badge {
+            top: 8px;
+            left: 8px;
+            padding: 0.2rem 0.45rem;
+            font-size: 9px;
+            letter-spacing: 0;
+        }
+
+        .best-sellers-grid .product-actions {
+            top: 8px;
+            right: 8px;
+            gap: 6px;
+        }
+
+        .best-sellers-grid .product-card-action {
+            width: 30px;
+            height: 30px;
+        }
+
+        .best-sellers-grid .product-card-action svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .best-sellers-grid .product-quick {
+            margin-top: -16px;
+            padding: 0 6px;
+        }
+
+        .best-sellers-grid .product-quick-add {
+            padding: 0.4rem 0.5rem;
+            font-size: 11px;
+        }
+
+        .best-sellers-grid .product-card-body {
+            margin-top: 0.75rem !important;
+        }
+
+        .best-sellers-grid .product-card-title,
+        .best-sellers-grid .product-card-price-current {
+            font-size: 0.85rem;
+            line-height: 1.2;
+        }
+
+        .best-sellers-grid .product-card-price-old {
+            font-size: 0.75rem;
+        }
+    }
+
     .product-breadcrumb {
         @apply border-b border-slate-200 bg-slate-100 py-3;
     }
@@ -7546,11 +7605,10 @@
         display: flex;
         gap: 12px;
         padding: 16px 18px;
-        text-decoration: none;
         color: inherit;
     }
 
-    .purchase-popup-content.is-disabled {
+    .purchase-popup-media.is-disabled {
         pointer-events: none;
     }
 
@@ -7578,6 +7636,7 @@
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
+        text-decoration: none;
     }
 
     .purchase-popup-media img {

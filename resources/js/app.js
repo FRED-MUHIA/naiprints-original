@@ -1250,6 +1250,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const safeUrl = url || '#';
             linkEl.setAttribute('href', safeUrl);
+            linkEl.setAttribute('aria-label', safeUrl === '#' ? 'Product image' : `View ${productEl?.textContent || 'product'}`);
             linkEl.classList.toggle('is-disabled', safeUrl === '#');
         };
 

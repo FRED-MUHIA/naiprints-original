@@ -51,8 +51,8 @@
          data-purchase-items='@json($popupItems)'
          data-purchase-interval="{{ $popupInterval }}">
         <button class="purchase-popup-close" type="button" aria-label="Close" data-purchase-close>x</button>
-        <a class="purchase-popup-content" href="{{ $firstPopup['url'] ?? '#' }}" data-purchase-link>
-            <div class="purchase-popup-media">
+        <div class="purchase-popup-content">
+            <a class="purchase-popup-media" href="{{ $firstPopup['url'] ?? '#' }}" aria-label="View {{ $firstPopup['product'] ?? 'product' }}" data-purchase-link>
                 <img src="{{ $firstPopup['image'] ?? '' }}"
                      alt=""
                      data-purchase-image
@@ -67,12 +67,12 @@
                         <rect class="purchase-popup-tee-graphic" x="215" y="260" width="170" height="160" rx="28"/>
                     </svg>
                 </span>
-            </div>
+            </a>
             <div class="purchase-popup-body">
                 <p class="purchase-popup-line"><span data-purchase-name>{{ $firstPopup['name'] ?? 'Someone' }}</span> purchased</p>
                 <p class="purchase-popup-product" data-purchase-product>{{ $firstPopup['product'] ?? '' }}</p>
                 <p class="purchase-popup-time" data-purchase-time>{{ $firstPopup['time'] ?? '' }}</p>
             </div>
-        </a>
+        </div>
     </div>
 @endif
