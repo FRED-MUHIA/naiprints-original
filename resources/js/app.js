@@ -1298,7 +1298,9 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         applyItem(items[index]);
-        scheduleCycle();
+        timer = window.setTimeout(() => {
+            scheduleCycle();
+        }, 90000);
 
         const closePopup = (event) => {
             event?.preventDefault();
