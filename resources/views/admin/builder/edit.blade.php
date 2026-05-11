@@ -171,6 +171,27 @@
                                                       rows="2"
                                                       placeholder="Step description"
                                                       class="mt-3 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">{{ $step['body'] ?? '' }}</textarea>
+                                            <div class="mt-3 grid gap-3 sm:grid-cols-3">
+                                                <input type="text"
+                                                       name="sections[{{ $index }}][data][steps][{{ $stepIndex }}][image]"
+                                                       value="{{ $step['image'] ?? '' }}"
+                                                       placeholder="Image URL"
+                                                       class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                <input type="text"
+                                                       name="sections[{{ $index }}][data][steps][{{ $stepIndex }}][image_alt]"
+                                                       value="{{ $step['image_alt'] ?? '' }}"
+                                                       placeholder="Image alt text"
+                                                       class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                <input type="file"
+                                                       name="sections[{{ $index }}][data][steps][{{ $stepIndex }}][image_file]"
+                                                       accept="image/*"
+                                                       class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                            </div>
+                                            @if (!empty($step['image']))
+                                                <div class="mt-2 text-xs text-slate-500">
+                                                    Current: <a href="{{ $step['image'] }}" class="text-brand underline underline-offset-4" target="_blank" rel="noopener">View image</a>
+                                                </div>
+                                            @endif
                                         </div>
                                     @endforeach
                                 </div>
@@ -271,6 +292,30 @@
                                     <input type="datetime-local" name="sections[{{ $index }}][data][ends_at]" value="{{ $saleEndsAt }}" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
                                     <input type="text" name="sections[{{ $index }}][data][cta_label]" value="{{ $data['cta_label'] ?? '' }}" placeholder="CTA label" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
                                     <input type="text" name="sections[{{ $index }}][data][cta_url]" value="{{ $data['cta_url'] ?? '' }}" placeholder="CTA URL" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                </div>
+                                <div class="rounded-xl border border-slate-200 p-4">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Artwork Image</p>
+                                    <div class="mt-3 grid gap-3 sm:grid-cols-3">
+                                        <input type="text"
+                                               name="sections[{{ $index }}][data][hero_image]"
+                                               value="{{ $data['hero_image'] ?? '' }}"
+                                               placeholder="Image URL"
+                                               class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                        <input type="text"
+                                               name="sections[{{ $index }}][data][hero_image_alt]"
+                                               value="{{ $data['hero_image_alt'] ?? '' }}"
+                                               placeholder="Image alt text"
+                                               class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                        <input type="file"
+                                               name="sections[{{ $index }}][data][hero_image_file]"
+                                               accept="image/*"
+                                               class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                    </div>
+                                    @if (!empty($data['hero_image']))
+                                        <div class="mt-2 text-xs text-slate-500">
+                                            Current: <a href="{{ $data['hero_image'] }}" class="text-brand underline underline-offset-4" target="_blank" rel="noopener">View image</a>
+                                        </div>
+                                    @endif
                                 </div>
                                 <div>
                                     <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Sale product category</label>

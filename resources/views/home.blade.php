@@ -329,10 +329,14 @@
                                             if (!in_array($stepTheme, ['products', 'design', 'delivery'], true)) {
                                                 $stepTheme = 'products';
                                             }
+                                            $stepImage = trim((string) ($step['image'] ?? ''));
+                                            $stepImageAlt = trim((string) ($step['image_alt'] ?? $step['title'] ?? ''));
                                         @endphp
                                         <article class="product-step">
-                                            <div class="product-step-media product-step-media-{{ $stepTheme }}" aria-hidden="true">
-                                                @if ($stepTheme === 'products')
+                                            <div class="product-step-media product-step-media-{{ $stepTheme }}" @if ($stepImage === '') aria-hidden="true" @endif>
+                                                @if ($stepImage !== '')
+                                                    <img src="{{ $stepImage }}" alt="{{ $stepImageAlt }}" loading="lazy" class="product-step-image">
+                                                @elseif ($stepTheme === 'products')
                                                     <svg class="product-step-art product-step-art-products" viewBox="0 0 420 280" role="img" aria-label="">
                                                         <rect x="94" y="52" width="224" height="174" rx="24" fill="#50d09f" opacity="0.88" />
                                                         <path d="M84 74 36 88 78 226 142 198 112 112Z" fill="#f8fafc" />
@@ -693,6 +697,8 @@
                             $saleDiscount = max(0, min(95, $saleDiscount));
                             $saleCtaLabel = trim((string) ($data['cta_label'] ?? 'Shop now'));
                             $saleCtaUrl = trim((string) ($data['cta_url'] ?? '/shop'));
+                            $saleHeroImage = trim((string) ($data['hero_image'] ?? ''));
+                            $saleHeroImageAlt = trim((string) ($data['hero_image_alt'] ?? $saleTitle));
                             $saleCategoryId = $data['product_category_id'] ?? null;
                             $saleCategoryId = is_numeric($saleCategoryId) ? (int) $saleCategoryId : null;
                             $sanitizeSaleColor = static function ($value, $fallback) {
@@ -735,26 +741,30 @@
                                  style="--sale-feature-bg: {{ $saleColors['background'] }}; --sale-hero-bg: {{ $saleColors['heroBackground'] }}; --sale-word-color: {{ $saleColors['saleText'] }}; --sale-word-alt: {{ $saleColors['saleTextAlt'] }}; --sale-word-outline: {{ $saleColors['saleOutline'] }}; --sale-countdown-bg: {{ $saleColors['countdownBackground'] }}; --sale-countdown-text: {{ $saleColors['countdownText'] }};">
                             <div class="sale-feature-grid">
                                 <div class="sale-feature-hero">
-                                    <div class="sale-feature-people" aria-hidden="true">
-                                        <div class="sale-person sale-person-left">
-                                            <div class="sale-person-head"></div>
-                                            <div class="sale-person-hair"></div>
-                                            <div class="sale-person-shirt">
-                                                <span></span>
+                                    @if ($saleHeroImage !== '')
+                                        <img src="{{ $saleHeroImage }}" alt="{{ $saleHeroImageAlt }}" loading="lazy" class="sale-feature-hero-image">
+                                    @else
+                                        <div class="sale-feature-people" aria-hidden="true">
+                                            <div class="sale-person sale-person-left">
+                                                <div class="sale-person-head"></div>
+                                                <div class="sale-person-hair"></div>
+                                                <div class="sale-person-shirt">
+                                                    <span></span>
+                                                </div>
+                                                <div class="sale-person-leg sale-person-leg-left"></div>
+                                                <div class="sale-person-leg sale-person-leg-right"></div>
                                             </div>
-                                            <div class="sale-person-leg sale-person-leg-left"></div>
-                                            <div class="sale-person-leg sale-person-leg-right"></div>
-                                        </div>
-                                        <div class="sale-person sale-person-right">
-                                            <div class="sale-person-head"></div>
-                                            <div class="sale-person-hair"></div>
-                                            <div class="sale-person-shirt">
-                                                <span></span>
+                                            <div class="sale-person sale-person-right">
+                                                <div class="sale-person-head"></div>
+                                                <div class="sale-person-hair"></div>
+                                                <div class="sale-person-shirt">
+                                                    <span></span>
+                                                </div>
+                                                <div class="sale-person-leg sale-person-leg-left"></div>
+                                                <div class="sale-person-leg sale-person-leg-right"></div>
                                             </div>
-                                            <div class="sale-person-leg sale-person-leg-left"></div>
-                                            <div class="sale-person-leg sale-person-leg-right"></div>
                                         </div>
-                                    </div>
+                                    @endif
                                     <div class="sale-feature-repeat" aria-hidden="true">
                                         <span>SALE SALE</span>
                                         <span>SALE SALE</span>

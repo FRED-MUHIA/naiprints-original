@@ -52,6 +52,12 @@ class PageBuilderController extends Controller
             'sections.*.data.tiles.*.background_image_alt_file' => ['nullable', 'image', 'max:4096'],
             'sections.*.data.tiles.*.video_file' => ['nullable', 'file', 'mimetypes:video/mp4,video/webm,video/ogg', 'max:20480'],
             'sections.*.data.tiles.*.video_url' => ['nullable', 'string', 'max:2048'],
+            'sections.*.data.steps.*.image' => ['nullable', 'string', 'max:2048'],
+            'sections.*.data.steps.*.image_alt' => ['nullable', 'string', 'max:255'],
+            'sections.*.data.steps.*.image_file' => ['nullable', 'image', 'max:4096'],
+            'sections.*.data.hero_image' => ['nullable', 'string', 'max:2048'],
+            'sections.*.data.hero_image_alt' => ['nullable', 'string', 'max:255'],
+            'sections.*.data.hero_image_file' => ['nullable', 'image', 'max:4096'],
             'sections.*.data.background_image' => ['nullable', 'string', 'max:2048'],
             'sections.*.data.background_image_file' => ['nullable', 'image', 'max:4096'],
             'sections.*.data.hero.image' => ['nullable', 'string', 'max:2048'],
@@ -84,12 +90,16 @@ class PageBuilderController extends Controller
         }
 
         $sections = $this->mergeTileUploads($sections, $request->file('sections', []));
+        $sections = $this->mergeProductStepUploads($sections, $request->file('sections', []));
+        $sections = $this->mergeSaleFeatureUploads($sections, $request->file('sections', []));
         $sections = $this->mergeDesignStudioUploads($sections, $request->file('sections', []));
         $sections = $this->mergeCorporateUploads($sections, $request->file('sections', []));
         $sections = $this->mergeMockupPageUploads($sections, $request->file('sections', []));
         $sections = $this->mergeDesignerMockups($sections, $request->file('sections', []));
         $sections = $this->sanitizeTileVideos($sections);
         $sections = $this->stripTileUploadFields($sections);
+        $sections = $this->stripProductStepUploadFields($sections);
+        $sections = $this->stripSaleFeatureUploadFields($sections);
         $sections = $this->stripDesignStudioUploadFields($sections);
         $sections = $this->stripCorporateUploadFields($sections);
         $sections = $this->stripMockupPageUploadFields($sections);
@@ -303,6 +313,88 @@ class PageBuilderController extends Controller
                 if (array_key_exists('video_file', $tile)) {
                     unset($sections[$sectionIndex]['data']['tiles'][$tileIndex]['video_file']);
                 }
+            }
+        }
+
+        return $sections;
+    }
+
+    private function mergeProductStepUploads(array $sections, array $sectionFiles): array
+    {
+        foreach ($sectionFiles as $sectionIndex => $sectionPayload) {
+            if (!isset($sections[$sectionIndex]) || ($sections[$sectionIndex]['type'] ?? '') !== 'product_steps') {
+                continue;
+            }
+
+            $stepFiles = $sectionPayload['data']['steps'] ?? [];
+            if (!is_array($stepFiles)) {
+                continue;
+            }
+
+            foreach ($stepFiles as $stepIndex => $stepPayload) {
+                $file = $stepPayload['image_file'] ?? null;
+                if (!$file || !isset($sections[$sectionIndex]['data']['steps'][$stepIndex])) {
+                    continue;
+                }
+
+                $path = $file->store('page-builder/product-steps', 'public');
+                $sections[$sectionIndex]['data']['steps'][$stepIndex]['image'] = Storage::url($path);
+            }
+        }
+
+        return $sections;
+    }
+
+    private function stripProductStepUploadFields(array $sections): array
+    {
+        foreach ($sections as $sectionIndex => $section) {
+            if (($section['type'] ?? '') !== 'product_steps') {
+                continue;
+            }
+
+            $steps = $section['data']['steps'] ?? [];
+            if (!is_array($steps)) {
+                continue;
+            }
+
+            foreach ($steps as $stepIndex => $step) {
+                if (is_array($step) && array_key_exists('image_file', $step)) {
+                    unset($sections[$sectionIndex]['data']['steps'][$stepIndex]['image_file']);
+                }
+            }
+        }
+
+        return $sections;
+    }
+
+    private function mergeSaleFeatureUploads(array $sections, array $sectionFiles): array
+    {
+        foreach ($sectionFiles as $sectionIndex => $sectionPayload) {
+            if (!isset($sections[$sectionIndex]) || ($sections[$sectionIndex]['type'] ?? '') !== 'sale_feature') {
+                continue;
+            }
+
+            $file = $sectionPayload['data']['hero_image_file'] ?? null;
+            if (!$file) {
+                continue;
+            }
+
+            $path = $file->store('page-builder/sale-feature', 'public');
+            $sections[$sectionIndex]['data']['hero_image'] = Storage::url($path);
+        }
+
+        return $sections;
+    }
+
+    private function stripSaleFeatureUploadFields(array $sections): array
+    {
+        foreach ($sections as $sectionIndex => $section) {
+            if (($section['type'] ?? '') !== 'sale_feature') {
+                continue;
+            }
+
+            if (array_key_exists('hero_image_file', $section['data'] ?? [])) {
+                unset($sections[$sectionIndex]['data']['hero_image_file']);
             }
         }
 
