@@ -13,10 +13,14 @@
             }
             $seoImageAbsolute = $seoImage && str_starts_with((string) $seoImage, 'http') ? $seoImage : ($seoImage ? url($seoImage) : null);
             $seoPrice = is_numeric($product->price ?? null) ? (float) $product->price : 0;
+            $seoDescription = $product->meta_description ?: trim(strip_tags((string) $product->description));
+            $seoDescription = $seoDescription !== ''
+                ? \Illuminate\Support\Str::limit($seoDescription, 155, '')
+                : 'Shop premium custom prints from Nai Prints in Kenya.';
         @endphp
         @include('partials.seo', [
             'title' => ($product->meta_title ?: $product->name . ' | Nai Prints'),
-            'description' => $product->meta_description ?: ($product->description ?: 'Shop premium custom prints from Nai Prints in Kenya.'),
+            'description' => $seoDescription,
             'canonical' => route('products.show', ['product' => $product->slug ?: $product->id]),
             'type' => 'product',
             'image' => $seoImage,
@@ -24,7 +28,7 @@
                 '@context' => 'https://schema.org',
                 '@type' => 'Product',
                 'name' => $product->name,
-                'description' => strip_tags((string) ($product->meta_description ?: $product->description)),
+                'description' => $seoDescription,
                 'image' => $seoImageAbsolute ? [$seoImageAbsolute] : [],
                 'sku' => $product->sku ?: (string) $product->id,
                 'brand' => [
@@ -335,28 +339,43 @@
                         </div>
                     </section>
 
+                    @php
+                        $description = trim((string) $product->description);
+                        $hasDescription = $description !== '';
+                        $descriptionHasHtml = $hasDescription && $description !== strip_tags($description);
+                    @endphp
                     <section class="product-description">
                         <h2>Product Description</h2>
-                        <p>
-                            The Better Days T-Shirt is a premium black cotton tee designed for comfort, durability, and everyday style.
-                            Featuring the bold "Better Days Ahead" graphic print with vibrant smiley accents, this shirt is perfect for casual wear,
-                            street fashion, and statement styling.
-                        </p>
-                        @php
-                            $colorLabelList = $colorOptions->isNotEmpty() ? $colorOptions : collect(['Black']);
-                            $sizeLabelList = $sizeOptions->isNotEmpty()
-                                ? $sizeOptions->pluck('name')
-                                : collect(['S', 'M', 'L', 'XL', 'XXL', '3XL']);
-                        @endphp
-                        <ul>
-                            <li>100% high-quality cotton</li>
-                            <li>Soft breathable fabric</li>
-                            <li>Unisex oversized fit</li>
-                            <li>Durable print finish</li>
-                            <li>Machine washable</li>
-                            <li>Color: {{ $colorLabelList->join(', ') }}</li>
-                            <li>Sizes available: {{ $sizeLabelList->join(', ') }}</li>
-                        </ul>
+                        @if ($hasDescription)
+                            <div class="product-description-content">
+                                @if ($descriptionHasHtml)
+                                    {!! $description !!}
+                                @else
+                                    {!! nl2br(e($description)) !!}
+                                @endif
+                            </div>
+                        @else
+                            <p>
+                                The Better Days T-Shirt is a premium black cotton tee designed for comfort, durability, and everyday style.
+                                Featuring the bold "Better Days Ahead" graphic print with vibrant smiley accents, this shirt is perfect for casual wear,
+                                street fashion, and statement styling.
+                            </p>
+                            @php
+                                $colorLabelList = $colorOptions->isNotEmpty() ? $colorOptions : collect(['Black']);
+                                $sizeLabelList = $sizeOptions->isNotEmpty()
+                                    ? $sizeOptions->pluck('name')
+                                    : collect(['S', 'M', 'L', 'XL', 'XXL', '3XL']);
+                            @endphp
+                            <ul>
+                                <li>100% high-quality cotton</li>
+                                <li>Soft breathable fabric</li>
+                                <li>Unisex oversized fit</li>
+                                <li>Durable print finish</li>
+                                <li>Machine washable</li>
+                                <li>Color: {{ $colorLabelList->join(', ') }}</li>
+                                <li>Sizes available: {{ $sizeLabelList->join(', ') }}</li>
+                            </ul>
+                        @endif
                     </section>
 
                     @if (!empty($relatedProducts) && $relatedProducts->count())

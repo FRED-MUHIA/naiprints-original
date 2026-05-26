@@ -2718,6 +2718,37 @@
         @apply list-disc pl-5 text-sm text-slate-600;
     }
 
+    .product-description-content {
+        @apply space-y-4 text-sm leading-relaxed text-slate-600;
+    }
+
+    .product-description-content h2,
+    .product-description-content h3,
+    .product-description-content h4 {
+        @apply font-semibold text-slate-900;
+    }
+
+    .product-description-content h2 {
+        @apply text-xl;
+    }
+
+    .product-description-content h3 {
+        @apply text-lg;
+    }
+
+    .product-description-content ul {
+        @apply list-disc pl-5;
+    }
+
+    .product-description-content ol {
+        @apply list-decimal pl-5;
+    }
+
+    .product-description-content a {
+        @apply font-semibold underline underline-offset-4;
+        color: var(--brand-red);
+    }
+
     .related-products {
         @apply mt-12;
     }
