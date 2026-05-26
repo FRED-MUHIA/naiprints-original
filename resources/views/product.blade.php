@@ -453,7 +453,9 @@
                                         </div>
                                         <div class="mt-4 space-y-2 product-card-body">
                                             <div>
-                                                <h3 class="product-card-title"><span class="heartbeat-emoji" aria-hidden="true">🔥</span>{!! $relatedFlame !!}</h3>
+                                                <a href="{{ $relatedUrl }}" class="product-card-title-link" aria-label="View {{ $relatedName }}">
+                                                    <h3 class="product-card-title"><span class="heartbeat-emoji" aria-hidden="true">🔥</span>{!! $relatedFlame !!}</h3>
+                                                </a>
                                             </div>
                                             <div class="product-card-price">
                                                 <span class="product-card-price-current">KSh {{ number_format($relatedFinal, 0) }}</span>

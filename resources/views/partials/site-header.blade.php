@@ -99,7 +99,7 @@
 
 <header class="sticky top-0 z-40 border-b border-black/5 bg-white/90 backdrop-blur">
     <div class="mx-auto flex max-w-6xl xl:max-w-[88rem] items-center justify-between gap-3 xl:gap-5 px-4 py-4">
-        <div class="flex items-center gap-3">
+        <div class="ml-2 flex items-center gap-3 sm:ml-4">
             <button class="icon-button mobile-menu-toggle lg:hidden" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobile-menu" data-mobile-menu-toggle>
                 <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M3 12h18M3 18h18" />
