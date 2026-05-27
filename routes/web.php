@@ -1188,6 +1188,8 @@ Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function
         Route::post('invoices/settings', [InvoiceSettingController::class, 'update'])->name('invoices.settings.update');
         Route::post('invoices/settings/mpesa/test', [MpesaController::class, 'testCredentials'])->name('invoices.mpesa.test');
         Route::post('invoices/settings/mpesa/register', [MpesaController::class, 'registerC2b'])->name('invoices.mpesa.register');
+        Route::get('invoices/{invoice}/payments', fn (Invoice $invoice) => redirect()->route('admin.invoices.show', $invoice))
+            ->name('invoices.payments.index');
         Route::post('invoices/{invoice}/payments', [InvoiceController::class, 'addPayment'])->name('invoices.payments.store');
         Route::post('invoices/{invoice}/mpesa/stk', [MpesaController::class, 'stkPush'])->name('invoices.mpesa.stk');
         Route::get('invoices/{invoice}/download', [InvoiceController::class, 'download'])->name('invoices.download');
