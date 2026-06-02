@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin.can' => \App\Http\Middleware\AdminAuthorize::class,
             'api.key' => \App\Http\Middleware\RequireApiKey::class,
             'affiliate.auth' => \App\Http\Middleware\AffiliateAuth::class,
+            'mpesa.callback' => \App\Http\Middleware\ValidateMpesaCallbackSource::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

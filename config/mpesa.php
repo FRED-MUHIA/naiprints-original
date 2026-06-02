@@ -15,6 +15,8 @@ return [
     'party_b' => env('MPESA_PARTY_B'),
     'initiator_name' => env('MPESA_INITIATOR_NAME'),
     'security_credential' => env('MPESA_SECURITY_CREDENTIAL'),
+    'callback_secret' => env('MPESA_CALLBACK_SECRET'),
+    'callback_allowed_ips' => env('MPESA_CALLBACK_ALLOWED_IPS', ''),
     'cache_ttl_minutes' => (int) env('MPESA_TOKEN_CACHE_TTL', 55),
     'request_timeout' => (int) env('MPESA_HTTP_TIMEOUT', 30),
 ];

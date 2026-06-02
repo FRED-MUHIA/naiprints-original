@@ -790,15 +790,15 @@ Route::get('/receipt/view/{receipt:public_id}/pdf', [PublicReceiptController::cl
 
 Route::post('/mpesa/stk/callback', [MpesaCallbackController::class, 'stkCallback'])
     ->name('mpesa.stk.callback')
-    ->middleware('throttle:120,1')
+    ->middleware(['mpesa.callback', 'throttle:120,1'])
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class]);
 Route::post('/mpesa/c2b/validation', [MpesaCallbackController::class, 'c2bValidation'])
     ->name('mpesa.c2b.validation')
-    ->middleware('throttle:120,1')
+    ->middleware(['mpesa.callback', 'throttle:120,1'])
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class]);
 Route::post('/mpesa/c2b/confirmation', [MpesaCallbackController::class, 'c2bConfirmation'])
     ->name('mpesa.c2b.confirmation')
-    ->middleware('throttle:120,1')
+    ->middleware(['mpesa.callback', 'throttle:120,1'])
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class]);
 
 Route::get('/admin/login', function () {
