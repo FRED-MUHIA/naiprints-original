@@ -13,11 +13,13 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
+        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
         $middleware->appendToGroup('web', \App\Http\Middleware\CaptureAffiliateReferral::class);
 
         $middleware->alias([
             'admin.auth' => \App\Http\Middleware\AdminAuth::class,
             'admin.can' => \App\Http\Middleware\AdminAuthorize::class,
+            'api.key' => \App\Http\Middleware\RequireApiKey::class,
             'affiliate.auth' => \App\Http\Middleware\AffiliateAuth::class,
         ]);
     })

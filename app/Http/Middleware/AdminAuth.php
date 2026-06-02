@@ -24,6 +24,11 @@ class AdminAuth
                 $request->session()->forget(['admin_authenticated', 'admin_role', 'admin_user_id', 'admin_name']);
                 return redirect()->route('admin.login');
             }
+
+            $actualRole = strtolower((string) ($user->role ?: 'editor'));
+            if ($role !== $actualRole) {
+                $request->session()->put('admin_role', $actualRole);
+            }
         }
 
         return $next($request);

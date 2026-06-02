@@ -390,10 +390,16 @@ Route::get('/3d-designer', function () {
 })->name('designer.3d');
 
 Route::get('/jerseys', [JerseyCatalogController::class, 'index'])->name('jerseys.index');
-Route::post('/upload-logo', [JerseyLogoController::class, 'store'])->name('jerseys.logo.upload');
-Route::post('/design/save', [JerseyDesignController::class, 'save'])->name('jerseys.design.save');
+Route::post('/upload-logo', [JerseyLogoController::class, 'store'])
+    ->name('jerseys.logo.upload')
+    ->middleware('throttle:10,1');
+Route::post('/design/save', [JerseyDesignController::class, 'save'])
+    ->name('jerseys.design.save')
+    ->middleware('throttle:20,1');
 Route::get('/design/{id}', [JerseyDesignController::class, 'show'])->name('jerseys.design.show');
-Route::post('/order', [JerseyOrderController::class, 'store'])->name('jerseys.order.store');
+Route::post('/order', [JerseyOrderController::class, 'store'])
+    ->name('jerseys.order.store')
+    ->middleware('throttle:10,1');
 
 Route::get('/shop', function () {
     $page = Page::ensure('shop', 'Shop', PageDefaults::shop());
@@ -587,7 +593,8 @@ Route::get('/checkout', function () {
 })->name('checkout');
 
 Route::post('/checkout/submit', [CheckoutController::class, 'submit'])
-    ->name('checkout.submit');
+    ->name('checkout.submit')
+    ->middleware('throttle:10,1');
 
 Route::prefix('affiliate')->name('affiliate.')->group(function () {
     Route::get('/register', [AffiliateAuthController::class, 'showRegister'])->name('register');
@@ -619,7 +626,9 @@ Route::get('/corporate', function () {
 })->name('corporate');
 
 Route::get('/contact', [ContactController::class, 'show'])->name('contact.show');
-Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+Route::post('/contact', [ContactController::class, 'store'])
+    ->name('contact.store')
+    ->middleware('throttle:5,1');
 
 Route::get('/ethical-policies', function () {
     $header = GlobalSection::ensure('header', PageDefaults::header());
@@ -683,10 +692,11 @@ Route::post('/newsletter', function (Request $request) {
     ]);
 
     return back()->with('newsletter_subscribed', true);
-})->name('newsletter.subscribe');
+})->name('newsletter.subscribe')->middleware('throttle:5,1');
 
 Route::post('/corporate/quote', [CorporateQuoteController::class, 'store'])
-    ->name('corporate.quote');
+    ->name('corporate.quote')
+    ->middleware('throttle:5,1');
 
 Route::get('/mockup', function () {
     $page = Page::ensure('mockup', 'Mockup', PageDefaults::mockup());
@@ -705,7 +715,8 @@ Route::get('/mockup', function () {
 })->name('mockup');
 
 Route::post('/mockup/ai/generate', [MockupAiController::class, 'generate'])
-    ->name('mockup.ai.generate');
+    ->name('mockup.ai.generate')
+    ->middleware('throttle:6,1');
 
 Route::get('/products/{product}', function (string $productKey) {
     $product = Product::query()
@@ -764,12 +775,14 @@ Route::get('/invoice/view/{invoice:public_id}', [PublicInvoiceController::class,
 Route::get('/invoice/view/{invoice:public_id}/pdf', [PublicInvoiceController::class, 'pdf'])
     ->name('invoice.public.pdf');
 Route::get('/invoice/view/{invoice:public_id}/status', [PublicInvoiceController::class, 'status'])
-    ->name('invoice.payment.status');
+    ->name('invoice.payment.status')
+    ->middleware('throttle:30,1');
 Route::get('/invoice/verify/{invoice:public_id}', [PublicInvoiceController::class, 'verify'])
     ->name('invoice.verify')
     ->middleware('signed');
 Route::post('/invoice/view/{invoice:public_id}/mpesa', [PublicMpesaController::class, 'pay'])
-    ->name('invoice.public.mpesa');
+    ->name('invoice.public.mpesa')
+    ->middleware('throttle:5,1');
 Route::get('/receipt/view/{receipt:public_id}', [PublicReceiptController::class, 'show'])
     ->name('receipt.public');
 Route::get('/receipt/view/{receipt:public_id}/pdf', [PublicReceiptController::class, 'pdf'])
@@ -777,12 +790,15 @@ Route::get('/receipt/view/{receipt:public_id}/pdf', [PublicReceiptController::cl
 
 Route::post('/mpesa/stk/callback', [MpesaCallbackController::class, 'stkCallback'])
     ->name('mpesa.stk.callback')
+    ->middleware('throttle:120,1')
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class]);
 Route::post('/mpesa/c2b/validation', [MpesaCallbackController::class, 'c2bValidation'])
     ->name('mpesa.c2b.validation')
+    ->middleware('throttle:120,1')
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class]);
 Route::post('/mpesa/c2b/confirmation', [MpesaCallbackController::class, 'c2bConfirmation'])
     ->name('mpesa.c2b.confirmation')
+    ->middleware('throttle:120,1')
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class]);
 
 Route::get('/admin/login', function () {
@@ -796,11 +812,12 @@ Route::post('/admin/login', function (Request $request) {
     ]);
 
     $username = trim((string) $credentials['username']);
-    $expectedUser = config('admin.username');
-    $expectedHash = config('admin.password_hash');
+    $expectedUser = (string) config('admin.username', 'Admin');
+    $expectedHash = trim((string) config('admin.password_hash', ''));
 
     if (
-        $username === $expectedUser &&
+        $expectedHash !== '' &&
+        hash_equals($expectedUser, $username) &&
         Hash::check($credentials['password'], $expectedHash)
     ) {
         $request->session()->put([
@@ -848,7 +865,7 @@ Route::post('/admin/login', function (Request $request) {
     }
 
     return back()->withErrors(['username' => 'Invalid credentials.'])->withInput();
-})->name('admin.login.submit');
+})->name('admin.login.submit')->middleware('throttle:5,1');
 
 Route::post('/admin/logout', function (Request $request) {
     $request->session()->forget(['admin_authenticated', 'admin_role', 'admin_user_id', 'admin_name']);

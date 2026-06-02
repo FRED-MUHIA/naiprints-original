@@ -11,7 +11,7 @@ class JerseyLogoController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'logo' => ['required', 'file', 'mimes:png,jpg,jpeg,webp,svg', 'max:6144'],
+            'logo' => ['required', 'file', 'mimes:png,jpg,jpeg,webp', 'max:6144'],
         ]);
 
         $disk = $this->resolveDisk();

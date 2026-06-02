@@ -47,6 +47,10 @@ return [
         'image_model' => env('GEMINI_IMAGE_MODEL', 'gemini-2.5-flash-image'),
     ],
 
+    'api' => [
+        'key' => env('NAI_API_KEY'),
+    ],
+
     'mpesa' => [
         'environment' => env('MPESA_ENVIRONMENT'),
         'consumer_key' => env('MPESA_CONSUMER_KEY'),
