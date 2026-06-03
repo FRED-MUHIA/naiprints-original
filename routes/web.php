@@ -836,7 +836,13 @@ Route::post('/admin/login', function (Request $request) {
 
     if ($supportsRoleBasedAdmin) {
         $editor = User::query()
-            ->where('email', $username)
+            ->where(function ($query) use ($username) {
+                $query->where('email', $username);
+
+                if (!str_contains($username, '@')) {
+                    $query->orWhere('name', $username);
+                }
+            })
             ->whereIn('role', ['admin', 'editor'])
             ->first();
     }
