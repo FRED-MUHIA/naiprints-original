@@ -22,6 +22,7 @@ use App\Http\Controllers\Admin\TaskController;
 use App\Http\Controllers\Admin\TagController;
 use App\Http\Controllers\MpesaCallbackController;
 use App\Http\Controllers\MockupAiController;
+use App\Http\Controllers\MockupCheckoutController;
 use App\Http\Controllers\PublicInvoiceController;
 use App\Http\Controllers\PublicMpesaController;
 use App\Http\Controllers\PublicReceiptController;
@@ -717,6 +718,10 @@ Route::get('/mockup', function () {
 Route::post('/mockup/ai/generate', [MockupAiController::class, 'generate'])
     ->name('mockup.ai.generate')
     ->middleware('throttle:6,1');
+
+Route::post('/mockup/checkout', [MockupCheckoutController::class, 'store'])
+    ->name('mockup.checkout')
+    ->middleware('throttle:8,1');
 
 Route::get('/products/{product}', function (string $productKey) {
     $product = Product::query()

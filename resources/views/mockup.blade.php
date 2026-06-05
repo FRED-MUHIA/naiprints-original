@@ -172,7 +172,7 @@
                         </svg>
                     </button>
                     <div class="mockup-shop-actions">
-                        <a class="mockup-shop-btn is-cart" href="{{ $addToCartUrl }}">{{ $addToCartLabel }}</a>
+                        <button class="mockup-shop-btn is-cart" type="button" data-mockup-cart-open>{{ $addToCartLabel }}</button>
                         <a class="mockup-shop-btn is-back" href="{{ $backToShopUrl }}">{{ $backToShopLabel }}</a>
                     </div>
                     <div class="mockup-share" data-share>
@@ -750,6 +750,38 @@
             </button>
         </div>
 
+        <div class="mockup-order-modal" data-mockup-order-modal hidden>
+            <div class="mockup-order-overlay" data-mockup-order-close></div>
+            <form class="mockup-order-dialog" data-mockup-order-form>
+                <div class="mockup-order-header">
+                    <div>
+                        <p class="mockup-order-kicker">Mockup checkout</p>
+                        <h2>Send invoice</h2>
+                    </div>
+                    <button type="button" class="mockup-order-close" data-mockup-order-close aria-label="Close">X</button>
+                </div>
+                <p class="mockup-order-copy" data-mockup-order-copy>Your current mockup will be added to cart and emailed with an invoice.</p>
+                <label class="mockup-order-field">
+                    <span>Name</span>
+                    <input type="text" name="name" autocomplete="name" required>
+                </label>
+                <label class="mockup-order-field">
+                    <span>Email</span>
+                    <input type="email" name="email" autocomplete="email" required>
+                </label>
+                <label class="mockup-order-field">
+                    <span>Phone</span>
+                    <input type="tel" name="phone" autocomplete="tel">
+                </label>
+                <div class="mockup-order-total">
+                    <span>Total</span>
+                    <strong data-mockup-order-total>KSh 1,000</strong>
+                </div>
+                <p class="mockup-order-status" data-mockup-order-status role="status"></p>
+                <button class="mockup-order-submit" type="submit">Add to cart and email invoice</button>
+            </form>
+        </div>
+
         <script>
             (() => {
                 const canvasEl = document.getElementById('mockup-canvas');
@@ -767,10 +799,18 @@
                 const GUIDE_SAFE_DASH = [6 * GUIDE_SCALE, 8 * GUIDE_SCALE];
                 const GUIDE_PRINT_STROKE = 2 * GUIDE_SCALE;
                 const GUIDE_SAFE_STROKE = 1.5 * GUIDE_SCALE;
+                const DEFAULT_MOCKUP_PRICE = 1000;
+                const MOCKUP_PRICES = {
+                    hoodie: 2500,
+                    polo: 1200,
+                    cap: 550,
+                    totebag: 600,
+                };
                 const SAVED_STORAGE_KEY = 'nai_mockup_saved_designs';
                 const MOCKUP_TAB_STORAGE_KEY = 'nai_mockup_active_tab';
                 const SAVED_TTL_MS = 24 * 60 * 60 * 1000;
                 const templateGenerateUrl = @json(route('mockup.ai.generate'));
+                const mockupCheckoutUrl = @json(route('mockup.checkout'));
                 const csrfToken = @json(csrf_token());
                 const BG_THEMES = {
                     light: '#f8fafc',
@@ -1162,6 +1202,13 @@
                 const brandClearBtn = document.querySelector('[data-brand-clear]');
                 const brandLogoImg = document.querySelector('[data-brand-logo]');
                 const brandMarkEl = document.querySelector('[data-brand-mark]');
+                const mockupCartOpen = document.querySelector('[data-mockup-cart-open]');
+                const mockupOrderModal = document.querySelector('[data-mockup-order-modal]');
+                const mockupOrderForm = document.querySelector('[data-mockup-order-form]');
+                const mockupOrderStatus = document.querySelector('[data-mockup-order-status]');
+                const mockupOrderCopy = document.querySelector('[data-mockup-order-copy]');
+                const mockupOrderTotal = document.querySelector('[data-mockup-order-total]');
+                const mockupOrderCloseButtons = document.querySelectorAll('[data-mockup-order-close]');
 
                 const isToolsMenuOpen = () => Boolean(toolsMenu?.classList.contains('is-open'));
 
@@ -2990,6 +3037,14 @@
 
                 const exportCanvas = (format) => {
                     const includeBg = exportBgToggle.checked;
+                    const dataUrl = getMockupDataUrl(format, includeBg);
+                    const link = document.createElement('a');
+                    link.href = dataUrl;
+                    link.download = `nai-mockup-${currentMockup}.${format === 'jpeg' ? 'jpg' : format}`;
+                    link.click();
+                };
+
+                const getMockupDataUrl = (format = 'png', includeBg = true) => {
                     const prevBg = canvas.backgroundColor;
                     const prevGuides = guidesVisible;
                     setGuidesVisible(false);
@@ -3007,10 +3062,125 @@
                     if (prevGuides) {
                         setGuidesVisible(true);
                     }
-                    const link = document.createElement('a');
-                    link.href = dataUrl;
-                    link.download = `nai-mockup-${currentMockup}.${format === 'jpeg' ? 'jpg' : format}`;
-                    link.click();
+
+                    return dataUrl;
+                };
+
+                const getCurrentMockupLabel = () => {
+                    const productLabel = mockupConfig[currentMockup]?.label || currentMockup || 'Mockup';
+                    const color = getProductColors(currentMockup)?.[currentColorIndex]?.name;
+                    const view = currentView ? currentView.charAt(0).toUpperCase() + currentView.slice(1) : '';
+                    return [productLabel, color, view].filter(Boolean).join(' - ');
+                };
+
+                const formatMockupPrice = (amount) => `KSh ${Number(amount || 0).toLocaleString('en-KE')}`;
+
+                const getCurrentMockupPrice = () => MOCKUP_PRICES[currentMockup] || DEFAULT_MOCKUP_PRICE;
+
+                const setMockupOrderStatus = (message, isError = false) => {
+                    if (!mockupOrderStatus) {
+                        return;
+                    }
+                    mockupOrderStatus.textContent = message || '';
+                    mockupOrderStatus.classList.toggle('is-error', isError);
+                };
+
+                const setMockupOrderOpen = (open) => {
+                    if (!mockupOrderModal) {
+                        return;
+                    }
+                    mockupOrderModal.hidden = !open;
+                    document.body.classList.toggle('mockup-order-open', open);
+                    if (open) {
+                        const priceLabel = formatMockupPrice(getCurrentMockupPrice());
+                        if (mockupOrderCopy) {
+                            mockupOrderCopy.textContent = `Your current ${getCurrentMockupLabel()} mockup will be added to cart and emailed with an invoice for ${priceLabel}.`;
+                        }
+                        if (mockupOrderTotal) {
+                            mockupOrderTotal.textContent = priceLabel;
+                        }
+                        setMockupOrderStatus('');
+                        mockupOrderForm?.querySelector('input[name="name"]')?.focus();
+                    }
+                };
+
+                const addMockupToLocalCart = (image, invoiceUrl) => {
+                    try {
+                        const key = 'nai_cart';
+                        const items = JSON.parse(localStorage.getItem(key) || '[]');
+                        const existingItems = Array.isArray(items) ? items : [];
+                        const item = {
+                            id: `mockup-${Date.now()}`,
+                            name: 'Custom mockup design',
+                            price: getCurrentMockupPrice(),
+                            qty: 1,
+                            image,
+                            url: invoiceUrl || window.location.href,
+                            color: getCurrentMockupLabel(),
+                            size: 'Digital mockup',
+                        };
+                        const nextItems = [...existingItems, item];
+                        localStorage.setItem(key, JSON.stringify(nextItems));
+                        const count = nextItems.reduce((total, cartItem) => total + (Number(cartItem.qty) || 0), 0);
+                        document.querySelectorAll('[data-cart-count]').forEach((badge) => {
+                            badge.textContent = count;
+                            badge.classList.toggle('hidden', count === 0);
+                            badge.classList.toggle('is-green', count > 0);
+                        });
+                    } catch (err) {
+                        // Local cart is a convenience; invoice creation remains the source of truth.
+                    }
+                };
+
+                const submitMockupOrder = async (event) => {
+                    event.preventDefault();
+                    if (!mockupOrderForm) {
+                        return;
+                    }
+
+                    const submitBtn = mockupOrderForm.querySelector('button[type="submit"]');
+                    const formData = new FormData(mockupOrderForm);
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                    }
+                    setMockupOrderStatus('Preparing mockup and invoice...');
+
+                    try {
+                        const mockupImage = getMockupDataUrl('png', true);
+                        const response = await fetch(mockupCheckoutUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken,
+                            },
+                            body: JSON.stringify({
+                                name: formData.get('name'),
+                                email: formData.get('email'),
+                                phone: formData.get('phone'),
+                                mockup_type: currentMockup,
+                                mockup_name: getCurrentMockupLabel(),
+                                mockup_image: mockupImage,
+                            }),
+                        });
+
+                        const payload = await response.json().catch(() => ({}));
+                        if (!response.ok) {
+                            const message = payload?.message || Object.values(payload?.errors || {})?.flat()?.[0] || 'Could not create the invoice.';
+                            throw new Error(message);
+                        }
+
+                        addMockupToLocalCart(mockupImage, payload.invoice_url);
+                        setMockupOrderStatus(payload.message || 'Invoice emailed.');
+                        window.setTimeout(() => {
+                            window.location.href = payload.invoice_url || window.location.href;
+                        }, 700);
+                    } catch (err) {
+                        setMockupOrderStatus(err.message || 'Could not create the invoice.', true);
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                        }
+                    }
                 };
 
                 const downloadBlob = (blob, filename) => {
@@ -4090,6 +4260,12 @@
                     });
                 });
 
+                mockupCartOpen?.addEventListener('click', () => setMockupOrderOpen(true));
+                mockupOrderCloseButtons.forEach((button) => {
+                    button.addEventListener('click', () => setMockupOrderOpen(false));
+                });
+                mockupOrderForm?.addEventListener('submit', submitMockupOrder);
+
                 const templateInput = document.querySelector('[data-template-input]');
                 const templateSubmit = document.querySelector('[data-template-submit]');
                 const templateGenerate = document.querySelector('[data-template-generate]');
@@ -4882,6 +5058,7 @@
                         event.target?.isContentEditable;
                     if (event.key === 'Escape') {
                         setToolsMenuOpen(false);
+                        setMockupOrderOpen(false);
                     }
                     if ((event.key === 'Delete' || event.key === 'Backspace') && canvas.getActiveObject() && !isInput) {
                         deleteActive();
