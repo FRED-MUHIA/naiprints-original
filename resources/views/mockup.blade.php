@@ -773,6 +773,32 @@
                     <span>Phone</span>
                     <input type="tel" name="phone" autocomplete="tel">
                 </label>
+                <div class="mockup-order-grid">
+                    <label class="mockup-order-field">
+                        <span>Size</span>
+                        <select name="size" data-mockup-order-size required>
+                            <option value="One size">One size</option>
+                            <option value="XS">XS</option>
+                            <option value="S">S</option>
+                            <option value="M" selected>M</option>
+                            <option value="L">L</option>
+                            <option value="XL">XL</option>
+                            <option value="2XL">2XL</option>
+                            <option value="3XL">3XL</option>
+                            <option value="4XL">4XL</option>
+                            <option value="5XL">5XL</option>
+                        </select>
+                    </label>
+                    <label class="mockup-order-field">
+                        <span>Quantity</span>
+                        <input type="number" name="quantity" min="1" max="999" value="1" data-mockup-order-quantity required>
+                    </label>
+                </div>
+                <label class="mockup-order-field">
+                    <span>Artwork file</span>
+                    <input type="file" name="artwork_file" accept=".pdf,.jpg,.jpeg,.png,.ai,.svg,application/pdf,image/jpeg,image/png,image/svg+xml,application/postscript">
+                    <small>PDF, JPEG, PNG, AI, or SVG files are sent to info@naiprints.co.ke.</small>
+                </label>
                 <div class="mockup-order-total">
                     <span>Total</span>
                     <strong data-mockup-order-total>KSh 1,000</strong>
@@ -1208,6 +1234,8 @@
                 const mockupOrderStatus = document.querySelector('[data-mockup-order-status]');
                 const mockupOrderCopy = document.querySelector('[data-mockup-order-copy]');
                 const mockupOrderTotal = document.querySelector('[data-mockup-order-total]');
+                const mockupOrderQuantity = document.querySelector('[data-mockup-order-quantity]');
+                const mockupOrderSize = document.querySelector('[data-mockup-order-size]');
                 const mockupOrderCloseButtons = document.querySelectorAll('[data-mockup-order-close]');
 
                 const isToolsMenuOpen = () => Boolean(toolsMenu?.classList.contains('is-open'));
@@ -3077,6 +3105,29 @@
 
                 const getCurrentMockupPrice = () => MOCKUP_PRICES[currentMockup] || DEFAULT_MOCKUP_PRICE;
 
+                const getOrderQuantity = () => {
+                    const raw = Number.parseInt(mockupOrderQuantity?.value || '1', 10);
+                    if (Number.isNaN(raw)) {
+                        return 1;
+                    }
+                    return Math.min(999, Math.max(1, raw));
+                };
+
+                const getCurrentMockupTotal = () => getCurrentMockupPrice() * getOrderQuantity();
+
+                const updateMockupOrderSummary = () => {
+                    const unitPrice = getCurrentMockupPrice();
+                    const total = getCurrentMockupTotal();
+                    const unitLabel = formatMockupPrice(unitPrice);
+                    const totalLabel = formatMockupPrice(total);
+                    if (mockupOrderCopy) {
+                        mockupOrderCopy.textContent = `Your current ${getCurrentMockupLabel()} mockup will be added to cart and emailed with an invoice for ${unitLabel} each.`;
+                    }
+                    if (mockupOrderTotal) {
+                        mockupOrderTotal.textContent = totalLabel;
+                    }
+                };
+
                 const setMockupOrderStatus = (message, isError = false) => {
                     if (!mockupOrderStatus) {
                         return;
@@ -3092,13 +3143,7 @@
                     mockupOrderModal.hidden = !open;
                     document.body.classList.toggle('mockup-order-open', open);
                     if (open) {
-                        const priceLabel = formatMockupPrice(getCurrentMockupPrice());
-                        if (mockupOrderCopy) {
-                            mockupOrderCopy.textContent = `Your current ${getCurrentMockupLabel()} mockup will be added to cart and emailed with an invoice for ${priceLabel}.`;
-                        }
-                        if (mockupOrderTotal) {
-                            mockupOrderTotal.textContent = priceLabel;
-                        }
+                        updateMockupOrderSummary();
                         setMockupOrderStatus('');
                         mockupOrderForm?.querySelector('input[name="name"]')?.focus();
                     }
@@ -3113,11 +3158,11 @@
                             id: `mockup-${Date.now()}`,
                             name: 'Custom mockup design',
                             price: getCurrentMockupPrice(),
-                            qty: 1,
+                            qty: getOrderQuantity(),
                             image,
                             url: invoiceUrl || window.location.href,
                             color: getCurrentMockupLabel(),
-                            size: 'Digital mockup',
+                            size: mockupOrderSize?.value || 'One size',
                         };
                         const nextItems = [...existingItems, item];
                         localStorage.setItem(key, JSON.stringify(nextItems));
@@ -3147,21 +3192,17 @@
 
                     try {
                         const mockupImage = getMockupDataUrl('png', true);
+                        formData.append('mockup_type', currentMockup);
+                        formData.append('mockup_name', getCurrentMockupLabel());
+                        formData.append('mockup_image', mockupImage);
+
                         const response = await fetch(mockupCheckoutUrl, {
                             method: 'POST',
                             headers: {
-                                'Content-Type': 'application/json',
                                 'Accept': 'application/json',
                                 'X-CSRF-TOKEN': csrfToken,
                             },
-                            body: JSON.stringify({
-                                name: formData.get('name'),
-                                email: formData.get('email'),
-                                phone: formData.get('phone'),
-                                mockup_type: currentMockup,
-                                mockup_name: getCurrentMockupLabel(),
-                                mockup_image: mockupImage,
-                            }),
+                            body: formData,
                         });
 
                         const payload = await response.json().catch(() => ({}));
@@ -4263,6 +4304,11 @@
                 mockupCartOpen?.addEventListener('click', () => setMockupOrderOpen(true));
                 mockupOrderCloseButtons.forEach((button) => {
                     button.addEventListener('click', () => setMockupOrderOpen(false));
+                });
+                mockupOrderQuantity?.addEventListener('input', updateMockupOrderSummary);
+                mockupOrderQuantity?.addEventListener('change', () => {
+                    mockupOrderQuantity.value = String(getOrderQuantity());
+                    updateMockupOrderSummary();
                 });
                 mockupOrderForm?.addEventListener('submit', submitMockupOrder);
 
