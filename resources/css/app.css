@@ -5463,6 +5463,9 @@
         position: relative;
         z-index: 1;
         width: min(440px, 100%);
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
+        overscroll-behavior: contain;
         display: grid;
         gap: 14px;
         border-radius: 8px;
@@ -5470,6 +5473,15 @@
         background: #ffffff;
         padding: 22px;
         box-shadow: 0 24px 80px -35px rgba(15, 23, 42, 0.55);
+    }
+
+    .mockup-order-dialog::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .mockup-order-dialog::-webkit-scrollbar-thumb {
+        border-radius: 999px;
+        background: #cbd5e1;
     }
 
     .mockup-order-header {
