@@ -4,6 +4,14 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 
+if (
+    extension_loaded('pdo_mysql') &&
+    defined('PDO::MYSQL_ATTR_SSL_CA') &&
+    !class_exists(\Pdo\Mysql::class, false)
+) {
+    class_alias(\App\Support\PdoMysqlCompat::class, \Pdo\Mysql::class);
+}
+
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
