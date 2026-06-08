@@ -566,7 +566,6 @@
                         <div class="mockup-stage-tabs">
                             <button class="mockup-stage-tab is-active" type="button" data-tools-toggle aria-expanded="false" aria-haspopup="menu" aria-controls="mockup-tools-menu">Tools</button>
                             <button class="mockup-stage-tab" type="button" data-remove-bg>Remove Background</button>
-                            <button class="mockup-stage-tab" type="button">Position</button>
                         </div>
                         <div class="mockup-stage-actions">
                             <button class="mockup-icon-btn" type="button" data-lock aria-label="Lock">
@@ -645,7 +644,6 @@
                                 </div>
                                 <button class="mockup-toolbar-link" type="button" data-text-effects data-text-control>Effects</button>
                                 <button class="mockup-toolbar-link" type="button" data-text-animate data-text-control>Animate</button>
-                                <button class="mockup-toolbar-link" type="button" data-text-position data-text-control>Position</button>
                                 <button class="mockup-toolbar-btn" type="button" data-text-paint data-text-control aria-label="More tools">🎨</button>
                             </div>
                         </div>
@@ -1221,7 +1219,6 @@
                 const textLetterSpacingInput = document.querySelector('[data-text-letter-spacing]');
                 const textEffectsBtn = document.querySelector('[data-text-effects]');
                 const textAnimateBtn = document.querySelector('[data-text-animate]');
-                const textPositionBtn = document.querySelector('[data-text-position]');
                 const textPaintBtn = document.querySelector('[data-text-paint]');
                 const removeBgBtn = document.querySelector('[data-remove-bg]');
                 const brandUploadInput = document.querySelector('[data-brand-upload]');
@@ -4656,10 +4653,6 @@
 
                 textAnimateBtn?.addEventListener('click', () => {
                     alert('Text animations coming soon.');
-                });
-
-                textPositionBtn?.addEventListener('click', () => {
-                    setActivePanel('edit');
                 });
 
                 textPaintBtn?.addEventListener('click', () => {

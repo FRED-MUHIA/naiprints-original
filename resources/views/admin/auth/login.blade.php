@@ -22,8 +22,8 @@
                     </div>
                 </div>
 
-                <h1 class="mt-6 text-2xl font-semibold">Sign in</h1>
-                <p class="mt-2 text-sm text-slate-500">Use your admin username or editor email to continue.</p>
+                <h1 class="mt-6 text-2xl font-semibold">Admin login</h1>
+                <p class="mt-2 text-sm text-slate-500">Enter your credentials to continue.</p>
 
                 @if ($errors->any())
                     <div class="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -34,7 +34,7 @@
                 <form method="POST" action="{{ route('admin.login.submit') }}" class="mt-6 space-y-4">
                     @csrf
                     <div>
-                        <label class="text-sm font-semibold text-slate-700">Username or Email</label>
+                        <label class="text-sm font-semibold text-slate-700">Username</label>
                         <input type="text" name="username" value="{{ old('username') }}" class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-brand focus:outline-none" required>
                     </div>
                     <div>
