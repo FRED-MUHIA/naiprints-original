@@ -5,6 +5,14 @@ import { mountJerseyDesigner } from './jersey-3d-designer';
 document.addEventListener('DOMContentLoaded', () => {
     mountJerseyDesigner();
 
+    const shouldPlayOpeningWipe = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (shouldPlayOpeningWipe) {
+        document.body.classList.add('is-glossy-wipe-active');
+        window.setTimeout(() => {
+            document.body.classList.remove('is-glossy-wipe-active');
+        }, 1700);
+    }
+
     const processedImages = new WeakSet();
     let eagerBudget = 4;
 
