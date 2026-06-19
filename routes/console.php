@@ -55,19 +55,23 @@ Artisan::command('admin:password {password? : The new admin password} {--usernam
     return Command::SUCCESS;
 })->purpose('Set the configured admin username and password hash');
 
-function setEnvValue(string $contents, string $key, string $value): string
-{
-    $line = "{$key}={$value}";
-    $pattern = '/^' . preg_quote($key, '/') . '=.*$/m';
+if (!function_exists('setEnvValue')) {
+    function setEnvValue(string $contents, string $key, string $value): string
+    {
+        $line = "{$key}={$value}";
+        $pattern = '/^' . preg_quote($key, '/') . '=.*$/m';
 
-    if (preg_match($pattern, $contents) === 1) {
-        return preg_replace_callback($pattern, fn () => $line, $contents) ?? $contents;
+        if (preg_match($pattern, $contents) === 1) {
+            return preg_replace_callback($pattern, fn () => $line, $contents) ?? $contents;
+        }
+
+        return rtrim($contents) . PHP_EOL . $line . PHP_EOL;
     }
-
-    return rtrim($contents) . PHP_EOL . $line . PHP_EOL;
 }
 
-function quoteEnvValue(string $value): string
-{
-    return "'" . str_replace(['\\', "'"], ['\\\\', "\\'"], $value) . "'";
+if (!function_exists('quoteEnvValue')) {
+    function quoteEnvValue(string $value): string
+    {
+        return "'" . str_replace(['\\', "'"], ['\\\\', "\\'"], $value) . "'";
+    }
 }
