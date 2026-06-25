@@ -473,7 +473,7 @@ $shopRoute = function (?string $category = null) {
         default => $productsQuery->orderByDesc('stock')->orderByDesc('created_at'),
     };
 
-    $products = $productsQuery->take(12)->get();
+    $products = $productsQuery->get();
 
     $fallbackProducts = collect([
         ['name' => 'Classic Tee', 'price' => 1290, 'rating' => 4.9, 'sold' => 3523],
