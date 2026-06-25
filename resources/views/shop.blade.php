@@ -228,7 +228,10 @@
 
                         <div class="shop-grid">
                             @php
-                                $shopProducts = $products->count() ? $products : $fallbackProducts;
+                                $hasRealProducts = method_exists($products, 'total')
+                                    ? $products->total() > 0
+                                    : $products->count() > 0;
+                                $shopProducts = $hasRealProducts ? $products : $fallbackProducts;
                             @endphp
                             @forelse ($shopProducts as $product)
                                 @php
@@ -322,6 +325,12 @@
                                 </div>
                             @endforelse
                         </div>
+
+                        @if (method_exists($products, 'hasPages') && $products->hasPages())
+                            <div class="mt-6">
+                                {{ $products->links() }}
+                            </div>
+                        @endif
                     </section>
                 </div>
             </main>
