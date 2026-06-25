@@ -2106,6 +2106,26 @@
         box-shadow: 0 24px 60px -40px rgba(15, 23, 42, 0.5);
     }
 
+    .shop-category-link {
+        @apply flex items-center gap-2 rounded-xl px-1 py-1 text-slate-700 transition;
+    }
+
+    .shop-category-link:hover,
+    .shop-category-link:focus-visible {
+        color: var(--brand-red) !important;
+        outline: none;
+    }
+
+    .shop-category-radio {
+        @apply grid h-4 w-4 shrink-0 place-items-center rounded-full border border-slate-400 bg-white;
+    }
+
+    .shop-category-link.is-active .shop-category-radio {
+        border-color: #0d6efd;
+        box-shadow: inset 0 0 0 4px #ffffff;
+        background-color: #0d6efd;
+    }
+
     .shop-results {
         @apply space-y-6;
     }
@@ -2120,6 +2140,10 @@
 
     .shop-grid {
         @apply grid gap-5 sm:grid-cols-2 xl:grid-cols-3;
+    }
+
+    .shop-empty {
+        @apply rounded-[24px] border border-dashed border-slate-200 bg-white p-6 text-center sm:col-span-2 xl:col-span-3;
     }
 
     .shop-card {

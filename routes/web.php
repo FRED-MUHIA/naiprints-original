@@ -402,14 +402,14 @@ Route::post('/order', [JerseyOrderController::class, 'store'])
     ->name('jerseys.order.store')
     ->middleware('throttle:10,1');
 
-Route::get('/shop', function () {
+$shopRoute = function (?string $category = null) {
     $page = Page::ensure('shop', 'Shop', PageDefaults::shop());
     $header = GlobalSection::ensure('header', PageDefaults::header());
     $footer = GlobalSection::ensure('footer', PageDefaults::footer());
     $purchasePopups = GlobalSection::ensure('purchase_popups', PageDefaults::purchasePopups());
     $purchasePopupProducts = resolvePurchasePopupProducts($purchasePopups->content ?? []);
     $categories = Category::orderBy('name')->get();
-    $selectedCategoryParam = trim((string) request('category', ''));
+    $selectedCategoryParam = trim((string) ($category ?? request('category', '')));
     $selectedCategory = null;
     if ($selectedCategoryParam !== '') {
         if (is_numeric($selectedCategoryParam)) {
@@ -428,6 +428,13 @@ Route::get('/shop', function () {
     $maxPrice = request('max_price');
     $minPrice = is_numeric($minPrice) ? (float) $minPrice : null;
     $maxPrice = is_numeric($maxPrice) ? (float) $maxPrice : null;
+    $search = trim((string) request('q', ''));
+    $rating = request('rating', 'highest');
+    $rating = in_array($rating, ['highest', 'lowest'], true) ? $rating : 'highest';
+    $sort = request('sort', 'popular');
+    $sort = in_array($sort, ['popular', 'newest', 'price_asc', 'price_desc', 'name_asc'], true) ? $sort : 'popular';
+    $mainOrder = request('main_order');
+    $mainOrder = is_numeric($mainOrder) ? max(0, min(100, (int) $mainOrder)) : 0;
 
     $productsQuery = Product::with(['category', 'categories', 'brand'])
         ->when($selectedCategory, function ($query) use ($selectedCategory) {
@@ -437,9 +444,34 @@ Route::get('/shop', function () {
                     ->orWhereHas('categories', fn ($relatedCategoryQuery) => $relatedCategoryQuery->where('categories.id', $selectedCategory->id));
             });
         })
+        ->when($search !== '', function ($query) use ($search) {
+            $query->where(function ($searchQuery) use ($search) {
+                $searchQuery
+                    ->where('name', 'like', "%{$search}%")
+                    ->orWhere('sku', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhereHas('category', function ($categoryQuery) use ($search) {
+                        $categoryQuery->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('categories', function ($categoryQuery) use ($search) {
+                        $categoryQuery->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('brand', function ($brandQuery) use ($search) {
+                        $brandQuery->where('name', 'like', "%{$search}%");
+                    });
+            });
+        })
         ->when($minPrice !== null, fn ($query) => $query->where('price', '>=', $minPrice))
         ->when($maxPrice !== null, fn ($query) => $query->where('price', '<=', $maxPrice))
-        ->orderByDesc('created_at');
+        ->when($mainOrder > 0, fn ($query) => $query->where('stock', '>=', $mainOrder));
+
+    match ($sort) {
+        'newest' => $productsQuery->orderByDesc('created_at'),
+        'price_asc' => $productsQuery->orderBy('price')->orderByDesc('created_at'),
+        'price_desc' => $productsQuery->orderByDesc('price')->orderByDesc('created_at'),
+        'name_asc' => $productsQuery->orderBy('name'),
+        default => $productsQuery->orderByDesc('stock')->orderByDesc('created_at'),
+    };
 
     $products = $productsQuery->take(12)->get();
 
@@ -453,8 +485,19 @@ Route::get('/shop', function () {
         ['name' => 'Athletic Set', 'price' => 3590, 'rating' => 4.7, 'sold' => 640],
         ['name' => 'Gift Bundle', 'price' => 2690, 'rating' => 4.6, 'sold' => 430],
     ]);
-    if ($minPrice !== null || $maxPrice !== null) {
-        $fallbackProducts = $fallbackProducts->filter(function ($item) use ($minPrice, $maxPrice) {
+    if ($selectedCategory || $search !== '' || $minPrice !== null || $maxPrice !== null || $mainOrder > 0) {
+        $fallbackProducts = $fallbackProducts->filter(function ($item) use ($selectedCategory, $search, $minPrice, $maxPrice, $mainOrder) {
+            $name = Str::of((string) ($item['name'] ?? ''))->lower();
+            if ($selectedCategory) {
+                $categoryName = Str::of((string) $selectedCategory->name)->lower();
+                $categorySlug = Str::of((string) ($selectedCategory->slug ?? ''))->lower();
+                if (!$name->contains((string) $categoryName) && ($categorySlug->isEmpty() || !$name->contains((string) $categorySlug))) {
+                    return false;
+                }
+            }
+            if ($search !== '' && !$name->contains(Str::of($search)->lower()->toString())) {
+                return false;
+            }
             $price = (float) ($item['price'] ?? 0);
             if ($minPrice !== null && $price < $minPrice) {
                 return false;
@@ -462,9 +505,21 @@ Route::get('/shop', function () {
             if ($maxPrice !== null && $price > $maxPrice) {
                 return false;
             }
+            if ($mainOrder > 0 && (int) ($item['sold'] ?? 0) < $mainOrder) {
+                return false;
+            }
             return true;
         })->values();
     }
+    $fallbackProducts = match ($sort) {
+        'price_asc' => $fallbackProducts->sortBy('price')->values(),
+        'price_desc' => $fallbackProducts->sortByDesc('price')->values(),
+        'name_asc' => $fallbackProducts->sortBy('name')->values(),
+        'newest' => $fallbackProducts->values(),
+        default => $rating === 'lowest'
+            ? $fallbackProducts->sortBy('rating')->values()
+            : $fallbackProducts->sortByDesc('rating')->values(),
+    };
 
     return view('shop', [
         'categories' => $categories,
@@ -473,13 +528,20 @@ Route::get('/shop', function () {
         'fallbackProducts' => $fallbackProducts,
         'minPrice' => $minPrice,
         'maxPrice' => $maxPrice,
+        'search' => $search,
+        'rating' => $rating,
+        'sort' => $sort,
+        'mainOrder' => $mainOrder,
         'pageContent' => $page->content,
         'globalHeader' => $header->content,
         'globalFooter' => $footer->content,
         'globalPurchasePopups' => $purchasePopups->content,
         'globalPurchasePopupProducts' => $purchasePopupProducts,
     ]);
-})->name('shop');
+};
+
+Route::get('/shop', $shopRoute)->name('shop');
+Route::get('/shop/{category}', $shopRoute)->name('shop.category');
 
 Route::get('/blogs', [BlogController::class, 'index'])->name('blogs.index');
 Route::get('/blogs/{slug}', [BlogController::class, 'show'])->name('blogs.show');
