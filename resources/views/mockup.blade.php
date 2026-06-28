@@ -875,7 +875,7 @@
                             { name: 'Sand', value: '#f5e9d8' },
                         ],
                         printArea: { x: 260, y: 260, w: 300, h: 360 },
-                        mobileImageFit: { scale: 1.65, offsetX: 85, offsetY: 42 },
+                        mobileImageFit: { targetWidth: 420, targetHeight: 460, offsetX: 0, offsetY: 4 },
                     },
                     hoodie: {
                         label: 'Hoodie',
@@ -885,7 +885,7 @@
                             { name: 'Storm', value: '#334155' },
                         ],
                         printArea: { x: 250, y: 300, w: 320, h: 320 },
-                        mobileImageFit: { scale: 1.7, offsetX: 80, offsetY: 34 },
+                        mobileImageFit: { targetWidth: 430, targetHeight: 455, offsetX: 0, offsetY: 8 },
                     },
                     polo: {
                         label: 'Polo',
@@ -895,7 +895,7 @@
                             { name: 'Olive', value: '#4b5d4a' },
                         ],
                         printArea: { x: 270, y: 260, w: 280, h: 320 },
-                        mobileImageFit: { scale: 1.6, offsetX: 75, offsetY: 28 },
+                        mobileImageFit: { targetWidth: 410, targetHeight: 450, offsetX: 0, offsetY: 4 },
                     },
                     cap: {
                         label: 'Caps',
@@ -2158,6 +2158,56 @@
                     wirePrintAreaRect();
                 };
 
+                const getVisibleImageBounds = (fabricImage) => {
+                    const element = fabricImage?.getElement?.();
+                    const width = Math.round(fabricImage?.width || element?.naturalWidth || element?.width || 0);
+                    const height = Math.round(fabricImage?.height || element?.naturalHeight || element?.height || 0);
+                    if (!element || width <= 0 || height <= 0) {
+                        return null;
+                    }
+
+                    try {
+                        const temp = document.createElement('canvas');
+                        temp.width = width;
+                        temp.height = height;
+                        const context = temp.getContext('2d', { willReadFrequently: true });
+                        context.drawImage(element, 0, 0, width, height);
+                        const pixels = context.getImageData(0, 0, width, height).data;
+                        let minX = width;
+                        let minY = height;
+                        let maxX = 0;
+                        let maxY = 0;
+                        let found = false;
+                        const step = Math.max(1, Math.floor(Math.max(width, height) / 500));
+
+                        for (let y = 0; y < height; y += step) {
+                            for (let x = 0; x < width; x += step) {
+                                const index = (y * width + x) * 4;
+                                if (pixels[index + 3] > 12) {
+                                    found = true;
+                                    minX = Math.min(minX, x);
+                                    minY = Math.min(minY, y);
+                                    maxX = Math.max(maxX, x);
+                                    maxY = Math.max(maxY, y);
+                                }
+                            }
+                        }
+
+                        if (!found) {
+                            return null;
+                        }
+
+                        return {
+                            x: minX,
+                            y: minY,
+                            width: Math.max(step, maxX - minX + step),
+                            height: Math.max(step, maxY - minY + step),
+                        };
+                    } catch (error) {
+                        return null;
+                    }
+                };
+
                 const loadMockup = (mockupKey, colorIndex = 0, view = null) => {
                     captureViewDesigns();
                     currentMockup = mockupKey;
@@ -2183,10 +2233,10 @@
                     setBackgroundTheme(color);
 
                     fabric.Image.fromURL(url, (img) => {
-                        const mobileImageFit = window.matchMedia('(max-width: 640px)').matches
+                        const isMobileMockup = window.matchMedia('(max-width: 640px)').matches;
+                        const mobileImageFit = isMobileMockup
                             ? (config.mobileImageFit || null)
                             : null;
-                        const imageScale = Number.isFinite(mobileImageFit?.scale) ? mobileImageFit.scale : 1;
                         const imageOffsetX = Number.isFinite(mobileImageFit?.offsetX) ? mobileImageFit.offsetX * SCALE_X : 0;
                         const imageOffsetY = Number.isFinite(mobileImageFit?.offsetY) ? mobileImageFit.offsetY * SCALE_Y : 0;
                         let scaleX = 1;
@@ -2196,11 +2246,28 @@
                         let originX = 'left';
                         let originY = 'top';
                         if (img.width > 0 && img.height > 0) {
-                            const scale = Math.min(CANVAS_WIDTH / img.width, CANVAS_HEIGHT / img.height) * imageScale;
+                            const visibleBounds = isMobileMockup ? getVisibleImageBounds(img) : null;
+                            const targetWidth = Number.isFinite(mobileImageFit?.targetWidth)
+                                ? mobileImageFit.targetWidth
+                                : CANVAS_WIDTH * 0.7;
+                            const targetHeight = Number.isFinite(mobileImageFit?.targetHeight)
+                                ? mobileImageFit.targetHeight
+                                : CANVAS_HEIGHT * 0.76;
+                            const fallbackScale = Math.min(CANVAS_WIDTH / img.width, CANVAS_HEIGHT / img.height);
+                            const scale = visibleBounds
+                                ? Math.min(targetWidth / visibleBounds.width, targetHeight / visibleBounds.height)
+                                : fallbackScale * (Number.isFinite(mobileImageFit?.scale) ? mobileImageFit.scale : 1);
                             scaleX = scale;
                             scaleY = scale;
-                            left = CANVAS_WIDTH / 2 + imageOffsetX;
-                            top = CANVAS_HEIGHT / 2 + imageOffsetY;
+                            if (visibleBounds) {
+                                const visibleCenterX = visibleBounds.x + visibleBounds.width / 2;
+                                const visibleCenterY = visibleBounds.y + visibleBounds.height / 2;
+                                left = CANVAS_WIDTH / 2 - (visibleCenterX - img.width / 2) * scale + imageOffsetX;
+                                top = CANVAS_HEIGHT / 2 - (visibleCenterY - img.height / 2) * scale + imageOffsetY;
+                            } else {
+                                left = CANVAS_WIDTH / 2 + imageOffsetX;
+                                top = CANVAS_HEIGHT / 2 + imageOffsetY;
+                            }
                             originX = 'center';
                             originY = 'center';
                         }
