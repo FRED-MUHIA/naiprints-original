@@ -2479,8 +2479,8 @@
                     };
 
                     fabric.Image.fromURL(url, (img) => {
-                        const isMobileMockup = window.matchMedia('(max-width: 640px)').matches;
-                        const mobileBaseDataUrl = isMobileMockup && imageUrl
+                        const isMobileMockup = isMobileCanvas();
+                        const mobileBaseDataUrl = isMobileMockup
                             ? createMobileMockupBaseDataUrl(img)
                             : null;
                         if (mobileBaseDataUrl) {
