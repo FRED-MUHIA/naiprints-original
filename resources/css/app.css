@@ -5945,6 +5945,10 @@
         border-color: var(--mockup-accent);
     }
 
+    .mockup-panel-upload-tab {
+        display: none;
+    }
+
     .mockup-panel-section {
         margin-top: 18px;
     }
@@ -7520,6 +7524,19 @@
             width: 100%;
             justify-content: center;
             flex-wrap: wrap;
+        }
+
+        .mockup-panel-tabs {
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .mockup-panel-tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .mockup-panel-upload-tab {
+            display: inline-flex;
         }
 
         .mockup-tools-menu {

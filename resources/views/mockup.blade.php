@@ -270,6 +270,7 @@
                         <button class="mockup-panel-tab is-active" type="button" data-mockup-tab="all">All</button>
                         <button class="mockup-panel-tab" type="button" data-mockup-tab="designs">Designs</button>
                         <button class="mockup-panel-tab" type="button" data-mockup-tab="folders">Folders</button>
+                        <button class="mockup-panel-tab mockup-panel-upload-tab" type="button" data-mobile-upload-tab>Upload</button>
                     </div>
 
                     <div class="mockup-panel-section mockup-edit-section" data-panel-section="edit">
@@ -1211,6 +1212,7 @@
                 const fileToggle = document.querySelector('[data-file-toggle]');
                 const fileMenu = document.querySelector('[data-file-menu]');
                 const mockupTabs = document.querySelectorAll('[data-mockup-tab]');
+                const mobileUploadTabs = document.querySelectorAll('[data-mobile-upload-tab]');
                 const mockupTabSections = document.querySelectorAll('[data-mockup-tab-section]');
                 const builderList = document.querySelector('[data-builder-list]');
                 const builderEmpty = document.querySelector('[data-builder-empty]');
@@ -2173,6 +2175,50 @@
                         const context = temp.getContext('2d', { willReadFrequently: true });
                         context.drawImage(element, 0, 0, width, height);
                         const pixels = context.getImageData(0, 0, width, height).data;
+                        const sampleBackground = () => {
+                            const sampleSize = Math.min(12, Math.floor(Math.min(width, height) / 8));
+                            const corners = [
+                                [0, 0],
+                                [Math.max(0, width - sampleSize), 0],
+                                [0, Math.max(0, height - sampleSize)],
+                                [Math.max(0, width - sampleSize), Math.max(0, height - sampleSize)],
+                            ];
+                            const samples = [];
+
+                            corners.forEach(([startX, startY]) => {
+                                for (let y = startY; y < Math.min(height, startY + sampleSize); y += 2) {
+                                    for (let x = startX; x < Math.min(width, startX + sampleSize); x += 2) {
+                                        const index = (y * width + x) * 4;
+                                        if (pixels[index + 3] > 240) {
+                                            samples.push([pixels[index], pixels[index + 1], pixels[index + 2]]);
+                                        }
+                                    }
+                                }
+                            });
+
+                            if (samples.length < 8) {
+                                return null;
+                            }
+
+                            return samples.reduce(
+                                (total, sample) => [
+                                    total[0] + sample[0] / samples.length,
+                                    total[1] + sample[1] / samples.length,
+                                    total[2] + sample[2] / samples.length,
+                                ],
+                                [0, 0, 0]
+                            );
+                        };
+                        const background = sampleBackground();
+                        const colorDistance = (index) => {
+                            if (!background) {
+                                return Infinity;
+                            }
+                            const red = pixels[index] - background[0];
+                            const green = pixels[index + 1] - background[1];
+                            const blue = pixels[index + 2] - background[2];
+                            return Math.sqrt(red * red + green * green + blue * blue);
+                        };
                         let minX = width;
                         let minY = height;
                         let maxX = 0;
@@ -2183,7 +2229,10 @@
                         for (let y = 0; y < height; y += step) {
                             for (let x = 0; x < width; x += step) {
                                 const index = (y * width + x) * 4;
-                                if (pixels[index + 3] > 12) {
+                                const alpha = pixels[index + 3];
+                                const isVisible = alpha > 12;
+                                const differsFromBackground = !background || alpha < 240 || colorDistance(index) > 34;
+                                if (isVisible && differsFromBackground) {
                                     found = true;
                                     minX = Math.min(minX, x);
                                     minY = Math.min(minY, y);
@@ -4315,6 +4364,13 @@
                 if (uploadBtn) {
                     uploadBtn.addEventListener('click', () => uploadInput.click());
                 }
+                mobileUploadTabs.forEach((button) => {
+                    button.addEventListener('click', () => {
+                        setActivePanel('uploads');
+                        setMockupTab('designs', { persist: false });
+                        uploadInput?.click();
+                    });
+                });
 
                 uploadInput.addEventListener('change', (event) => {
                     const files = Array.from(event.target.files || []);
