@@ -2447,6 +2447,13 @@
             font-size: 11px;
         }
 
+        .best-sellers-grid .product-quick-customize {
+            justify-self: center;
+            width: auto;
+            min-width: 132px;
+            padding-inline: 1rem;
+        }
+
         .best-sellers-grid .product-card-body {
             margin-top: 0.75rem !important;
         }
