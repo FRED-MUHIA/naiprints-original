@@ -304,7 +304,7 @@
                     <div class="grid gap-3 sm:grid-cols-2">
                         <div>
                             <label class="text-sm font-semibold text-slate-700">WhatsApp Number</label>
-                            <input type="text" name="footer[whatsapp_number]" value="{{ $footer->content['whatsapp_number'] ?? '' }}" placeholder="254700000000" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-brand focus:outline-none">
+                            <input type="text" name="footer[whatsapp_number]" value="{{ $footer->content['whatsapp_number'] ?? '' }}" placeholder="254745506619" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-brand focus:outline-none">
                         </div>
                         <div>
                             <label class="text-sm font-semibold text-slate-700">Pre-filled Message</label>

@@ -232,8 +232,13 @@
                                         if (!empty($tileVideo)) {
                                             $tileClass .= ' hero-tile-video';
                                         }
+                                        $tileUrl = trim((string) ($tile['product_link'] ?? ($tile['url'] ?? '')));
                                     @endphp
-                                    <div class="{{ $tileClass }}" @if ($tileStyle) style="{{ $tileStyle }}" @endif @if (!empty($tileVideo)) data-hero-video-tile @endif>
+                                    @if ($tileUrl !== '')
+                                        <a href="{{ $tileUrl }}" class="{{ $tileClass }}" @if ($tileStyle) style="{{ $tileStyle }}" @endif @if (!empty($tileVideo)) data-hero-video-tile @endif>
+                                    @else
+                                        <div class="{{ $tileClass }}" @if ($tileStyle) style="{{ $tileStyle }}" @endif @if (!empty($tileVideo)) data-hero-video-tile @endif>
+                                    @endif
                                         @if (!empty($tileVideo))
                                             <video class="hero-tile-video-el" muted loop playsinline autoplay preload="metadata">
                                                 <source src="{{ $tileVideo }}" @if (!empty($tileVideoType)) type="{{ $tileVideoType }}" @endif>
@@ -249,7 +254,11 @@
                                             <p class="text-xs uppercase tracking-[0.3em] text-white/70">{{ $tile['kicker'] ?? '' }}</p>
                                             <h3 class="text-2xl font-semibold text-white">{{ $tile['title'] ?? '' }}</h3>
                                         </div>
-                                    </div>
+                                    @if ($tileUrl !== '')
+                                        </a>
+                                    @else
+                                        </div>
+                                    @endif
                                 @endforeach
                             @endif
                         </section>
@@ -292,8 +301,13 @@
                                         if (!empty($tileVideo)) {
                                             $tileClass .= ' hero-tile-video';
                                         }
+                                        $tileUrl = trim((string) ($tile['product_link'] ?? ($tile['url'] ?? '')));
                                     @endphp
-                                    <div class="{{ $tileClass }}" data-tile-index="{{ $tileIndex }}" @if ($tileStyle) style="{{ $tileStyle }}" @endif @if (!empty($tileVideo)) data-hero-video-tile @endif>
+                                    @if ($tileUrl !== '')
+                                        <a href="{{ $tileUrl }}" class="{{ $tileClass }}" data-tile-index="{{ $tileIndex }}" @if ($tileStyle) style="{{ $tileStyle }}" @endif @if (!empty($tileVideo)) data-hero-video-tile @endif>
+                                    @else
+                                        <div class="{{ $tileClass }}" data-tile-index="{{ $tileIndex }}" @if ($tileStyle) style="{{ $tileStyle }}" @endif @if (!empty($tileVideo)) data-hero-video-tile @endif>
+                                    @endif
                                         @if (!empty($tileVideo))
                                             <video class="hero-tile-video-el" muted loop playsinline autoplay preload="metadata">
                                                 <source src="{{ $tileVideo }}" @if (!empty($tileVideoType)) type="{{ $tileVideoType }}" @endif>
@@ -309,7 +323,11 @@
                                             <p class="text-xs uppercase tracking-[0.3em] text-white/70">{{ $tile['kicker'] ?? '' }}</p>
                                             <h3 class="text-2xl font-semibold text-white">{{ $tile['title'] ?? '' }}</h3>
                                         </div>
-                                    </div>
+                                    @if ($tileUrl !== '')
+                                        </a>
+                                    @else
+                                        </div>
+                                    @endif
                                 @endforeach
                             </section>
                         @endif

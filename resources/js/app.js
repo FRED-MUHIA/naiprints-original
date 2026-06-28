@@ -745,6 +745,59 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    const normalizeWhatsAppNumber = (value) => {
+        const digits = String(value || '').replace(/[^\d]/g, '');
+        if (digits.startsWith('0')) {
+            return `254${digits.slice(1)}`;
+        }
+        if (digits.length === 9 && (digits.startsWith('7') || digits.startsWith('1'))) {
+            return `254${digits}`;
+        }
+        return digits;
+    };
+
+    const buildWhatsAppOrderMessage = (button) => {
+        const panel = button.closest('[data-product-panel]');
+        const qtyInput = panel?.querySelector('[data-qty-input]');
+        const quantity = Math.max(1, Number.parseInt(qtyInput?.value || '1', 10) || 1);
+        const price = Number.parseFloat(button.dataset.productPrice || '0') || 0;
+        const selectedColor = panel?.dataset.selectedColor || '';
+        const selectedSize = panel?.dataset.selectedSize || '';
+        const total = price * quantity;
+        const lines = [
+            'Hello Nai Prints, I would like to place a WhatsApp order.',
+            '',
+            `Product: ${button.dataset.productName || 'Product'}`,
+            button.dataset.productSku ? `SKU: ${button.dataset.productSku}` : '',
+            button.dataset.productCategory ? `Category: ${button.dataset.productCategory}` : '',
+            `Quantity: ${quantity}`,
+            selectedColor ? `Color: ${selectedColor}` : '',
+            selectedSize ? `Size: ${selectedSize}` : '',
+            `Unit price: ${formatMoney(price)}`,
+            `Estimated total: ${formatMoney(total)}`,
+            button.dataset.productUrl ? `Product link: ${button.dataset.productUrl}` : '',
+            '',
+            'Please confirm availability and delivery.'
+        ];
+
+        return lines.filter((line) => line !== '').join('\n');
+    };
+
+    document.querySelectorAll('[data-whatsapp-order]').forEach((button) => {
+        button.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const number = normalizeWhatsAppNumber(button.dataset.whatsappNumber || '254745506619');
+            if (!number) {
+                return;
+            }
+
+            const message = buildWhatsAppOrderMessage(button);
+            window.open(`https://wa.me/${number}?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
+        });
+    });
+
     document.querySelectorAll('[data-qty-control]').forEach((control) => {
         const input = control.querySelector('[data-qty-input]');
         const decrease = control.querySelector('[data-qty-decrease]');

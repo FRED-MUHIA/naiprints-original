@@ -85,10 +85,11 @@
                                 @endphp
                                 <div class="grid gap-3">
                                     @foreach ($tiles as $tileIndex => $tile)
-                                        <div class="grid gap-3 sm:grid-cols-3">
+                                        <div class="grid gap-3 sm:grid-cols-4">
                                             <input type="text" name="sections[{{ $index }}][data][tiles][{{ $tileIndex }}][kicker]" value="{{ $tile['kicker'] ?? '' }}" placeholder="Kicker" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
                                             <input type="text" name="sections[{{ $index }}][data][tiles][{{ $tileIndex }}][title]" value="{{ $tile['title'] ?? '' }}" placeholder="Title" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
                                             <input type="text" name="sections[{{ $index }}][data][tiles][{{ $tileIndex }}][theme]" value="{{ $tile['theme'] ?? '' }}" placeholder="Theme class" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                            <input type="text" name="sections[{{ $index }}][data][tiles][{{ $tileIndex }}][product_link]" value="{{ $tile['product_link'] ?? '' }}" placeholder="Product link" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
                                         </div>
                                         <div class="grid gap-3 sm:grid-cols-2">
                                             <input type="text" name="sections[{{ $index }}][data][tiles][{{ $tileIndex }}][background_image]" value="{{ $tile['background_image'] ?? '' }}" placeholder="Background image URL" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">

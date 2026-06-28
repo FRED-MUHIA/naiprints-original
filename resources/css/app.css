@@ -2675,7 +2675,7 @@
 
     .purchase {
         @apply grid gap-4;
-        grid-template-columns: minmax(0, 140px) minmax(0, 1fr) auto;
+        grid-template-columns: minmax(0, 140px) minmax(0, 1fr) minmax(0, 190px) auto;
     }
 
     .quantity {
@@ -2704,6 +2704,19 @@
 
     .add-to-cart.is-added {
         background-color: #16a34a;
+    }
+
+    .whatsapp-order {
+        @apply flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold text-white transition;
+        background-color: #16a34a;
+    }
+
+    .whatsapp-order:hover {
+        background-color: #128c3f;
+    }
+
+    .whatsapp-order svg {
+        @apply h-5 w-5 shrink-0;
     }
 
     .icon-actions {

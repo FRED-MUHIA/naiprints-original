@@ -1,6 +1,6 @@
 @php
     $footer = $globalFooter ?? [];
-    $whatsappNumber = $footer['whatsapp_number'] ?? '254700000000';
+    $whatsappNumber = $footer['whatsapp_number'] ?? '254745506619';
     $whatsappMessage = $footer['whatsapp_message'] ?? 'Hello I need assistance';
     $whatsappScroll = $footer['whatsapp_scroll'] ?? true;
     $whatsappThreshold = $footer['whatsapp_threshold'] ?? 180;

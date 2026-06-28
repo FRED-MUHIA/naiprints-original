@@ -690,7 +690,7 @@ class PageDefaults
             'logo_url' => '/images/logo.svg',
             'description' => 'T-shirt & garment printing in Nairobi.',
             'hours' => ['Mon-Sat', '8am-7pm'],
-            'whatsapp_number' => '254700000000',
+            'whatsapp_number' => '254745506619',
             'whatsapp_message' => 'Hello I need assistance',
             'whatsapp_scroll' => true,
             'whatsapp_threshold' => 180,

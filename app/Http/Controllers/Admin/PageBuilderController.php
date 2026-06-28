@@ -46,6 +46,7 @@ class PageBuilderController extends Controller
         $validator = validator($request->all(), [
             'title' => ['nullable', 'string', 'max:255'],
             'sections' => ['array'],
+            'sections.*.data.tiles.*.product_link' => ['nullable', 'string', 'max:2048'],
             'sections.*.data.tiles.*.background_image' => ['nullable', 'string', 'max:2048'],
             'sections.*.data.tiles.*.background_image_file' => ['nullable', 'image', 'max:4096'],
             'sections.*.data.tiles.*.background_image_alt' => ['nullable', 'string', 'max:2048'],
