@@ -3646,7 +3646,7 @@
     .template-ai-grid-item {
         border-radius: 14px;
         background: #f1f5f9;
-        min-height: 120px;
+        min-height: 150px;
         border: 1px solid rgba(148, 163, 184, 0.25);
     }
 
@@ -7393,7 +7393,7 @@
         }
 
         .mockup-panel {
-            padding: 14px;
+            padding: 12px;
         }
 
         .mockup-topbar-center {
@@ -7537,6 +7537,14 @@
 
         .mockup-panel-upload-tab {
             display: inline-flex;
+        }
+
+        .template-ai-grid {
+            gap: 10px;
+        }
+
+        .template-ai-grid-item {
+            min-height: 178px;
         }
 
         .mockup-tools-menu {
