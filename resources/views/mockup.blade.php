@@ -2329,18 +2329,22 @@
                                 ? mobileImageFit.targetHeight
                                 : CANVAS_HEIGHT * 0.76;
                             const fallbackScale = Math.min(CANVAS_WIDTH / img.width, CANVAS_HEIGHT / img.height);
-                            const scale = isMobileMockup && visibleBounds
-                                ? Math.min(targetWidth / visibleBounds.width, targetHeight / visibleBounds.height)
-                                : isMobileMockup && mobileImageFit
-                                    ? Math.min(targetWidth / img.width, targetHeight / img.height)
-                                : fallbackScale * (Number.isFinite(mobileImageFit?.scale) ? mobileImageFit.scale : 1);
-                            scaleX = scale;
-                            scaleY = scale;
+                            if (isMobileMockup && visibleBounds) {
+                                scaleX = targetWidth / visibleBounds.width;
+                                scaleY = targetHeight / visibleBounds.height;
+                            } else if (isMobileMockup && mobileImageFit) {
+                                scaleX = targetWidth / img.width;
+                                scaleY = targetHeight / img.height;
+                            } else {
+                                const scale = fallbackScale * (Number.isFinite(mobileImageFit?.scale) ? mobileImageFit.scale : 1);
+                                scaleX = scale;
+                                scaleY = scale;
+                            }
                             if (visibleBounds) {
                                 const visibleCenterX = visibleBounds.x + visibleBounds.width / 2;
                                 const visibleCenterY = visibleBounds.y + visibleBounds.height / 2;
-                                left = CANVAS_WIDTH / 2 - (visibleCenterX - img.width / 2) * scale + imageOffsetX;
-                                top = CANVAS_HEIGHT / 2 - (visibleCenterY - img.height / 2) * scale + imageOffsetY;
+                                left = CANVAS_WIDTH / 2 - (visibleCenterX - img.width / 2) * scaleX + imageOffsetX;
+                                top = CANVAS_HEIGHT / 2 - (visibleCenterY - img.height / 2) * scaleY + imageOffsetY;
                             } else {
                                 left = CANVAS_WIDTH / 2 + imageOffsetX;
                                 top = CANVAS_HEIGHT / 2 + imageOffsetY;
