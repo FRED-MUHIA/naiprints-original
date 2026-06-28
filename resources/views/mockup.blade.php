@@ -565,7 +565,7 @@
                 <main class="mockup-stage">
                     <div class="mockup-stage-toolbar">
                         <div class="mockup-stage-tabs">
-                            <button class="mockup-stage-tab is-active" type="button" data-tools-toggle aria-expanded="false" aria-haspopup="menu" aria-controls="mockup-tools-menu">Tools</button>
+                            <button class="mockup-stage-tab is-active" type="button" data-tools-toggle aria-expanded="false" aria-haspopup="menu" aria-controls="mockup-tools-menu">Text Tools</button>
                             <button class="mockup-stage-tab" type="button" data-remove-bg>Remove Background</button>
                         </div>
                         <div class="mockup-stage-actions">
@@ -876,7 +876,7 @@
                             { name: 'Sand', value: '#f5e9d8' },
                         ],
                         printArea: { x: 260, y: 260, w: 300, h: 360 },
-                        mobileImageFit: { targetWidth: 420, targetHeight: 460, offsetX: 0, offsetY: 4 },
+                        mobileImageFit: { targetWidth: 560, targetHeight: 560, offsetX: 0, offsetY: 0 },
                     },
                     hoodie: {
                         label: 'Hoodie',
@@ -886,7 +886,7 @@
                             { name: 'Storm', value: '#334155' },
                         ],
                         printArea: { x: 250, y: 300, w: 320, h: 320 },
-                        mobileImageFit: { targetWidth: 430, targetHeight: 455, offsetX: 0, offsetY: 8 },
+                        mobileImageFit: { targetWidth: 560, targetHeight: 560, offsetX: 0, offsetY: 0 },
                     },
                     polo: {
                         label: 'Polo',
@@ -896,7 +896,7 @@
                             { name: 'Olive', value: '#4b5d4a' },
                         ],
                         printArea: { x: 270, y: 260, w: 280, h: 320 },
-                        mobileImageFit: { targetWidth: 410, targetHeight: 450, offsetX: 0, offsetY: 4 },
+                        mobileImageFit: { targetWidth: 560, targetHeight: 560, offsetX: 0, offsetY: 0 },
                     },
                     cap: {
                         label: 'Caps',
@@ -2295,7 +2295,6 @@
                         let originX = 'left';
                         let originY = 'top';
                         if (img.width > 0 && img.height > 0) {
-                            const visibleBounds = isMobileMockup ? getVisibleImageBounds(img) : null;
                             const targetWidth = Number.isFinite(mobileImageFit?.targetWidth)
                                 ? mobileImageFit.targetWidth
                                 : CANVAS_WIDTH * 0.7;
@@ -2303,20 +2302,13 @@
                                 ? mobileImageFit.targetHeight
                                 : CANVAS_HEIGHT * 0.76;
                             const fallbackScale = Math.min(CANVAS_WIDTH / img.width, CANVAS_HEIGHT / img.height);
-                            const scale = visibleBounds
-                                ? Math.min(targetWidth / visibleBounds.width, targetHeight / visibleBounds.height)
+                            const scale = isMobileMockup && mobileImageFit
+                                ? Math.min(targetWidth / img.width, targetHeight / img.height)
                                 : fallbackScale * (Number.isFinite(mobileImageFit?.scale) ? mobileImageFit.scale : 1);
                             scaleX = scale;
                             scaleY = scale;
-                            if (visibleBounds) {
-                                const visibleCenterX = visibleBounds.x + visibleBounds.width / 2;
-                                const visibleCenterY = visibleBounds.y + visibleBounds.height / 2;
-                                left = CANVAS_WIDTH / 2 - (visibleCenterX - img.width / 2) * scale + imageOffsetX;
-                                top = CANVAS_HEIGHT / 2 - (visibleCenterY - img.height / 2) * scale + imageOffsetY;
-                            } else {
-                                left = CANVAS_WIDTH / 2 + imageOffsetX;
-                                top = CANVAS_HEIGHT / 2 + imageOffsetY;
-                            }
+                            left = CANVAS_WIDTH / 2 + imageOffsetX;
+                            top = CANVAS_HEIGHT / 2 + imageOffsetY;
                             originX = 'center';
                             originY = 'center';
                         }
