@@ -799,7 +799,7 @@
                 </label>
                 <div class="mockup-order-total">
                     <span>Total</span>
-                    <strong data-mockup-order-total>KSh 1,000</strong>
+                    <strong data-mockup-order-total>KSh 1,325</strong>
                 </div>
                 <p class="mockup-order-status" data-mockup-order-status role="status"></p>
                 <button class="mockup-order-submit" type="submit">Add to cart and email invoice</button>
@@ -823,11 +823,13 @@
                 const GUIDE_SAFE_DASH = [6 * GUIDE_SCALE, 8 * GUIDE_SCALE];
                 const GUIDE_PRINT_STROKE = 2 * GUIDE_SCALE;
                 const GUIDE_SAFE_STROKE = 1.5 * GUIDE_SCALE;
-                const DEFAULT_MOCKUP_PRICE = 1000;
+                const DEFAULT_MOCKUP_PRICE = 1325;
                 const MOCKUP_PRICES = {
+                    tshirt: 1325,
                     hoodie: 2500,
-                    polo: 1200,
-                    cap: 550,
+                    polo: 1650,
+                    cap: 540,
+                    mug: 500,
                     totebag: 600,
                 };
                 const SAVED_STORAGE_KEY = 'nai_mockup_saved_designs';
@@ -873,7 +875,7 @@
                             { name: 'Sand', value: '#f5e9d8' },
                         ],
                         printArea: { x: 260, y: 260, w: 300, h: 360 },
-                        mobileImageFit: { scale: 1.35, offsetX: 100, offsetY: 42 },
+                        mobileImageFit: { scale: 1.65, offsetX: 85, offsetY: 42 },
                     },
                     hoodie: {
                         label: 'Hoodie',
@@ -883,7 +885,7 @@
                             { name: 'Storm', value: '#334155' },
                         ],
                         printArea: { x: 250, y: 300, w: 320, h: 320 },
-                        mobileImageFit: { scale: 1.2, offsetX: 0, offsetY: 28 },
+                        mobileImageFit: { scale: 1.7, offsetX: 80, offsetY: 34 },
                     },
                     polo: {
                         label: 'Polo',
@@ -893,7 +895,7 @@
                             { name: 'Olive', value: '#4b5d4a' },
                         ],
                         printArea: { x: 270, y: 260, w: 280, h: 320 },
-                        mobileImageFit: { scale: 1.2, offsetX: 0, offsetY: 24 },
+                        mobileImageFit: { scale: 1.6, offsetX: 75, offsetY: 28 },
                     },
                     cap: {
                         label: 'Caps',
@@ -1120,15 +1122,39 @@
                     width: CANVAS_WIDTH,
                     height: CANVAS_HEIGHT,
                     preserveObjectStacking: true,
+                    allowTouchScrolling: false,
                     selectionColor: 'rgba(59, 130, 246, 0.12)',
                     selectionBorderColor: '#3b82f6',
                     selectionLineWidth: 2,
                 });
 
+                const isMobileCanvas = () => window.matchMedia('(max-width: 640px), (pointer: coarse)').matches;
+                const applyCanvasInteractionMode = () => {
+                    const mobile = isMobileCanvas();
+                    canvas.allowTouchScrolling = false;
+                    canvas.selection = activeTool === 'select';
+                    canvas.targetFindTolerance = mobile ? 16 : 4;
+                    fabric.Object.prototype.cornerSize = mobile ? 18 : 13;
+                    fabric.Object.prototype.touchCornerSize = mobile ? 32 : 24;
+                    fabric.Object.prototype.padding = mobile ? 10 : 6;
+                    fabric.Object.prototype.borderScaleFactor = mobile ? 2.2 : 1.4;
+                    canvas.getObjects().forEach((obj) => {
+                        obj.cornerSize = fabric.Object.prototype.cornerSize;
+                        obj.touchCornerSize = fabric.Object.prototype.touchCornerSize;
+                        obj.padding = fabric.Object.prototype.padding;
+                        obj.borderScaleFactor = fabric.Object.prototype.borderScaleFactor;
+                        obj.setCoords();
+                    });
+                    canvas.renderAll();
+                };
+
                 fabric.Object.prototype.cornerColor = '#3b82f6';
                 fabric.Object.prototype.cornerStyle = 'circle';
                 fabric.Object.prototype.transparentCorners = false;
-                fabric.Object.prototype.padding = 6;
+                fabric.Object.prototype.cornerSize = isMobileCanvas() ? 18 : 13;
+                fabric.Object.prototype.touchCornerSize = isMobileCanvas() ? 32 : 24;
+                fabric.Object.prototype.padding = isMobileCanvas() ? 10 : 6;
+                fabric.Object.prototype.borderScaleFactor = isMobileCanvas() ? 2.2 : 1.4;
 
                 let currentMockup = 'tshirt';
                 let currentColorIndex = 0;
@@ -1258,6 +1284,7 @@
                 let activeTool = 'select';
                 let activeColor = '#7c3aed';
                 let activePanel = 'mockups';
+                applyCanvasInteractionMode();
                 const MOCKUP_TAB_KEYS = ['all', 'designs', 'folders'];
                 const readSavedMockupTab = () => {
                     try {
@@ -2044,7 +2071,7 @@
                         strokeWidth: GUIDE_PRINT_STROKE,
                         strokeUniform: false,
                         perPixelTargetFind: true,
-                        targetFindTolerance: 4,
+                        targetFindTolerance: isMobileCanvas() ? 16 : 4,
                         selectable: true,
                         evented: true,
                         hasControls: true,
@@ -2082,7 +2109,7 @@
                         strokeWidth: GUIDE_PRINT_STROKE,
                         strokeUniform: false,
                         perPixelTargetFind: true,
-                        targetFindTolerance: 4,
+                        targetFindTolerance: isMobileCanvas() ? 16 : 4,
                         selectable: true,
                         evented: true,
                         hasControls: true,
@@ -5071,6 +5098,7 @@
                 canvas.on('text:changed', saveState);
                 canvas.on('text:editing:exited', saveState);
                 canvas.on('object:added', () => {
+                    applyCanvasInteractionMode();
                     if (!isRestoring) {
                         updateOpacitySlider();
                     }
@@ -5116,6 +5144,7 @@
                 });
 
                 window.addEventListener('resize', () => {
+                    applyCanvasInteractionMode();
                     fitToContainer();
                 });
 

@@ -15,12 +15,14 @@ use Illuminate\Support\Str;
 
 class MockupCheckoutController extends Controller
 {
-    private const DEFAULT_PRICE = 1000;
+    private const DEFAULT_PRICE = 1325;
 
     private const PRICES = [
+        'tshirt' => 1325,
         'hoodie' => 2500,
-        'polo' => 1200,
-        'cap' => 550,
+        'polo' => 1650,
+        'cap' => 540,
+        'mug' => 500,
         'totebag' => 600,
     ];
 

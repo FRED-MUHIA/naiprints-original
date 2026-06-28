@@ -657,15 +657,9 @@
                                             </div>
                                         </div>
                                         <div class="product-quick">
-                                            <button class="product-quick-add" type="button"
-                                                    data-add-to-cart
-                                                    data-product-id="{{ $productId }}"
-                                                    data-product-name="{{ $name }}"
-                                                    data-product-price="{{ $finalPrice }}"
-                                                    data-product-image="{{ $imageUrl }}"
-                                                    data-product-url="{{ $detailUrl }}">
-                                                Quick Add
-                                            </button>
+                                            <a class="product-quick-add product-quick-customize" href="{{ route('mockup') }}">
+                                                Customize Now
+                                            </a>
                                             @if (!empty($sizes))
                                                 <div class="product-sizes" data-option-group="size">
                                                     @foreach ($sizes as $sizeIndex => $size)
