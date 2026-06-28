@@ -2223,7 +2223,12 @@
                         let minY = height;
                         let maxX = 0;
                         let maxY = 0;
+                        let alphaMinX = width;
+                        let alphaMinY = height;
+                        let alphaMaxX = 0;
+                        let alphaMaxY = 0;
                         let found = false;
+                        let alphaFound = false;
                         const step = Math.max(1, Math.floor(Math.max(width, height) / 500));
 
                         for (let y = 0; y < height; y += step) {
@@ -2231,6 +2236,13 @@
                                 const index = (y * width + x) * 4;
                                 const alpha = pixels[index + 3];
                                 const isVisible = alpha > 12;
+                                if (isVisible) {
+                                    alphaFound = true;
+                                    alphaMinX = Math.min(alphaMinX, x);
+                                    alphaMinY = Math.min(alphaMinY, y);
+                                    alphaMaxX = Math.max(alphaMaxX, x);
+                                    alphaMaxY = Math.max(alphaMaxY, y);
+                                }
                                 const differsFromBackground = !background || alpha < 240 || colorDistance(index) > 34;
                                 if (isVisible && differsFromBackground) {
                                     found = true;
@@ -2239,6 +2251,20 @@
                                     maxX = Math.max(maxX, x);
                                     maxY = Math.max(maxY, y);
                                 }
+                            }
+                        }
+
+                        if (alphaFound) {
+                            const alphaWidth = Math.max(step, alphaMaxX - alphaMinX + step);
+                            const alphaHeight = Math.max(step, alphaMaxY - alphaMinY + step);
+                            const hasTransparentMargin = alphaWidth < width * 0.92 || alphaHeight < height * 0.92;
+                            if (hasTransparentMargin) {
+                                return {
+                                    x: alphaMinX,
+                                    y: alphaMinY,
+                                    width: alphaWidth,
+                                    height: alphaHeight,
+                                };
                             }
                         }
 
@@ -2295,6 +2321,7 @@
                         let originX = 'left';
                         let originY = 'top';
                         if (img.width > 0 && img.height > 0) {
+                            const visibleBounds = isMobileMockup ? getVisibleImageBounds(img) : null;
                             const targetWidth = Number.isFinite(mobileImageFit?.targetWidth)
                                 ? mobileImageFit.targetWidth
                                 : CANVAS_WIDTH * 0.7;
@@ -2302,13 +2329,22 @@
                                 ? mobileImageFit.targetHeight
                                 : CANVAS_HEIGHT * 0.76;
                             const fallbackScale = Math.min(CANVAS_WIDTH / img.width, CANVAS_HEIGHT / img.height);
-                            const scale = isMobileMockup && mobileImageFit
-                                ? Math.min(targetWidth / img.width, targetHeight / img.height)
+                            const scale = isMobileMockup && visibleBounds
+                                ? Math.min(targetWidth / visibleBounds.width, targetHeight / visibleBounds.height)
+                                : isMobileMockup && mobileImageFit
+                                    ? Math.min(targetWidth / img.width, targetHeight / img.height)
                                 : fallbackScale * (Number.isFinite(mobileImageFit?.scale) ? mobileImageFit.scale : 1);
                             scaleX = scale;
                             scaleY = scale;
-                            left = CANVAS_WIDTH / 2 + imageOffsetX;
-                            top = CANVAS_HEIGHT / 2 + imageOffsetY;
+                            if (visibleBounds) {
+                                const visibleCenterX = visibleBounds.x + visibleBounds.width / 2;
+                                const visibleCenterY = visibleBounds.y + visibleBounds.height / 2;
+                                left = CANVAS_WIDTH / 2 - (visibleCenterX - img.width / 2) * scale + imageOffsetX;
+                                top = CANVAS_HEIGHT / 2 - (visibleCenterY - img.height / 2) * scale + imageOffsetY;
+                            } else {
+                                left = CANVAS_WIDTH / 2 + imageOffsetX;
+                                top = CANVAS_HEIGHT / 2 + imageOffsetY;
+                            }
                             originX = 'center';
                             originY = 'center';
                         }
