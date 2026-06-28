@@ -876,7 +876,7 @@
                             { name: 'Sand', value: '#f5e9d8' },
                         ],
                         printArea: { x: 260, y: 260, w: 300, h: 360 },
-                        mobileImageFit: { targetWidth: 560, targetHeight: 560, offsetX: 0, offsetY: 0 },
+                        mobileImageFit: { targetWidth: 600, targetHeight: 600, offsetX: 0, offsetY: 0 },
                     },
                     hoodie: {
                         label: 'Hoodie',
@@ -886,7 +886,7 @@
                             { name: 'Storm', value: '#334155' },
                         ],
                         printArea: { x: 250, y: 300, w: 320, h: 320 },
-                        mobileImageFit: { targetWidth: 560, targetHeight: 560, offsetX: 0, offsetY: 0 },
+                        mobileImageFit: { targetWidth: 600, targetHeight: 600, offsetX: 0, offsetY: 0 },
                     },
                     polo: {
                         label: 'Polo',
@@ -896,7 +896,7 @@
                             { name: 'Olive', value: '#4b5d4a' },
                         ],
                         printArea: { x: 270, y: 260, w: 280, h: 320 },
-                        mobileImageFit: { targetWidth: 560, targetHeight: 560, offsetX: 0, offsetY: 0 },
+                        mobileImageFit: { targetWidth: 600, targetHeight: 600, offsetX: 0, offsetY: 0 },
                     },
                     cap: {
                         label: 'Caps',
@@ -2160,6 +2160,60 @@
                     wirePrintAreaRect();
                 };
 
+                const getImageCornerBackground = (fabricImage) => {
+                    const element = fabricImage?.getElement?.();
+                    const width = Math.round(fabricImage?.width || element?.naturalWidth || element?.width || 0);
+                    const height = Math.round(fabricImage?.height || element?.naturalHeight || element?.height || 0);
+                    if (!element || width <= 0 || height <= 0) {
+                        return null;
+                    }
+
+                    try {
+                        const temp = document.createElement('canvas');
+                        temp.width = width;
+                        temp.height = height;
+                        const context = temp.getContext('2d', { willReadFrequently: true });
+                        context.drawImage(element, 0, 0, width, height);
+                        const pixels = context.getImageData(0, 0, width, height).data;
+                        const sampleSize = Math.min(18, Math.floor(Math.min(width, height) / 6));
+                        const corners = [
+                            [0, 0],
+                            [Math.max(0, width - sampleSize), 0],
+                            [0, Math.max(0, height - sampleSize)],
+                            [Math.max(0, width - sampleSize), Math.max(0, height - sampleSize)],
+                        ];
+                        const samples = [];
+
+                        corners.forEach(([startX, startY]) => {
+                            for (let y = startY; y < Math.min(height, startY + sampleSize); y += 3) {
+                                for (let x = startX; x < Math.min(width, startX + sampleSize); x += 3) {
+                                    const index = (y * width + x) * 4;
+                                    if (pixels[index + 3] > 240) {
+                                        samples.push([pixels[index], pixels[index + 1], pixels[index + 2]]);
+                                    }
+                                }
+                            }
+                        });
+
+                        if (samples.length < 6) {
+                            return null;
+                        }
+
+                        const rgb = samples.reduce(
+                            (total, sample) => [
+                                total[0] + sample[0] / samples.length,
+                                total[1] + sample[1] / samples.length,
+                                total[2] + sample[2] / samples.length,
+                            ],
+                            [0, 0, 0]
+                        );
+
+                        return `rgb(${Math.round(rgb[0])}, ${Math.round(rgb[1])}, ${Math.round(rgb[2])})`;
+                    } catch (error) {
+                        return null;
+                    }
+                };
+
                 const getVisibleImageBounds = (fabricImage) => {
                     const element = fabricImage?.getElement?.();
                     const width = Math.round(fabricImage?.width || element?.naturalWidth || element?.width || 0);
@@ -2264,6 +2318,7 @@
                                     y: alphaMinY,
                                     width: alphaWidth,
                                     height: alphaHeight,
+                                    source: 'alpha',
                                 };
                             }
                         }
@@ -2277,6 +2332,7 @@
                             y: minY,
                             width: Math.max(step, maxX - minX + step),
                             height: Math.max(step, maxY - minY + step),
+                            source: 'background',
                         };
                     } catch (error) {
                         return null;
@@ -2309,6 +2365,10 @@
 
                     fabric.Image.fromURL(url, (img) => {
                         const isMobileMockup = window.matchMedia('(max-width: 640px)').matches;
+                        const mobileImageBackground = isMobileMockup ? getImageCornerBackground(img) : null;
+                        if (mobileImageBackground) {
+                            canvas.setBackgroundColor(mobileImageBackground, canvas.renderAll.bind(canvas));
+                        }
                         const mobileImageFit = isMobileMockup
                             ? (config.mobileImageFit || null)
                             : null;
@@ -2322,6 +2382,15 @@
                         let originY = 'top';
                         if (img.width > 0 && img.height > 0) {
                             const visibleBounds = isMobileMockup ? getVisibleImageBounds(img) : null;
+                            const boundsTouchImageEdge = visibleBounds
+                                ? visibleBounds.x <= img.width * 0.04
+                                    || visibleBounds.y <= img.height * 0.04
+                                    || visibleBounds.x + visibleBounds.width >= img.width * 0.96
+                                    || visibleBounds.y + visibleBounds.height >= img.height * 0.96
+                                : false;
+                            const shouldCropMobileBase = isMobileMockup
+                                && visibleBounds
+                                && (visibleBounds.source === 'alpha' || boundsTouchImageEdge);
                             const targetWidth = Number.isFinite(mobileImageFit?.targetWidth)
                                 ? mobileImageFit.targetWidth
                                 : CANVAS_WIDTH * 0.7;
@@ -2329,28 +2398,40 @@
                                 ? mobileImageFit.targetHeight
                                 : CANVAS_HEIGHT * 0.76;
                             const fallbackScale = Math.min(CANVAS_WIDTH / img.width, CANVAS_HEIGHT / img.height);
-                            if (isMobileMockup && visibleBounds) {
-                                scaleX = targetWidth / visibleBounds.width;
-                                scaleY = targetHeight / visibleBounds.height;
+                            if (shouldCropMobileBase) {
+                                img.set({
+                                    cropX: visibleBounds.x,
+                                    cropY: visibleBounds.y,
+                                    width: visibleBounds.width,
+                                    height: visibleBounds.height,
+                                });
+                                scaleX = CANVAS_WIDTH / visibleBounds.width;
+                                scaleY = CANVAS_HEIGHT / visibleBounds.height;
+                                left = 0;
+                                top = 0;
+                                originX = 'left';
+                                originY = 'top';
                             } else if (isMobileMockup && mobileImageFit) {
-                                scaleX = targetWidth / img.width;
-                                scaleY = targetHeight / img.height;
+                                scaleX = CANVAS_WIDTH / img.width;
+                                scaleY = CANVAS_HEIGHT / img.height;
                             } else {
                                 const scale = fallbackScale * (Number.isFinite(mobileImageFit?.scale) ? mobileImageFit.scale : 1);
                                 scaleX = scale;
                                 scaleY = scale;
                             }
-                            if (visibleBounds) {
+                            if (!shouldCropMobileBase && visibleBounds) {
                                 const visibleCenterX = visibleBounds.x + visibleBounds.width / 2;
                                 const visibleCenterY = visibleBounds.y + visibleBounds.height / 2;
                                 left = CANVAS_WIDTH / 2 - (visibleCenterX - img.width / 2) * scaleX + imageOffsetX;
                                 top = CANVAS_HEIGHT / 2 - (visibleCenterY - img.height / 2) * scaleY + imageOffsetY;
-                            } else {
+                            } else if (!shouldCropMobileBase) {
                                 left = CANVAS_WIDTH / 2 + imageOffsetX;
                                 top = CANVAS_HEIGHT / 2 + imageOffsetY;
                             }
-                            originX = 'center';
-                            originY = 'center';
+                            if (!shouldCropMobileBase) {
+                                originX = 'center';
+                                originY = 'center';
+                            }
                         }
                         img.set({
                             left,
