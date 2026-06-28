@@ -2323,25 +2323,8 @@
                         let originX = 'left';
                         let originY = 'top';
                         if (img.width > 0 && img.height > 0) {
-                            const visibleBounds = isMobileMockup ? getVisibleImageBounds(img) : null;
-                            const shouldCropMobileBase = isMobileMockup
-                                && visibleBounds
-                                && visibleBounds.source === 'alpha';
                             const fallbackScale = Math.min(CANVAS_WIDTH / img.width, CANVAS_HEIGHT / img.height);
-                            if (shouldCropMobileBase) {
-                                img.set({
-                                    cropX: visibleBounds.x,
-                                    cropY: visibleBounds.y,
-                                    width: visibleBounds.width,
-                                    height: visibleBounds.height,
-                                });
-                                scaleX = CANVAS_WIDTH / visibleBounds.width;
-                                scaleY = CANVAS_HEIGHT / visibleBounds.height;
-                                left = 0;
-                                top = 0;
-                                originX = 'left';
-                                originY = 'top';
-                            } else if (isMobileMockup && mobileImageFit) {
+                            if (isMobileMockup && mobileImageFit) {
                                 scaleX = CANVAS_WIDTH / img.width;
                                 scaleY = CANVAS_HEIGHT / img.height;
                                 left = 0;
