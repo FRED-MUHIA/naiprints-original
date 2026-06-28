@@ -2285,6 +2285,159 @@
                     }
                 };
 
+                const createMobileMockupBaseDataUrl = (fabricImage) => {
+                    const element = fabricImage?.getElement?.();
+                    const sourceWidth = Math.round(fabricImage?.width || element?.naturalWidth || element?.width || 0);
+                    const sourceHeight = Math.round(fabricImage?.height || element?.naturalHeight || element?.height || 0);
+                    if (!element || sourceWidth <= 0 || sourceHeight <= 0) {
+                        return null;
+                    }
+
+                    try {
+                        const temp = document.createElement('canvas');
+                        temp.width = sourceWidth;
+                        temp.height = sourceHeight;
+                        const tempContext = temp.getContext('2d', { willReadFrequently: true });
+                        tempContext.drawImage(element, 0, 0, sourceWidth, sourceHeight);
+                        const pixels = tempContext.getImageData(0, 0, sourceWidth, sourceHeight).data;
+                        const step = Math.max(1, Math.floor(Math.max(sourceWidth, sourceHeight) / 500));
+                        let alphaMinX = sourceWidth;
+                        let alphaMinY = sourceHeight;
+                        let alphaMaxX = 0;
+                        let alphaMaxY = 0;
+                        let alphaFound = false;
+
+                        for (let y = 0; y < sourceHeight; y += step) {
+                            for (let x = 0; x < sourceWidth; x += step) {
+                                const index = (y * sourceWidth + x) * 4;
+                                if (pixels[index + 3] > 12) {
+                                    alphaFound = true;
+                                    alphaMinX = Math.min(alphaMinX, x);
+                                    alphaMinY = Math.min(alphaMinY, y);
+                                    alphaMaxX = Math.max(alphaMaxX, x);
+                                    alphaMaxY = Math.max(alphaMaxY, y);
+                                }
+                            }
+                        }
+
+                        const alphaCrop = alphaFound
+                            ? {
+                                x: alphaMinX,
+                                y: alphaMinY,
+                                width: Math.max(step, alphaMaxX - alphaMinX + step),
+                                height: Math.max(step, alphaMaxY - alphaMinY + step),
+                            }
+                            : null;
+                        let crop = alphaCrop
+                            && (alphaCrop.width < sourceWidth * 0.96 || alphaCrop.height < sourceHeight * 0.96)
+                            ? alphaCrop
+                            : { x: 0, y: 0, width: sourceWidth, height: sourceHeight };
+
+                        if (crop.x === 0 && crop.y === 0 && crop.width === sourceWidth && crop.height === sourceHeight) {
+                            const sampleLimit = Math.max(8, Math.min(24, Math.floor(Math.min(sourceWidth, sourceHeight) / 8)));
+                            const cornerSamples = [];
+                            for (let y = 0; y < sampleLimit; y += 2) {
+                                for (let x = 0; x < sampleLimit; x += 2) {
+                                    const index = (y * sourceWidth + x) * 4;
+                                    if (pixels[index + 3] > 200) {
+                                        cornerSamples.push([pixels[index], pixels[index + 1], pixels[index + 2]]);
+                                    }
+                                }
+                            }
+
+                            if (cornerSamples.length) {
+                                const corner = cornerSamples.reduce(
+                                    (total, sample) => [
+                                        total[0] + sample[0] / cornerSamples.length,
+                                        total[1] + sample[1] / cornerSamples.length,
+                                        total[2] + sample[2] / cornerSamples.length,
+                                    ],
+                                    [0, 0, 0]
+                                );
+                                const colorDistance = (index) => {
+                                    const red = pixels[index] - corner[0];
+                                    const green = pixels[index + 1] - corner[1];
+                                    const blue = pixels[index + 2] - corner[2];
+                                    return Math.sqrt(red * red + green * green + blue * blue);
+                                };
+                                const columnLooksLikeCornerBlock = (x) => {
+                                    let matches = 0;
+                                    let total = 0;
+                                    for (let y = 0; y < sourceHeight; y += Math.max(step, 3)) {
+                                        const index = (y * sourceWidth + x) * 4;
+                                        if (pixels[index + 3] > 180) {
+                                            total++;
+                                            if (colorDistance(index) < 42) {
+                                                matches++;
+                                            }
+                                        }
+                                    }
+                                    return total > 0 && matches / total > 0.08;
+                                };
+                                const rowLooksLikeCornerBlock = (y) => {
+                                    let matches = 0;
+                                    let total = 0;
+                                    for (let x = 0; x < sourceWidth; x += Math.max(step, 3)) {
+                                        const index = (y * sourceWidth + x) * 4;
+                                        if (pixels[index + 3] > 180) {
+                                            total++;
+                                            if (colorDistance(index) < 42) {
+                                                matches++;
+                                            }
+                                        }
+                                    }
+                                    return total > 0 && matches / total > 0.08;
+                                };
+                                let lastBlockX = 0;
+                                let lastBlockY = 0;
+                                for (let x = 0; x < sourceWidth; x += step) {
+                                    if (columnLooksLikeCornerBlock(x)) {
+                                        lastBlockX = x;
+                                    }
+                                }
+                                for (let y = 0; y < sourceHeight; y += step) {
+                                    if (rowLooksLikeCornerBlock(y)) {
+                                        lastBlockY = y;
+                                    }
+                                }
+                                const detectedWidth = Math.min(sourceWidth, lastBlockX + step);
+                                const detectedHeight = Math.min(sourceHeight, lastBlockY + step);
+                                if (
+                                    detectedWidth > sourceWidth * 0.25
+                                    && detectedHeight > sourceHeight * 0.25
+                                    && (detectedWidth < sourceWidth * 0.96 || detectedHeight < sourceHeight * 0.96)
+                                ) {
+                                    crop = {
+                                        x: 0,
+                                        y: 0,
+                                        width: detectedWidth,
+                                        height: detectedHeight,
+                                    };
+                                }
+                            }
+                        }
+
+                        const output = document.createElement('canvas');
+                        output.width = CANVAS_WIDTH;
+                        output.height = CANVAS_HEIGHT;
+                        const context = output.getContext('2d');
+                        context.drawImage(
+                            element,
+                            crop.x,
+                            crop.y,
+                            crop.width,
+                            crop.height,
+                            0,
+                            0,
+                            CANVAS_WIDTH,
+                            CANVAS_HEIGHT
+                        );
+                        return output.toDataURL('image/png');
+                    } catch (error) {
+                        return null;
+                    }
+                };
+
                 const loadMockup = (mockupKey, colorIndex = 0, view = null) => {
                     captureViewDesigns();
                     currentMockup = mockupKey;
@@ -2309,8 +2462,44 @@
                     canvas.clear();
                     setBackgroundTheme(color);
 
+                    const addMockupBaseImage = (baseImage) => {
+                        mockupImage = baseImage;
+                        canvas.add(baseImage);
+                        renderPrintArea();
+                        setGuidesVisible(guidesVisible);
+                        if (printAreaRect) {
+                            canvas.setActiveObject(printAreaRect);
+                        }
+                        restoreViewDesigns(currentMockup, currentView, () => {
+                            setLayerOrder();
+                            saveState();
+                            fitToContainer();
+                            refreshBuilder();
+                        });
+                    };
+
                     fabric.Image.fromURL(url, (img) => {
                         const isMobileMockup = window.matchMedia('(max-width: 640px)').matches;
+                        const mobileBaseDataUrl = isMobileMockup && imageUrl
+                            ? createMobileMockupBaseDataUrl(img)
+                            : null;
+                        if (mobileBaseDataUrl) {
+                            fabric.Image.fromURL(mobileBaseDataUrl, (mobileImg) => {
+                                mobileImg.set({
+                                    left: 0,
+                                    top: 0,
+                                    originX: 'left',
+                                    originY: 'top',
+                                    scaleX: 1,
+                                    scaleY: 1,
+                                    selectable: false,
+                                    evented: false,
+                                    data: { role: 'mockup-base' },
+                                });
+                                addMockupBaseImage(mobileImg);
+                            });
+                            return;
+                        }
                         const mobileImageFit = isMobileMockup
                             ? (config.mobileImageFit || null)
                             : null;
@@ -2323,8 +2512,25 @@
                         let originX = 'left';
                         let originY = 'top';
                         if (img.width > 0 && img.height > 0) {
+                            const visibleBounds = isMobileMockup ? getVisibleImageBounds(img) : null;
+                            const shouldCropTransparentPadding = isMobileMockup
+                                && visibleBounds
+                                && visibleBounds.source === 'alpha';
                             const fallbackScale = Math.min(CANVAS_WIDTH / img.width, CANVAS_HEIGHT / img.height);
-                            if (isMobileMockup && mobileImageFit) {
+                            if (shouldCropTransparentPadding) {
+                                img.set({
+                                    cropX: visibleBounds.x,
+                                    cropY: visibleBounds.y,
+                                    width: visibleBounds.width,
+                                    height: visibleBounds.height,
+                                });
+                                scaleX = CANVAS_WIDTH / visibleBounds.width;
+                                scaleY = CANVAS_HEIGHT / visibleBounds.height;
+                                left = 0;
+                                top = 0;
+                                originX = 'left';
+                                originY = 'top';
+                            } else if (isMobileMockup && mobileImageFit) {
                                 scaleX = CANVAS_WIDTH / img.width;
                                 scaleY = CANVAS_HEIGHT / img.height;
                                 left = 0;
@@ -2352,19 +2558,7 @@
                             evented: false,
                             data: { role: 'mockup-base' },
                         });
-                        mockupImage = img;
-                        canvas.add(img);
-                        renderPrintArea();
-                        setGuidesVisible(guidesVisible);
-                        if (printAreaRect) {
-                            canvas.setActiveObject(printAreaRect);
-                        }
-                        restoreViewDesigns(currentMockup, currentView, () => {
-                            setLayerOrder();
-                            saveState();
-                            fitToContainer();
-                            refreshBuilder();
-                        });
+                        addMockupBaseImage(img);
                     }, { crossOrigin: 'anonymous' });
                 };
 
