@@ -2160,60 +2160,6 @@
                     wirePrintAreaRect();
                 };
 
-                const getImageCornerBackground = (fabricImage) => {
-                    const element = fabricImage?.getElement?.();
-                    const width = Math.round(fabricImage?.width || element?.naturalWidth || element?.width || 0);
-                    const height = Math.round(fabricImage?.height || element?.naturalHeight || element?.height || 0);
-                    if (!element || width <= 0 || height <= 0) {
-                        return null;
-                    }
-
-                    try {
-                        const temp = document.createElement('canvas');
-                        temp.width = width;
-                        temp.height = height;
-                        const context = temp.getContext('2d', { willReadFrequently: true });
-                        context.drawImage(element, 0, 0, width, height);
-                        const pixels = context.getImageData(0, 0, width, height).data;
-                        const sampleSize = Math.min(18, Math.floor(Math.min(width, height) / 6));
-                        const corners = [
-                            [0, 0],
-                            [Math.max(0, width - sampleSize), 0],
-                            [0, Math.max(0, height - sampleSize)],
-                            [Math.max(0, width - sampleSize), Math.max(0, height - sampleSize)],
-                        ];
-                        const samples = [];
-
-                        corners.forEach(([startX, startY]) => {
-                            for (let y = startY; y < Math.min(height, startY + sampleSize); y += 3) {
-                                for (let x = startX; x < Math.min(width, startX + sampleSize); x += 3) {
-                                    const index = (y * width + x) * 4;
-                                    if (pixels[index + 3] > 240) {
-                                        samples.push([pixels[index], pixels[index + 1], pixels[index + 2]]);
-                                    }
-                                }
-                            }
-                        });
-
-                        if (samples.length < 6) {
-                            return null;
-                        }
-
-                        const rgb = samples.reduce(
-                            (total, sample) => [
-                                total[0] + sample[0] / samples.length,
-                                total[1] + sample[1] / samples.length,
-                                total[2] + sample[2] / samples.length,
-                            ],
-                            [0, 0, 0]
-                        );
-
-                        return `rgb(${Math.round(rgb[0])}, ${Math.round(rgb[1])}, ${Math.round(rgb[2])})`;
-                    } catch (error) {
-                        return null;
-                    }
-                };
-
                 const getVisibleImageBounds = (fabricImage) => {
                     const element = fabricImage?.getElement?.();
                     const width = Math.round(fabricImage?.width || element?.naturalWidth || element?.width || 0);
@@ -2365,10 +2311,6 @@
 
                     fabric.Image.fromURL(url, (img) => {
                         const isMobileMockup = window.matchMedia('(max-width: 640px)').matches;
-                        const mobileImageBackground = isMobileMockup ? getImageCornerBackground(img) : null;
-                        if (mobileImageBackground) {
-                            canvas.setBackgroundColor(mobileImageBackground, canvas.renderAll.bind(canvas));
-                        }
                         const mobileImageFit = isMobileMockup
                             ? (config.mobileImageFit || null)
                             : null;
@@ -2382,21 +2324,9 @@
                         let originY = 'top';
                         if (img.width > 0 && img.height > 0) {
                             const visibleBounds = isMobileMockup ? getVisibleImageBounds(img) : null;
-                            const boundsTouchImageEdge = visibleBounds
-                                ? visibleBounds.x <= img.width * 0.04
-                                    || visibleBounds.y <= img.height * 0.04
-                                    || visibleBounds.x + visibleBounds.width >= img.width * 0.96
-                                    || visibleBounds.y + visibleBounds.height >= img.height * 0.96
-                                : false;
                             const shouldCropMobileBase = isMobileMockup
                                 && visibleBounds
-                                && (visibleBounds.source === 'alpha' || boundsTouchImageEdge);
-                            const targetWidth = Number.isFinite(mobileImageFit?.targetWidth)
-                                ? mobileImageFit.targetWidth
-                                : CANVAS_WIDTH * 0.7;
-                            const targetHeight = Number.isFinite(mobileImageFit?.targetHeight)
-                                ? mobileImageFit.targetHeight
-                                : CANVAS_HEIGHT * 0.76;
+                                && visibleBounds.source === 'alpha';
                             const fallbackScale = Math.min(CANVAS_WIDTH / img.width, CANVAS_HEIGHT / img.height);
                             if (shouldCropMobileBase) {
                                 img.set({
@@ -2414,21 +2344,16 @@
                             } else if (isMobileMockup && mobileImageFit) {
                                 scaleX = CANVAS_WIDTH / img.width;
                                 scaleY = CANVAS_HEIGHT / img.height;
+                                left = 0;
+                                top = 0;
+                                originX = 'left';
+                                originY = 'top';
                             } else {
                                 const scale = fallbackScale * (Number.isFinite(mobileImageFit?.scale) ? mobileImageFit.scale : 1);
                                 scaleX = scale;
                                 scaleY = scale;
-                            }
-                            if (!shouldCropMobileBase && visibleBounds) {
-                                const visibleCenterX = visibleBounds.x + visibleBounds.width / 2;
-                                const visibleCenterY = visibleBounds.y + visibleBounds.height / 2;
-                                left = CANVAS_WIDTH / 2 - (visibleCenterX - img.width / 2) * scaleX + imageOffsetX;
-                                top = CANVAS_HEIGHT / 2 - (visibleCenterY - img.height / 2) * scaleY + imageOffsetY;
-                            } else if (!shouldCropMobileBase) {
                                 left = CANVAS_WIDTH / 2 + imageOffsetX;
                                 top = CANVAS_HEIGHT / 2 + imageOffsetY;
-                            }
-                            if (!shouldCropMobileBase) {
                                 originX = 'center';
                                 originY = 'center';
                             }
