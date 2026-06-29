@@ -6215,6 +6215,13 @@
         height: 22px;
     }
 
+    .mockup-app-icon img {
+        width: 32px;
+        height: 32px;
+        object-fit: contain;
+        display: block;
+    }
+
     .mockup-edit-section {
         background: #fff;
         border-radius: 18px;

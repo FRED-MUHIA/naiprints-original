@@ -495,6 +495,15 @@ class PageDefaults
                         'back_to_shop_label' => 'Back to shop',
                         'back_to_shop_url' => '/',
                         'share_label' => 'Share',
+                        'products' => [
+                            'tshirt' => ['name' => 'Tshirt', 'icon' => '👕', 'price' => 1325],
+                            'hoodie' => ['name' => 'Hoodies', 'icon' => '🧥', 'price' => 2500],
+                            'polo' => ['name' => 'Polo Tshirt', 'icon' => '👔', 'price' => 1650],
+                            'cap' => ['name' => 'Caps', 'icon' => '🧢', 'price' => 540],
+                            'mug' => ['name' => 'Mug', 'icon' => '☕', 'price' => 500],
+                            'pillow' => ['name' => 'Pillow', 'icon' => '🛏️', 'price' => 1325],
+                            'totebag' => ['name' => 'Totebags', 'icon' => '👜', 'price' => 600],
+                        ],
                         'product_colors' => [
                             'tshirt' => [
                                 ['name' => 'Classic White', 'value' => '#f8fafc'],

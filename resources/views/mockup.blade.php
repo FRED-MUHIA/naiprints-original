@@ -36,6 +36,45 @@
             $backToShopLabel = $mockupData['back_to_shop_label'] ?? 'Back to shop';
             $backToShopUrl = $mockupData['back_to_shop_url'] ?? '/';
             $shareLabel = $mockupData['share_label'] ?? 'Share';
+            $productDefaults = [
+                'tshirt' => ['name' => 'Tshirt', 'icon' => '👕', 'price' => 1325],
+                'hoodie' => ['name' => 'Hoodies', 'icon' => '🧥', 'price' => 2500],
+                'polo' => ['name' => 'Polo Tshirt', 'icon' => '👔', 'price' => 1650],
+                'cap' => ['name' => 'Caps', 'icon' => '🧢', 'price' => 540],
+                'mug' => ['name' => 'Mug', 'icon' => '☕', 'price' => 500],
+                'pillow' => ['name' => 'Pillow', 'icon' => '🛏️', 'price' => 1325],
+                'totebag' => ['name' => 'Totebags', 'icon' => '👜', 'price' => 600],
+            ];
+            $configuredProducts = is_array($mockupData['products'] ?? null) ? $mockupData['products'] : [];
+            $productItems = $productDefaults;
+            foreach ($configuredProducts as $productKey => $productConfig) {
+                if (array_key_exists($productKey, $productItems) || !is_array($productConfig)) {
+                    continue;
+                }
+                $name = trim((string) ($productConfig['name'] ?? ''));
+                $icon = trim((string) ($productConfig['icon'] ?? ''));
+                if ($name === '' && $icon === '') {
+                    continue;
+                }
+                $productItems[$productKey] = [
+                    'name' => $name !== '' ? $name : 'Custom product',
+                    'icon' => $icon !== '' ? $icon : '□',
+                ];
+            }
+            $mockupProducts = collect($productItems)
+                ->map(function ($defaults, $key) use ($configuredProducts) {
+                    $configured = is_array($configuredProducts[$key] ?? null) ? $configuredProducts[$key] : [];
+                    $name = trim((string) ($configured['name'] ?? ''));
+                    $icon = trim((string) ($configured['icon'] ?? ''));
+
+                    return [
+                        'key' => $key,
+                        'name' => $name !== '' ? $name : $defaults['name'],
+                        'icon' => $icon !== '' ? $icon : $defaults['icon'],
+                    ];
+                })
+                ->values()
+                ->all();
             $railLabels = $mockupData['rail_labels'] ?? [
                 'mockups' => 'Products',
                 'templates' => 'Templates',
@@ -316,34 +355,22 @@
                                 <span aria-hidden="true">‹</span>
                             </button>
                             <div class="mockup-app-grid mockup-product-grid" data-product-track>
-                                <button class="mockup-app-tile is-active" type="button" data-mockup="tshirt">
-                                    <span class="mockup-app-icon">👕</span>
-                                    <span>Tshirt</span>
-                                </button>
-                                <button class="mockup-app-tile" type="button" data-mockup="hoodie">
-                                    <span class="mockup-app-icon">🧥</span>
-                                    <span>Hoodies</span>
-                                </button>
-                                <button class="mockup-app-tile" type="button" data-mockup="polo">
-                                    <span class="mockup-app-icon">👔</span>
-                                    <span>Polo Tshirt</span>
-                                </button>
-                                <button class="mockup-app-tile" type="button" data-mockup="cap">
-                                    <span class="mockup-app-icon">🧢</span>
-                                    <span>Caps</span>
-                                </button>
-                                <button class="mockup-app-tile" type="button" data-mockup="mug">
-                                    <span class="mockup-app-icon">☕</span>
-                                    <span>Mug</span>
-                                </button>
-                                <button class="mockup-app-tile" type="button" data-mockup="pillow">
-                                    <span class="mockup-app-icon">🛏️</span>
-                                    <span>Pillow</span>
-                                </button>
-                                <button class="mockup-app-tile" type="button" data-mockup="totebag">
-                                    <span class="mockup-app-icon">👜</span>
-                                    <span>Totebags</span>
-                                </button>
+                                @foreach ($mockupProducts as $productIndex => $product)
+                                    @php
+                                        $productIcon = $product['icon'] ?? '';
+                                        $isIconImage = is_string($productIcon) && preg_match('/^(https?:\/\/|\/|\.\/|\.\.\/|data:image\/)|\.(png|jpe?g|svg|webp|gif)(\?.*)?$/i', $productIcon);
+                                    @endphp
+                                    <button class="mockup-app-tile {{ $productIndex === 0 ? 'is-active' : '' }}" type="button" data-mockup="{{ $product['key'] }}">
+                                        <span class="mockup-app-icon">
+                                            @if ($isIconImage)
+                                                <img src="{{ $productIcon }}" alt="" loading="lazy">
+                                            @else
+                                                {{ $productIcon }}
+                                            @endif
+                                        </span>
+                                        <span>{{ $product['name'] }}</span>
+                                    </button>
+                                @endforeach
                             </div>
                             <button class="mockup-carousel-btn is-right" type="button" data-product-next aria-label="Scroll right">
                                 <span aria-hidden="true">›</span>
@@ -831,6 +858,7 @@
                     polo: 1650,
                     cap: 540,
                     mug: 500,
+                    pillow: 1325,
                     totebag: 600,
                 };
                 const SAVED_STORAGE_KEY = 'nai_mockup_saved_designs';
@@ -859,6 +887,13 @@
                     const colors = mockupPageData.product_colors;
                     return colors && typeof colors === 'object' ? colors : {};
                 })();
+                const mockupPageProducts = (() => {
+                    if (!mockupPageData || typeof mockupPageData !== 'object') {
+                        return {};
+                    }
+                    const products = mockupPageData.products;
+                    return products && typeof products === 'object' ? products : {};
+                })();
 
                 const scalePrintArea = (area) => ({
                     x: area.x * SCALE_X,
@@ -866,6 +901,7 @@
                     w: area.w * SCALE_X,
                     h: area.h * SCALE_Y,
                 });
+                const defaultCustomPrintArea = { x: 260, y: 280, w: 300, h: 320 };
 
                 const mockupConfig = {
                     tshirt: {
@@ -935,6 +971,38 @@
                         printArea: { x: 260, y: 320, w: 300, h: 320 },
                     },
                 };
+                const normalizeMockupPrice = (value) => {
+                    if (typeof value === 'string') {
+                        value = value.replace(/[^0-9.]/g, '');
+                    }
+                    const price = Number(value);
+                    return Number.isFinite(price) && price >= 0 ? price : null;
+                };
+
+                Object.entries(mockupPageProducts).forEach(([key, product]) => {
+                    if (!product || typeof product !== 'object') {
+                        return;
+                    }
+                    if (!mockupConfig[key]) {
+                        mockupConfig[key] = {
+                            label: key,
+                            colors: [
+                                { name: 'White', value: '#f9fafb' },
+                                { name: 'Black', value: '#111827' },
+                                { name: 'Natural', value: '#e7ddc8' },
+                            ],
+                            printArea: defaultCustomPrintArea,
+                        };
+                    }
+                    const label = product.name || product.label || product.title;
+                    if (typeof label === 'string' && label.trim()) {
+                        mockupConfig[key].label = label.trim();
+                    }
+                    const price = normalizeMockupPrice(product.price ?? product.checkout_price ?? product.amount);
+                    if (price !== null) {
+                        MOCKUP_PRICES[key] = price;
+                    }
+                });
 
                 const viewLabels = {
                     front: 'Front',
@@ -1835,6 +1903,26 @@
                             </svg>
                         `;
                     },
+                    generic: (color) => {
+                        const highlight = lighten(color, 22);
+                        return `
+                            <svg width="760" height="760" viewBox="0 0 820 980" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="820" height="980" fill="transparent"/>
+                                <rect x="210" y="210" width="400" height="520" rx="42"
+                                      fill="${color}" stroke="rgba(15,23,42,0.12)" stroke-width="8"/>
+                                <rect x="250" y="250" width="320" height="120" rx="32" fill="${highlight}" opacity="0.35"/>
+                                <rect x="270" y="420" width="280" height="220" rx="22"
+                                      fill="rgba(255,255,255,0.12)" stroke="rgba(15,23,42,0.08)" stroke-width="5"/>
+                            </svg>
+                        `;
+                    },
+                };
+                const getMockupSvg = (mockupKey, color) => {
+                    const renderer = typeof mockupSvgs[mockupKey] === 'function'
+                        ? mockupSvgs[mockupKey]
+                        : mockupSvgs.generic;
+
+                    return renderer(color);
                 };
 
                 const resolveBackground = (theme) => {
@@ -2454,7 +2542,7 @@
                     const config = mockupConfig[mockupKey];
                     currentPrintArea = scalePrintArea(config.printArea);
                     const color = colors[safeIndex]?.value || '#f9fafb';
-                    const svg = mockupSvgs[mockupKey](color);
+                    const svg = getMockupSvg(mockupKey, color);
                     const fallbackUrl = toDataUrl(svg);
                     const imageUrl = getMockupImageUrl(mockupKey, currentView, color);
                     const url = imageUrl || fallbackUrl;
@@ -4507,7 +4595,7 @@
                     const safeName = mockupLabel.replace(/\s+/g, '-').toLowerCase();
 
                     for (const view of views) {
-                        const svg = mockupSvgs[currentMockup](color);
+                        const svg = getMockupSvg(currentMockup, color);
                         const fallbackUrl = toDataUrl(svg);
                         const baseUrl = getMockupImageUrl(currentMockup, view, color) || fallbackUrl;
                         const output = document.createElement('canvas');

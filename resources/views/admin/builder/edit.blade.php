@@ -1376,7 +1376,7 @@
                                     </button>
                                 </div>
                                 @php
-                                    $mockupProducts = [
+                                    $baseMockupProducts = [
                                         'tshirt' => 'Tshirt',
                                         'hoodie' => 'Hoodies',
                                         'polo' => 'Polo Tshirt',
@@ -1385,8 +1385,37 @@
                                         'pillow' => 'Pillow',
                                         'totebag' => 'Totebags',
                                     ];
+                                    $productIcons = [
+                                        'tshirt' => '👕',
+                                        'hoodie' => '🧥',
+                                        'polo' => '👔',
+                                        'cap' => '🧢',
+                                        'mug' => '☕',
+                                        'pillow' => '🛏️',
+                                        'totebag' => '👜',
+                                    ];
+                                    $productPrices = [
+                                        'tshirt' => 1325,
+                                        'hoodie' => 2500,
+                                        'polo' => 1650,
+                                        'cap' => 540,
+                                        'mug' => 500,
+                                        'pillow' => 1325,
+                                        'totebag' => 600,
+                                    ];
                                     $mockupViews = ['front', 'back'];
                                     $mockups = is_array($data['mockups'] ?? null) ? $data['mockups'] : [];
+                                    $productItems = is_array($data['products'] ?? null) ? $data['products'] : [];
+                                    $mockupProducts = $baseMockupProducts;
+                                    foreach ($productItems as $productKey => $productConfig) {
+                                        if (array_key_exists($productKey, $mockupProducts) || !is_array($productConfig)) {
+                                            continue;
+                                        }
+                                        $productName = trim((string) ($productConfig['name'] ?? ''));
+                                        $mockupProducts[$productKey] = $productName !== ''
+                                            ? $productName
+                                            : ucwords(str_replace(['_', '-'], ' ', (string) $productKey));
+                                    }
                                     $productColors = is_array($data['product_colors'] ?? null) ? $data['product_colors'] : [];
                                     $defaultColors = [
                                         'tshirt' => [
@@ -1427,11 +1456,55 @@
                                     ];
                                 @endphp
                                 <div class="rounded-2xl border border-slate-200 p-4">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Product Tiles</p>
+                                    <p class="mt-2 text-xs text-slate-500">Edit the names and icons shown in the Product Mockups carousel. Icons can be emoji, text, or image URLs.</p>
+                                    <div class="mt-3 grid gap-4"
+                                         data-product-list
+                                         data-product-section="{{ $index }}">
+                                        @foreach ($mockupProducts as $productKey => $productLabel)
+                                            @php
+                                                $productConfig = is_array($productItems[$productKey] ?? null) ? $productItems[$productKey] : [];
+                                                $productName = $productConfig['name'] ?? $productLabel;
+                                                $productIcon = $productConfig['icon'] ?? ($productIcons[$productKey] ?? '');
+                                                $productPrice = $productConfig['price'] ?? ($productPrices[$productKey] ?? 1325);
+                                            @endphp
+                                            <div class="rounded-xl border border-slate-200 p-4" data-product-card="{{ $productKey }}">
+                                                <p class="text-sm font-semibold text-slate-700">{{ $productLabel }}</p>
+                                                <div class="mt-3 grid gap-3 sm:grid-cols-3">
+                                                    <input type="text"
+                                                           name="sections[{{ $index }}][data][products][{{ $productKey }}][name]"
+                                                           value="{{ $productName }}"
+                                                           placeholder="Display name"
+                                                           data-product-name="{{ $productKey }}"
+                                                           class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                    <input type="text"
+                                                           name="sections[{{ $index }}][data][products][{{ $productKey }}][icon]"
+                                                           value="{{ $productIcon }}"
+                                                           placeholder="Icon emoji or image URL"
+                                                           class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                    <input type="number"
+                                                           name="sections[{{ $index }}][data][products][{{ $productKey }}][price]"
+                                                           value="{{ $productPrice }}"
+                                                           min="0"
+                                                           step="1"
+                                                           placeholder="Checkout price"
+                                                           class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                    <button type="button"
+                                            class="admin-btn-outline mt-4 text-xs uppercase tracking-[0.3em]"
+                                            data-product-add>
+                                        Add product
+                                    </button>
+                                </div>
+                                <div class="rounded-2xl border border-slate-200 p-4">
                                     <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Product Colors</p>
                                     <p class="mt-2 text-xs text-slate-500">
                                         One color per line. Accepted formats: "Name|#hex", "Name:#hex", or "#hex Name".
                                     </p>
-                                    <div class="mt-3 grid gap-4">
+                                    <div class="mt-3 grid gap-4" data-product-colors-list data-product-section="{{ $index }}">
                                         @foreach ($mockupProducts as $productKey => $productLabel)
                                             @php
                                                 $colorValue = $productColors[$productKey] ?? '';
@@ -1445,8 +1518,8 @@
                                                     ->map(fn ($color) => "{$color['name']}|{$color['value']}")
                                                     ->implode("\n");
                                             @endphp
-                                            <div class="rounded-xl border border-slate-200 p-4">
-                                                <p class="text-sm font-semibold text-slate-700">{{ $productLabel }}</p>
+                                            <div class="rounded-xl border border-slate-200 p-4" data-product-colors-card="{{ $productKey }}">
+                                                <p class="text-sm font-semibold text-slate-700" data-product-heading="{{ $productKey }}">{{ $productLabel }}</p>
                                                 <textarea
                                                     name="sections[{{ $index }}][data][product_colors][{{ $productKey }}]"
                                                     rows="4"
@@ -1459,10 +1532,10 @@
                                 <div class="rounded-2xl border border-slate-200 p-4">
                                     <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Mockup Images</p>
                                     <p class="mt-2 text-xs text-slate-500">Upload front/back images per product. Uploaded files override the URL.</p>
-                                    <div class="mt-3 grid gap-4">
+                                    <div class="mt-3 grid gap-4" data-product-images-list data-product-section="{{ $index }}">
                                         @foreach ($mockupProducts as $productKey => $productLabel)
-                                            <div class="rounded-xl border border-slate-200 p-4">
-                                                <p class="text-sm font-semibold text-slate-700">{{ $productLabel }}</p>
+                                            <div class="rounded-xl border border-slate-200 p-4" data-product-images-card="{{ $productKey }}">
+                                                <p class="text-sm font-semibold text-slate-700" data-product-heading="{{ $productKey }}">{{ $productLabel }}</p>
                                                 <div class="mt-3 grid gap-3">
                                                     @foreach ($mockupViews as $viewKey)
                                                         @php
@@ -1587,6 +1660,127 @@
                 `;
                 list.appendChild(wrapper);
                 list.dataset.templateNextIndex = String(nextIndex + 1);
+            });
+        });
+
+        const escapeHtml = (value) => String(value)
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+
+        const updateProductHeadings = (key, label) => {
+            document.querySelectorAll(`[data-product-heading="${key}"]`).forEach((heading) => {
+                heading.textContent = label || 'New product';
+            });
+        };
+
+        document.querySelectorAll('[data-product-name]').forEach((input) => {
+            input.addEventListener('input', () => {
+                updateProductHeadings(input.dataset.productName, input.value.trim());
+            });
+        });
+
+        document.querySelectorAll('[data-product-add]').forEach((button) => {
+            const container = button.closest('.rounded-2xl') ?? button.parentElement;
+            const list = container ? container.querySelector('[data-product-list]') : null;
+            if (!list) {
+                return;
+            }
+
+            button.addEventListener('click', () => {
+                const sectionIndex = list.dataset.productSection;
+                if (sectionIndex === undefined) {
+                    return;
+                }
+
+                const key = `custom_${Date.now()}`;
+                const form = button.closest('form') ?? document;
+                const colorsList = form.querySelector(`[data-product-colors-list][data-product-section="${sectionIndex}"]`);
+                const imagesList = form.querySelector(`[data-product-images-list][data-product-section="${sectionIndex}"]`);
+                const productName = 'New product';
+
+                const tile = document.createElement('div');
+                tile.className = 'rounded-xl border border-slate-200 p-4';
+                tile.dataset.productCard = key;
+                tile.innerHTML = `
+                    <p class="text-sm font-semibold text-slate-700">${productName}</p>
+                    <div class="mt-3 grid gap-3 sm:grid-cols-3">
+                        <input type="text"
+                               name="sections[${sectionIndex}][data][products][${key}][name]"
+                               value="${productName}"
+                               placeholder="Display name"
+                               data-product-name="${key}"
+                               class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                        <input type="text"
+                               name="sections[${sectionIndex}][data][products][${key}][icon]"
+                               value="□"
+                               placeholder="Icon emoji or image URL"
+                               class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                        <input type="number"
+                               name="sections[${sectionIndex}][data][products][${key}][price]"
+                               value="1325"
+                               min="0"
+                               step="1"
+                               placeholder="Checkout price"
+                               class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                    </div>
+                `;
+                list.appendChild(tile);
+
+                const nameInput = tile.querySelector('[data-product-name]');
+                if (nameInput) {
+                    nameInput.addEventListener('input', () => {
+                        const label = nameInput.value.trim();
+                        tile.querySelector('p').textContent = label || productName;
+                        updateProductHeadings(key, label);
+                    });
+                    nameInput.focus();
+                    nameInput.select();
+                }
+
+                if (colorsList) {
+                    const colorCard = document.createElement('div');
+                    colorCard.className = 'rounded-xl border border-slate-200 p-4';
+                    colorCard.dataset.productColorsCard = key;
+                    colorCard.innerHTML = `
+                        <p class="text-sm font-semibold text-slate-700" data-product-heading="${key}">${escapeHtml(productName)}</p>
+                        <textarea
+                            name="sections[${sectionIndex}][data][product_colors][${key}]"
+                            rows="4"
+                            placeholder="White|#f9fafb&#10;Black|#111827&#10;Natural|#e7ddc8"
+                            class="mt-3 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"></textarea>
+                    `;
+                    colorsList.appendChild(colorCard);
+                }
+
+                if (imagesList) {
+                    const imageCard = document.createElement('div');
+                    imageCard.className = 'rounded-xl border border-slate-200 p-4';
+                    imageCard.dataset.productImagesCard = key;
+                    imageCard.innerHTML = `
+                        <p class="text-sm font-semibold text-slate-700" data-product-heading="${key}">${escapeHtml(productName)}</p>
+                        <div class="mt-3 grid gap-3">
+                            ${['front', 'back'].map((viewKey) => `
+                                <div class="rounded-lg border border-slate-200 p-3">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">${viewKey.charAt(0).toUpperCase() + viewKey.slice(1)} view</p>
+                                    <div class="mt-2 grid gap-3 sm:grid-cols-2">
+                                        <input type="text"
+                                               name="sections[${sectionIndex}][data][mockups][${key}][${viewKey}][default]"
+                                               placeholder="${viewKey.charAt(0).toUpperCase() + viewKey.slice(1)} image URL"
+                                               class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                        <input type="file"
+                                               name="sections[${sectionIndex}][data][mockups][${key}][${viewKey}][default_file]"
+                                               accept="image/*"
+                                               class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    imagesList.appendChild(imageCard);
+                }
             });
         });
     </script>

@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Mail\InvoiceMail;
 use App\Models\Client;
 use App\Models\Invoice;
+use App\Models\Page;
 use App\Services\MailDispatchService;
 use App\Support\DocumentSequence;
+use App\Support\PageDefaults;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -23,6 +25,7 @@ class MockupCheckoutController extends Controller
         'polo' => 1650,
         'cap' => 540,
         'mug' => 500,
+        'pillow' => 1325,
         'totebag' => 600,
     ];
 
@@ -141,7 +144,35 @@ class MockupCheckoutController extends Controller
 
     private function priceForMockup(string $type): int
     {
-        return self::PRICES[$type] ?? self::DEFAULT_PRICE;
+        $prices = $this->mockupPagePrices();
+
+        return $prices[$type] ?? self::DEFAULT_PRICE;
+    }
+
+    private function mockupPagePrices(): array
+    {
+        $prices = self::PRICES;
+        $page = Page::ensure('mockup', 'Mockup', PageDefaults::mockup());
+        $sections = $page->content['sections'] ?? [];
+        $section = collect(is_array($sections) ? $sections : [])
+            ->firstWhere('type', 'mockup_page');
+        $products = $section['data']['products'] ?? [];
+        if (!is_array($products)) {
+            return $prices;
+        }
+
+        foreach ($products as $productKey => $product) {
+            if (!is_array($product)) {
+                continue;
+            }
+            $price = $product['price'] ?? null;
+            if (!is_numeric($price) || (float) $price < 0) {
+                continue;
+            }
+            $prices[Str::lower((string) $productKey)] = (int) round((float) $price);
+        }
+
+        return $prices;
     }
 
     private function storeMockupImage(string $dataUrl): string
