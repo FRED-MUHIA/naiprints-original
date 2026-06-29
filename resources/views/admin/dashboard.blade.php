@@ -73,7 +73,7 @@
         ];
     @endphp
 
-    <section class="admin-card performance-dashboard-card" data-performance-dashboard>
+    <section class="admin-card performance-dashboard-card" data-performance-dashboard data-performance-reveal-url="{{ route('admin.performance.reveal') }}">
         <div class="flex flex-wrap items-start justify-between gap-4">
             <div>
                 <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Performance</p>
@@ -97,6 +97,11 @@
             </form>
         </div>
 
+        <div class="performance-privacy-bar mt-5">
+            <button type="button" class="admin-btn-outline performance-reveal-btn" data-performance-reveal>Show amounts</button>
+            <span data-performance-lock-status>Hidden until admin password is confirmed.</span>
+        </div>
+
         @if (!$analytics['is_ready'])
             <div class="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
                 Payment analytics will appear after the invoicing tables are migrated.
@@ -111,7 +116,7 @@
         <div class="mt-5 grid gap-5 xl:grid-cols-[minmax(280px,0.9fr)_minmax(0,1.55fr)]">
             <div class="performance-summary-panel rounded-2xl border border-slate-200 bg-slate-50 p-5">
                 <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Total revenue</p>
-                <p class="performance-total mt-3 text-4xl font-semibold tracking-tight text-slate-950">{{ $formatCurrency($analytics['summary']['revenue']) }}</p>
+                <p class="performance-total mt-3 text-4xl font-semibold tracking-tight text-slate-950" data-performance-sensitive>{{ $formatCurrency($analytics['summary']['revenue']) }}</p>
                 <p class="mt-2 text-sm text-slate-500">{{ \Illuminate\Support\Carbon::parse($analytics['start'])->format('M d, Y') }} - {{ \Illuminate\Support\Carbon::parse($analytics['end'])->format('M d, Y') }}</p>
 
                 <div class="mt-5 grid gap-3 sm:grid-cols-3 xl:grid-cols-2">
@@ -125,22 +130,22 @@
                     </div>
                     <div class="performance-stat-card rounded-2xl border border-slate-200 bg-white p-4 xl:col-span-2">
                         <p class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Average</p>
-                        <p class="mt-2 text-2xl font-semibold">{{ $formatCurrency($analytics['summary']['average_transaction']) }}</p>
+                        <p class="mt-2 text-2xl font-semibold" data-performance-sensitive>{{ $formatCurrency($analytics['summary']['average_transaction']) }}</p>
                     </div>
                 </div>
 
                 <div class="mt-3 grid gap-3 sm:grid-cols-3 xl:grid-cols-2">
                     <div class="performance-stat-card rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
                         <p class="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Credits</p>
-                        <p class="mt-2 text-2xl font-semibold text-emerald-700">{{ $formatCurrency($analytics['summary']['credits']) }}</p>
+                        <p class="mt-2 text-2xl font-semibold text-emerald-700" data-performance-sensitive>{{ $formatCurrency($analytics['summary']['credits']) }}</p>
                     </div>
                     <div class="performance-stat-card rounded-2xl border border-red-200 bg-red-50 p-4">
                         <p class="text-xs font-semibold uppercase tracking-[0.22em] text-red-700">Debits</p>
-                        <p class="mt-2 text-2xl font-semibold text-red-700">{{ $formatCurrency($analytics['summary']['debits']) }}</p>
+                        <p class="mt-2 text-2xl font-semibold text-red-700" data-performance-sensitive>{{ $formatCurrency($analytics['summary']['debits']) }}</p>
                     </div>
                     <div class="performance-stat-card rounded-2xl border border-slate-200 bg-white p-4 xl:col-span-2">
                         <p class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Net</p>
-                        <p class="mt-2 text-2xl font-semibold {{ $analytics['summary']['net'] < 0 ? 'text-red-700' : 'text-emerald-700' }}">{{ $formatCurrency($analytics['summary']['net']) }}</p>
+                        <p class="mt-2 text-2xl font-semibold {{ $analytics['summary']['net'] < 0 ? 'text-red-700' : 'text-emerald-700' }}" data-performance-sensitive>{{ $formatCurrency($analytics['summary']['net']) }}</p>
                     </div>
                 </div>
             </div>
@@ -154,7 +159,7 @@
                     <a href="{{ route('admin.payments.index') }}" class="admin-btn-outline">Detailed analytics</a>
                 </div>
 
-                <div class="mt-4 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                <div class="mt-4 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50 p-3" data-performance-sensitive>
                     <svg viewBox="0 0 {{ $chartWidth }} {{ $chartHeight }}" role="img" aria-label="Revenue trend chart" class="performance-chart h-64 w-full">
                         <defs>
                             <linearGradient id="performanceArea" x1="0" x2="0" y1="0" y2="1">
@@ -233,15 +238,15 @@
                 <div class="grid gap-3 sm:grid-cols-3">
                     <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Production</p>
-                        <p class="mt-2 text-xl font-semibold">{{ $formatCurrency($analytics['summary']['production_cost']) }}</p>
+                        <p class="mt-2 text-xl font-semibold" data-performance-sensitive>{{ $formatCurrency($analytics['summary']['production_cost']) }}</p>
                     </div>
                     <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Materials</p>
-                        <p class="mt-2 text-xl font-semibold">{{ $formatCurrency($analytics['summary']['materials_bought']) }}</p>
+                        <p class="mt-2 text-xl font-semibold" data-performance-sensitive>{{ $formatCurrency($analytics['summary']['materials_bought']) }}</p>
                     </div>
                     <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Petty Cash</p>
-                        <p class="mt-2 text-xl font-semibold">{{ $formatCurrency($analytics['summary']['petty_cash']) }}</p>
+                        <p class="mt-2 text-xl font-semibold" data-performance-sensitive>{{ $formatCurrency($analytics['summary']['petty_cash']) }}</p>
                     </div>
                 </div>
 
@@ -263,16 +268,16 @@
                             </div>
                             <div>
                                 <p>Average Cost</p>
-                                <strong>{{ $formatCurrency($costAnalysis['average'] ?? 0) }}</strong>
+                                <strong data-performance-sensitive>{{ $formatCurrency($costAnalysis['average'] ?? 0) }}</strong>
                             </div>
                             <div>
                                 <p>Highest Category</p>
                                 <strong>{{ $costAnalysis['highest_category']['label'] ?? 'None' }}</strong>
-                                <span>{{ $formatCurrency($costAnalysis['highest_category']['amount'] ?? 0) }}</span>
+                                <span data-performance-sensitive>{{ $formatCurrency($costAnalysis['highest_category']['amount'] ?? 0) }}</span>
                             </div>
                             <div>
                                 <p>Largest Cost</p>
-                                <strong>{{ $formatCurrency($costAnalysis['largest_entry']['amount'] ?? 0) }}</strong>
+                                <strong data-performance-sensitive>{{ $formatCurrency($costAnalysis['largest_entry']['amount'] ?? 0) }}</strong>
                                 <span>{{ $costAnalysis['largest_entry']['description'] ?? ($costAnalysis['largest_entry']['label'] ?? 'None') }}</span>
                             </div>
                         </div>
@@ -287,7 +292,7 @@
                                     <div class="cost-analysis-bar" aria-label="{{ $costCategory['label'] }} {{ $costCategory['percent'] }} percent">
                                         <span style="width: {{ max(2, min(100, (float) $costCategory['percent'])) }}%"></span>
                                     </div>
-                                    <em>{{ $formatCurrency($costCategory['amount']) }} · {{ $costCategory['percent'] }}%</em>
+                                    <em data-performance-sensitive>{{ $formatCurrency($costCategory['amount']) }} · {{ $costCategory['percent'] }}%</em>
                                 </div>
                             @endforeach
                         </div>
@@ -318,7 +323,7 @@
                                         @endif
                                     </td>
                                     <td>{{ optional($entry->entry_date)->format('M d, Y') }}</td>
-                                    <td class="font-semibold text-red-700">{{ $formatCurrency($entry->amount) }}</td>
+                                    <td class="font-semibold text-red-700" data-performance-sensitive>{{ $formatCurrency($entry->amount) }}</td>
                                     <td class="text-right">
                                         <button type="button" class="admin-btn-outline finance-edit-btn" data-finance-edit="{{ $entry->id }}" aria-expanded="false">Edit</button>
                                     </td>
@@ -362,6 +367,23 @@
             </div>
         </div>
     </section>
+
+    <div class="fixed inset-0 z-50 hidden items-center justify-center px-4 py-6" data-performance-modal aria-hidden="true">
+        <button type="button" class="absolute inset-0 bg-slate-950/45" data-performance-modal-close aria-label="Close"></button>
+        <form class="relative w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl" data-performance-reveal-form>
+            <div>
+                <h3 class="text-lg font-semibold">Reveal amounts</h3>
+                <p class="mt-1 text-sm text-slate-500">Admin password required.</p>
+            </div>
+            <label class="mt-4 block text-xs font-semibold uppercase tracking-[0.22em] text-slate-400" for="performance_admin_password">Admin password</label>
+            <input id="performance_admin_password" type="password" name="password" class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm focus:border-brand focus:outline-none" autocomplete="current-password" data-performance-password>
+            <p class="mt-2 hidden text-sm font-semibold text-red-700" data-performance-error></p>
+            <div class="mt-5 flex flex-wrap justify-end gap-2">
+                <button type="button" class="admin-btn-outline" data-performance-modal-close>Cancel</button>
+                <button type="submit" class="admin-btn-primary" data-performance-submit>Reveal</button>
+            </div>
+        </form>
+    </div>
 
     <div class="admin-card">
         <div class="flex flex-wrap items-center justify-between gap-4">
@@ -668,6 +690,139 @@
 
             const period = form.querySelector('[data-performance-period]');
             const customFields = form.querySelector('[data-performance-custom]');
+            const dashboard = document.querySelector('[data-performance-dashboard]');
+            const modal = document.querySelector('[data-performance-modal]');
+            const revealForm = document.querySelector('[data-performance-reveal-form]');
+            const passwordInput = document.querySelector('[data-performance-password]');
+            const submitButton = document.querySelector('[data-performance-submit]');
+            const errorMessage = document.querySelector('[data-performance-error]');
+            const lockStatus = document.querySelector('[data-performance-lock-status]');
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            const sensitiveTargets = dashboard ? Array.from(dashboard.querySelectorAll('[data-performance-sensitive]')) : [];
+            let isPerformanceUnlocked = false;
+
+            const setSensitiveAccessibility = () => {
+                sensitiveTargets.forEach((target) => {
+                    if (isPerformanceUnlocked) {
+                        target.removeAttribute('role');
+                        target.removeAttribute('tabindex');
+                        target.removeAttribute('aria-label');
+                        return;
+                    }
+
+                    target.setAttribute('role', 'button');
+                    target.setAttribute('tabindex', '0');
+                    target.setAttribute('aria-label', 'Reveal hidden performance amount');
+                });
+            };
+
+            const closeRevealModal = () => {
+                modal?.classList.add('hidden');
+                modal?.classList.remove('flex');
+                modal?.setAttribute('aria-hidden', 'true');
+            };
+
+            const openRevealModal = () => {
+                if (isPerformanceUnlocked || !modal) {
+                    return;
+                }
+
+                errorMessage?.classList.add('hidden');
+                if (errorMessage) {
+                    errorMessage.textContent = '';
+                }
+                if (passwordInput) {
+                    passwordInput.value = '';
+                }
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                modal.setAttribute('aria-hidden', 'false');
+                window.setTimeout(() => passwordInput?.focus(), 30);
+            };
+
+            const unlockPerformance = () => {
+                isPerformanceUnlocked = true;
+                dashboard?.classList.add('is-performance-unlocked');
+                if (lockStatus) {
+                    lockStatus.textContent = 'Amounts visible for this page view.';
+                }
+                document.querySelectorAll('[data-performance-reveal]').forEach((button) => {
+                    button.textContent = 'Amounts shown';
+                    button.setAttribute('disabled', 'disabled');
+                });
+                setSensitiveAccessibility();
+                closeRevealModal();
+            };
+
+            setSensitiveAccessibility();
+
+            document.querySelectorAll('[data-performance-reveal]').forEach((button) => {
+                button.addEventListener('click', openRevealModal);
+            });
+
+            sensitiveTargets.forEach((target) => {
+                target.addEventListener('click', openRevealModal);
+                target.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        openRevealModal();
+                    }
+                });
+            });
+
+            document.querySelectorAll('[data-performance-modal-close]').forEach((button) => {
+                button.addEventListener('click', closeRevealModal);
+            });
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && modal && !modal.classList.contains('hidden')) {
+                    closeRevealModal();
+                }
+            });
+
+            revealForm?.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                if (!dashboard?.dataset.performanceRevealUrl || !passwordInput || !submitButton) {
+                    return;
+                }
+
+                submitButton.setAttribute('disabled', 'disabled');
+                submitButton.textContent = 'Checking...';
+                errorMessage?.classList.add('hidden');
+
+                try {
+                    const response = await fetch(dashboard.dataset.performanceRevealUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                        },
+                        body: JSON.stringify({
+                            password: passwordInput.value,
+                        }),
+                    });
+
+                    if (response.ok) {
+                        unlockPerformance();
+                        return;
+                    }
+
+                    const payload = await response.json().catch(() => ({}));
+                    if (errorMessage) {
+                        errorMessage.textContent = payload.message || 'Password could not be verified.';
+                        errorMessage.classList.remove('hidden');
+                    }
+                } catch (error) {
+                    if (errorMessage) {
+                        errorMessage.textContent = 'Password could not be verified.';
+                        errorMessage.classList.remove('hidden');
+                    }
+                } finally {
+                    submitButton.removeAttribute('disabled');
+                    submitButton.textContent = 'Reveal';
+                }
+            });
 
             period?.addEventListener('change', () => {
                 const isCustom = period.value === 'custom';

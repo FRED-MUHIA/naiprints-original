@@ -949,6 +949,40 @@ Route::post('/admin/logout', function (Request $request) {
 })->name('admin.logout');
 
 Route::prefix('admin')->name('admin.')->middleware('admin.auth')->group(function () {
+    Route::post('/performance/reveal', function (Request $request) {
+        abort_unless(session('admin_role') === 'admin', 403);
+
+        $validated = $request->validate([
+            'password' => ['required', 'string'],
+        ]);
+
+        $password = (string) $validated['password'];
+        $userId = $request->session()->get('admin_user_id');
+        $verified = false;
+
+        if ($userId && Schema::hasTable('users')) {
+            $admin = User::query()->find($userId);
+            $verified = $admin
+                && strtolower((string) $admin->role) === 'admin'
+                && Hash::check($password, (string) $admin->password);
+        }
+
+        if (!$verified && !$userId) {
+            $expectedHash = trim((string) config('admin.password_hash', ''));
+            $verified = $expectedHash !== '' && Hash::check($password, $expectedHash);
+        }
+
+        if (!$verified) {
+            return response()->json([
+                'message' => 'Invalid admin password.',
+            ], 422);
+        }
+
+        return response()->json([
+            'revealed' => true,
+        ]);
+    })->name('performance.reveal')->middleware(['admin.can:admin', 'throttle:6,1']);
+
     Route::post('/financial-entries', function (Request $request) {
         abort_unless(session('admin_role') === 'admin', 403);
         abort_unless(Schema::hasTable('financial_entries'), 404);

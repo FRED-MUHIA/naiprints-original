@@ -4647,6 +4647,51 @@
         padding: 1.75rem;
     }
 
+    .performance-privacy-bar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.75rem;
+        border-radius: 1rem;
+        border: 1px solid rgba(226, 232, 240, 0.95);
+        background: #f8fafc;
+        padding: 0.75rem;
+    }
+
+    .performance-privacy-bar span {
+        color: #475569;
+        font-size: 0.82rem;
+        font-weight: 700;
+    }
+
+    .performance-reveal-btn:disabled {
+        cursor: default;
+        border-color: rgba(16, 185, 129, 0.28);
+        color: #047857 !important;
+        opacity: 1;
+    }
+
+    .performance-dashboard-card:not(.is-performance-unlocked) [data-performance-sensitive] {
+        cursor: pointer;
+        filter: blur(9px);
+        opacity: 0.82;
+        user-select: none;
+        transition: filter 0.18s ease, opacity 0.18s ease;
+    }
+
+    .performance-dashboard-card:not(.is-performance-unlocked) [data-performance-sensitive]:hover,
+    .performance-dashboard-card:not(.is-performance-unlocked) [data-performance-sensitive]:focus {
+        filter: blur(7px);
+        opacity: 0.96;
+        outline: 2px solid rgba(225, 29, 46, 0.24);
+        outline-offset: 3px;
+    }
+
+    .performance-dashboard-card.is-performance-unlocked [data-performance-sensitive] {
+        filter: blur(0);
+        opacity: 1;
+    }
+
     .performance-total {
         font-size: clamp(2rem, 2.6vw, 3rem);
         line-height: 1;
