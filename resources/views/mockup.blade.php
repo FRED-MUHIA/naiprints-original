@@ -894,6 +894,13 @@
                     const products = mockupPageData.products;
                     return products && typeof products === 'object' ? products : {};
                 })();
+                const mockupPagePrintAreas = (() => {
+                    if (!mockupPageData || typeof mockupPageData !== 'object') {
+                        return {};
+                    }
+                    const printAreas = mockupPageData.print_areas;
+                    return printAreas && typeof printAreas === 'object' ? printAreas : {};
+                })();
 
                 const scalePrintArea = (area) => ({
                     x: area.x * SCALE_X,
@@ -902,6 +909,30 @@
                     h: area.h * SCALE_Y,
                 });
                 const defaultCustomPrintArea = { x: 260, y: 280, w: 300, h: 320 };
+                const normalizePrintArea = (value, fallback = defaultCustomPrintArea) => {
+                    if (!value || typeof value !== 'object') {
+                        return fallback;
+                    }
+                    const area = {
+                        x: Number(value.x),
+                        y: Number(value.y),
+                        w: Number(value.w),
+                        h: Number(value.h),
+                    };
+
+                    if (
+                        !Number.isFinite(area.x) ||
+                        !Number.isFinite(area.y) ||
+                        !Number.isFinite(area.w) ||
+                        !Number.isFinite(area.h) ||
+                        area.w <= 0 ||
+                        area.h <= 0
+                    ) {
+                        return fallback;
+                    }
+
+                    return area;
+                };
 
                 const mockupConfig = {
                     tshirt: {
@@ -1002,6 +1033,20 @@
                     if (price !== null) {
                         MOCKUP_PRICES[key] = price;
                     }
+                });
+                Object.entries(mockupPagePrintAreas).forEach(([key, area]) => {
+                    if (!mockupConfig[key]) {
+                        mockupConfig[key] = {
+                            label: mockupPageProducts[key]?.name || key,
+                            colors: [
+                                { name: 'White', value: '#f9fafb' },
+                                { name: 'Black', value: '#111827' },
+                                { name: 'Natural', value: '#e7ddc8' },
+                            ],
+                            printArea: defaultCustomPrintArea,
+                        };
+                    }
+                    mockupConfig[key].printArea = normalizePrintArea(area, mockupConfig[key].printArea || defaultCustomPrintArea);
                 });
 
                 const viewLabels = {

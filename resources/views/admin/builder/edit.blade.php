@@ -1406,6 +1406,7 @@
                                     $mockupViews = ['front', 'back'];
                                     $mockups = is_array($data['mockups'] ?? null) ? $data['mockups'] : [];
                                     $productItems = is_array($data['products'] ?? null) ? $data['products'] : [];
+                                    $printAreas = is_array($data['print_areas'] ?? null) ? $data['print_areas'] : [];
                                     $mockupProducts = $baseMockupProducts;
                                     foreach ($productItems as $productKey => $productConfig) {
                                         if (array_key_exists($productKey, $mockupProducts) || !is_array($productConfig)) {
@@ -1416,6 +1417,15 @@
                                             ? $productName
                                             : ucwords(str_replace(['_', '-'], ' ', (string) $productKey));
                                     }
+                                    $printAreaDefaults = [
+                                        'tshirt' => ['x' => 260, 'y' => 260, 'w' => 300, 'h' => 360],
+                                        'hoodie' => ['x' => 250, 'y' => 300, 'w' => 320, 'h' => 320],
+                                        'polo' => ['x' => 270, 'y' => 260, 'w' => 280, 'h' => 320],
+                                        'cap' => ['x' => 300, 'y' => 360, 'w' => 220, 'h' => 140],
+                                        'mug' => ['x' => 260, 'y' => 340, 'w' => 300, 'h' => 200],
+                                        'pillow' => ['x' => 230, 'y' => 280, 'w' => 360, 'h' => 360],
+                                        'totebag' => ['x' => 260, 'y' => 320, 'w' => 300, 'h' => 320],
+                                    ];
                                     $productColors = is_array($data['product_colors'] ?? null) ? $data['product_colors'] : [];
                                     $defaultColors = [
                                         'tshirt' => [
@@ -1498,6 +1508,33 @@
                                             data-product-add>
                                         Add product
                                     </button>
+                                </div>
+                                <div class="rounded-2xl border border-slate-200 p-4">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Print Areas</p>
+                                    <p class="mt-2 text-xs text-slate-500">Adjust the artwork box for each product. X/Y control position; W/H control width and height.</p>
+                                    <div class="mt-3 grid gap-4" data-product-print-area-list data-product-section="{{ $index }}">
+                                        @foreach ($mockupProducts as $productKey => $productLabel)
+                                            @php
+                                                $areaConfig = is_array($printAreas[$productKey] ?? null) ? $printAreas[$productKey] : [];
+                                                $areaDefaults = $printAreaDefaults[$productKey] ?? ['x' => 260, 'y' => 280, 'w' => 300, 'h' => 320];
+                                                $area = array_merge($areaDefaults, array_intersect_key($areaConfig, $areaDefaults));
+                                            @endphp
+                                            <div class="rounded-xl border border-slate-200 p-4" data-product-print-area-card="{{ $productKey }}">
+                                                <p class="text-sm font-semibold text-slate-700" data-product-heading="{{ $productKey }}">{{ $productLabel }}</p>
+                                                <div class="mt-3 grid gap-3 sm:grid-cols-4">
+                                                    @foreach (['x' => 'X', 'y' => 'Y', 'w' => 'Width', 'h' => 'Height'] as $areaKey => $areaLabel)
+                                                        <input type="number"
+                                                               name="sections[{{ $index }}][data][print_areas][{{ $productKey }}][{{ $areaKey }}]"
+                                                               value="{{ $area[$areaKey] }}"
+                                                               min="{{ in_array($areaKey, ['w', 'h'], true) ? 1 : 0 }}"
+                                                               step="1"
+                                                               placeholder="{{ $areaLabel }}"
+                                                               class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
                                 </div>
                                 <div class="rounded-2xl border border-slate-200 p-4">
                                     <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Product Colors</p>
@@ -1697,6 +1734,7 @@
 
                 const key = `custom_${Date.now()}`;
                 const form = button.closest('form') ?? document;
+                const printAreaList = form.querySelector(`[data-product-print-area-list][data-product-section="${sectionIndex}"]`);
                 const colorsList = form.querySelector(`[data-product-colors-list][data-product-section="${sectionIndex}"]`);
                 const imagesList = form.querySelector(`[data-product-images-list][data-product-section="${sectionIndex}"]`);
                 const productName = 'New product';
@@ -1738,6 +1776,32 @@
                     });
                     nameInput.focus();
                     nameInput.select();
+                }
+
+                if (printAreaList) {
+                    const printAreaCard = document.createElement('div');
+                    printAreaCard.className = 'rounded-xl border border-slate-200 p-4';
+                    printAreaCard.dataset.productPrintAreaCard = key;
+                    printAreaCard.innerHTML = `
+                        <p class="text-sm font-semibold text-slate-700" data-product-heading="${key}">${escapeHtml(productName)}</p>
+                        <div class="mt-3 grid gap-3 sm:grid-cols-4">
+                            ${[
+                                ['x', 'X', 260, 0],
+                                ['y', 'Y', 280, 0],
+                                ['w', 'Width', 300, 1],
+                                ['h', 'Height', 320, 1],
+                            ].map(([areaKey, label, value, min]) => `
+                                <input type="number"
+                                       name="sections[${sectionIndex}][data][print_areas][${key}][${areaKey}]"
+                                       value="${value}"
+                                       min="${min}"
+                                       step="1"
+                                       placeholder="${label}"
+                                       class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                            `).join('')}
+                        </div>
+                    `;
+                    printAreaList.appendChild(printAreaCard);
                 }
 
                 if (colorsList) {
