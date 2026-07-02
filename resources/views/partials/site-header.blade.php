@@ -16,6 +16,19 @@
         ->filter(fn ($item) => $item['label'] !== '')
         ->values()
         ->all();
+    $hasMaasaiMenuItem = collect($menu)->contains(function ($item) {
+        return strtolower($item['label'] ?? '') === 'maasai'
+            || trim((string) ($item['url'] ?? '')) === '/maasai';
+    });
+    if (!$hasMaasaiMenuItem) {
+        $insertAfter = collect($menu)->search(fn ($item) => strtolower($item['label'] ?? '') === 'kids');
+        $maasaiItem = ['label' => 'Maasai', 'url' => route('maasai')];
+        if ($insertAfter === false) {
+            $menu[] = $maasaiItem;
+        } else {
+            array_splice($menu, (int) $insertAfter + 1, 0, [$maasaiItem]);
+        }
+    }
     $menuStrip = collect($header['menu_strip'] ?? [])
         ->filter(fn ($item) => is_array($item))
         ->map(function ($item) {

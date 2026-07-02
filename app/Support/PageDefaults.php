@@ -224,6 +224,61 @@ class PageDefaults
         ];
     }
 
+    public static function maasai(): array
+    {
+        return [
+            'sections' => [
+                [
+                    'type' => 'maasai_page',
+                    'data' => [
+                        'slides' => [
+                            [
+                                'kicker' => 'Maasai-Inspired Gifts',
+                                'title' => 'Made with color, care, and a personal finish.',
+                                'body' => 'Personalized shuka-inspired keepsakes, apparel, and corporate gifts produced by Nai Prints in Nairobi.',
+                                'image' => '/images/maasai/maasai-gifts.png',
+                                'alt' => 'Maasai-inspired gift collection with shuka textiles',
+                                'primary' => ['label' => 'Shop Custom Gifts', 'url' => '/shop'],
+                            ],
+                            [
+                                'kicker' => 'Babies & Kids',
+                                'title' => 'Soft keepsakes for new arrivals and birthdays.',
+                                'body' => 'Blankets, bibs, hoodies, and plush gifts with shuka-inspired trim and optional name personalization.',
+                                'image' => '/images/maasai/maasai-kids.png',
+                                'alt' => 'Baby and kids keepsakes with Maasai-inspired trim',
+                                'primary' => ['label' => 'View Kids Gifts', 'url' => '/shop'],
+                            ],
+                            [
+                                'kicker' => 'Teams & Adults',
+                                'title' => 'Modern apparel with a Kenyan signature.',
+                                'body' => 'Polos, hoodies, caps, totes, and group gifts finished with bold red-blue textile accents.',
+                                'image' => '/images/maasai/maasai-corporate.png',
+                                'alt' => 'Adult and corporate apparel with Maasai-inspired accents',
+                                'primary' => ['label' => 'Request Bulk Order', 'url' => '/contact'],
+                            ],
+                        ],
+                        'categories' => [
+                            ['title' => 'Babies & Kids', 'body' => 'Blankets, bibs, hoodies, and soft keepsakes.', 'image' => '/images/maasai/maasai-kids.png', 'url' => '#maasai-products'],
+                            ['title' => 'Teens & Adults', 'body' => 'T-shirts, hoodies, polos, and daily wear.', 'image' => '/images/maasai/maasai-corporate.png', 'url' => '#maasai-products'],
+                            ['title' => 'Maasai Piece Collection', 'body' => 'Giftable pieces with shuka-inspired detailing.', 'image' => '/images/maasai/maasai-gifts.png', 'url' => '#maasai-products'],
+                            ['title' => 'Corporate', 'body' => 'Team gifts, event merch, and staff apparel.', 'image' => '/images/maasai/maasai-corporate.png', 'url' => '/corporate'],
+                        ],
+                        'products' => [
+                            ['name' => 'Ready to Gift Shuka Edge Bib Set', 'price' => 1950, 'image' => '/images/maasai/maasai-kids.png'],
+                            ['name' => 'Kids Snuggle Hoodie with Shuka Trim', 'price' => 3250, 'image' => '/images/maasai/maasai-kids.png'],
+                            ['name' => 'Soft Warm Baby Blanket', 'price' => 2450, 'image' => '/images/maasai/maasai-kids.png'],
+                            ['name' => 'Shuka Accent Gift Bundle', 'price' => 5250, 'image' => '/images/maasai/maasai-gifts.png'],
+                            ['name' => 'Personalized Adult Hoodie', 'price' => 3850, 'image' => '/images/maasai/maasai-corporate.png'],
+                            ['name' => 'Corporate Tote and Cap Set', 'price' => 2750, 'image' => '/images/maasai/maasai-corporate.png'],
+                            ['name' => 'Home Gift Throw and Mug Set', 'price' => 4250, 'image' => '/images/maasai/maasai-gifts.png'],
+                            ['name' => 'Custom Polo with Shuka Detail', 'price' => 2850, 'image' => '/images/maasai/maasai-corporate.png'],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+    }
+
     public static function embroidery(): array
     {
         return [
@@ -671,6 +726,7 @@ class PageDefaults
                 ['label' => 'Women', 'url' => '#'],
                 ['label' => 'Sports', 'url' => '#'],
                 ['label' => 'Kids', 'url' => '#'],
+                ['label' => 'Maasai', 'url' => '/maasai'],
                 ['label' => 'Corporate', 'url' => '/corporate'],
                 ['label' => 'Embroidery', 'url' => '/embroidery'],
                 ['label' => 'Jersey', 'url' => '/jersey'],
@@ -797,6 +853,7 @@ class PageDefaults
             'design_studio' => self::home()['sections'][10],
             'footer_notice' => self::home()['sections'][11],
             'shop_header' => self::shop()['sections'][0],
+            'maasai_page' => self::maasai()['sections'][0],
             'embroidery_page' => self::embroidery()['sections'][0],
             'jersey_page' => self::jersey()['sections'][0],
             'corporate_page' => self::corporate()['sections'][0],

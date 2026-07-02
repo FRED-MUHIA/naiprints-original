@@ -1692,6 +1692,61 @@ document.addEventListener('DOMContentLoaded', () => {
     updateWishlistCount();
     syncWishlistButtons();
 
+    document.querySelectorAll('[data-maasai-slider]').forEach((slider) => {
+        const slides = Array.from(slider.querySelectorAll('[data-maasai-slide]'));
+        const controls = Array.from(slider.querySelectorAll('[data-maasai-slide-control]'));
+        if (slides.length <= 1) {
+            return;
+        }
+
+        let activeIndex = slides.findIndex((slide) => slide.classList.contains('is-active'));
+        activeIndex = activeIndex >= 0 ? activeIndex : 0;
+        let interval = null;
+
+        const showSlide = (nextIndex) => {
+            activeIndex = (nextIndex + slides.length) % slides.length;
+            slides.forEach((slide, index) => {
+                slide.classList.toggle('is-active', index === activeIndex);
+            });
+            controls.forEach((control, index) => {
+                control.classList.toggle('is-active', index === activeIndex);
+                control.setAttribute('aria-current', index === activeIndex ? 'true' : 'false');
+            });
+        };
+
+        const stopAutoplay = () => {
+            if (interval) {
+                window.clearInterval(interval);
+                interval = null;
+            }
+        };
+
+        const startAutoplay = () => {
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || interval) {
+                return;
+            }
+            interval = window.setInterval(() => {
+                showSlide(activeIndex + 1);
+            }, 5200);
+        };
+
+        controls.forEach((control) => {
+            control.addEventListener('click', () => {
+                const index = Number.parseInt(control.dataset.slideIndex || '0', 10);
+                showSlide(Number.isNaN(index) ? 0 : index);
+                stopAutoplay();
+                startAutoplay();
+            });
+        });
+
+        slider.addEventListener('mouseenter', stopAutoplay);
+        slider.addEventListener('mouseleave', startAutoplay);
+        slider.addEventListener('focusin', stopAutoplay);
+        slider.addEventListener('focusout', startAutoplay);
+        showSlide(activeIndex);
+        startAutoplay();
+    });
+
     const whatsappFloat = document.querySelector('[data-whatsapp-float]');
     if (whatsappFloat) {
         const link = whatsappFloat.querySelector('[data-whatsapp-link]');

@@ -336,6 +336,57 @@ Route::get('/embroidery', function () {
     ]);
 })->name('embroidery');
 
+Route::get('/maasai', function () {
+    $page = Page::ensure('maasai', 'Maasai', PageDefaults::maasai());
+    $header = GlobalSection::ensure('header', PageDefaults::header());
+    $footer = GlobalSection::ensure('footer', PageDefaults::footer());
+    $purchasePopups = GlobalSection::ensure('purchase_popups', PageDefaults::purchasePopups());
+    $purchasePopupProducts = resolvePurchasePopupProducts($purchasePopups->content ?? []);
+
+    $maasaiProducts = Product::with(['category', 'categories', 'tags', 'galleryImages', 'alternateImages', 'images'])
+        ->where('status', 'active')
+        ->where(function ($query) {
+            $query
+                ->whereRaw('LOWER(name) LIKE ?', ['%maasai%'])
+                ->orWhereRaw('LOWER(name) LIKE ?', ['%shuka%'])
+                ->orWhereRaw('LOWER(description) LIKE ?', ['%maasai%'])
+                ->orWhereRaw('LOWER(description) LIKE ?', ['%shuka%'])
+                ->orWhereHas('category', function ($categoryQuery) {
+                    $categoryQuery
+                        ->whereRaw('LOWER(slug) LIKE ?', ['%maasai%'])
+                        ->orWhereRaw('LOWER(slug) LIKE ?', ['%shuka%'])
+                        ->orWhereRaw('LOWER(name) LIKE ?', ['%maasai%'])
+                        ->orWhereRaw('LOWER(name) LIKE ?', ['%shuka%']);
+                })
+                ->orWhereHas('categories', function ($categoryQuery) {
+                    $categoryQuery
+                        ->whereRaw('LOWER(slug) LIKE ?', ['%maasai%'])
+                        ->orWhereRaw('LOWER(slug) LIKE ?', ['%shuka%'])
+                        ->orWhereRaw('LOWER(name) LIKE ?', ['%maasai%'])
+                        ->orWhereRaw('LOWER(name) LIKE ?', ['%shuka%']);
+                })
+                ->orWhereHas('tags', function ($tagQuery) {
+                    $tagQuery
+                        ->whereRaw('LOWER(slug) LIKE ?', ['%maasai%'])
+                        ->orWhereRaw('LOWER(slug) LIKE ?', ['%shuka%'])
+                        ->orWhereRaw('LOWER(name) LIKE ?', ['%maasai%'])
+                        ->orWhereRaw('LOWER(name) LIKE ?', ['%shuka%']);
+                });
+        })
+        ->orderByDesc('created_at')
+        ->take(12)
+        ->get();
+
+    return view('maasai', [
+        'pageContent' => $page->content,
+        'maasaiProducts' => $maasaiProducts,
+        'globalHeader' => $header->content,
+        'globalFooter' => $footer->content,
+        'globalPurchasePopups' => $purchasePopups->content,
+        'globalPurchasePopupProducts' => $purchasePopupProducts,
+    ]);
+})->name('maasai');
+
 Route::get('/jersey', function () {
     $page = Page::ensure('jersey', 'Jersey', PageDefaults::jersey());
     $header = GlobalSection::ensure('header', PageDefaults::header());
@@ -554,6 +605,7 @@ Route::get('/sitemap.xml', function () {
     $pageDefinitions = collect([
         ['slug' => 'home', 'path' => '/', 'changefreq' => 'daily', 'priority' => '1.0'],
         ['slug' => 'shop', 'path' => '/shop', 'changefreq' => 'daily', 'priority' => '0.9'],
+        ['slug' => 'maasai', 'path' => '/maasai', 'changefreq' => 'weekly', 'priority' => '0.8'],
         ['slug' => 'embroidery', 'path' => '/embroidery', 'changefreq' => 'weekly', 'priority' => '0.8'],
         ['slug' => 'jersey', 'path' => '/jersey', 'changefreq' => 'weekly', 'priority' => '0.8'],
         ['slug' => 'corporate', 'path' => '/corporate', 'changefreq' => 'weekly', 'priority' => '0.8'],

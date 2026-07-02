@@ -9,13 +9,16 @@
     $policyLinks = [
         ['label' => 'Ethical Policies', 'url' => route('ethical-policies')],
         ['label' => 'Data Protection Policies', 'url' => route('data-protection-policies')],
-        ['label' => 'Sitemap', 'url' => route('sitemap')],
     ];
     $accountLinks = [
         ['label' => 'Create Affiliate Account', 'url' => route('affiliate.register')],
         ['label' => 'Affiliate Login', 'url' => route('affiliate.login')],
     ];
-    $policyLabels = collect($policyLinks)->pluck('label')->map(fn ($label) => strtolower($label))->all();
+    $policyLabels = collect($policyLinks)
+        ->pluck('label')
+        ->push('Sitemap')
+        ->map(fn ($label) => strtolower($label))
+        ->all();
     $accountLabels = collect($accountLinks)->pluck('label')->map(fn ($label) => strtolower($label))->all();
     $hasAccountColumn = false;
     $columns = array_map(function ($column) use ($policyLabels, $accountLabels, $accountLinks, &$hasAccountColumn) {
