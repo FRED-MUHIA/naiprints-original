@@ -263,6 +263,24 @@ class PageDefaults
                             ['title' => 'Maasai Piece Collection', 'body' => 'Giftable pieces with shuka-inspired detailing.', 'image' => '/images/maasai/maasai-gifts.png', 'url' => '#maasai-products'],
                             ['title' => 'Corporate', 'body' => 'Team gifts, event merch, and staff apparel.', 'image' => '/images/maasai/maasai-corporate.png', 'url' => '/corporate'],
                         ],
+                        'how_it_works' => [
+                            'kicker' => 'How It Works',
+                            'title' => 'Personalized pieces in four simple steps',
+                            'steps' => [
+                                ['title' => 'Choose', 'body' => 'Select a gift, garment, or team bundle.'],
+                                ['title' => 'Personalise', 'body' => 'Add names, artwork, colors, and placement notes.'],
+                                ['title' => 'Approve', 'body' => 'We send a digital mockup before production.'],
+                                ['title' => 'Receive', 'body' => 'Pick up in Nairobi or ship nationwide.'],
+                            ],
+                        ],
+                        'product_collection' => [
+                            'kicker' => 'Featured Collection',
+                            'title' => 'Personalised keepsakes and apparel',
+                            'view_all_label' => 'View All',
+                            'view_all_url' => '/shop',
+                        ],
+                        'product_category_ids' => [],
+                        'product_limit' => 12,
                         'products' => [
                             ['name' => 'Ready to Gift Shuka Edge Bib Set', 'price' => 1950, 'image' => '/images/maasai/maasai-kids.png'],
                             ['name' => 'Kids Snuggle Hoodie with Shuka Trim', 'price' => 3250, 'image' => '/images/maasai/maasai-kids.png'],
@@ -272,6 +290,13 @@ class PageDefaults
                             ['name' => 'Corporate Tote and Cap Set', 'price' => 2750, 'image' => '/images/maasai/maasai-corporate.png'],
                             ['name' => 'Home Gift Throw and Mug Set', 'price' => 4250, 'image' => '/images/maasai/maasai-gifts.png'],
                             ['name' => 'Custom Polo with Shuka Detail', 'price' => 2850, 'image' => '/images/maasai/maasai-corporate.png'],
+                        ],
+                        'cta' => [
+                            'kicker' => 'Custom Orders',
+                            'title' => 'Need names, logos, or a bulk set?',
+                            'body' => 'Share your brief and Nai Prints will prepare a mockup, pricing, and production timeline.',
+                            'primary' => ['label' => 'Start Your Order', 'url' => '/contact'],
+                            'secondary' => ['label' => 'Corporate Gifts', 'url' => '/corporate'],
                         ],
                     ],
                 ],

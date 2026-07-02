@@ -343,38 +343,61 @@ Route::get('/maasai', function () {
     $purchasePopups = GlobalSection::ensure('purchase_popups', PageDefaults::purchasePopups());
     $purchasePopupProducts = resolvePurchasePopupProducts($purchasePopups->content ?? []);
 
+    $maasaiSections = $page->content['sections'] ?? [];
+    $maasaiSection = collect($maasaiSections)->first(fn ($section) => ($section['type'] ?? '') === 'maasai_page');
+    $maasaiData = $maasaiSection['data'] ?? [];
+    $maasaiCategoryIds = collect($maasaiData['product_category_ids'] ?? [])
+        ->filter(fn ($categoryId) => is_numeric($categoryId))
+        ->map(fn ($categoryId) => (int) $categoryId)
+        ->unique()
+        ->values();
+    if ($maasaiCategoryIds->isEmpty() && is_numeric($maasaiData['product_category_id'] ?? null)) {
+        $maasaiCategoryIds = collect([(int) $maasaiData['product_category_id']]);
+    }
+    $maasaiProductLimit = $maasaiData['product_limit'] ?? 12;
+    $maasaiProductLimit = is_numeric($maasaiProductLimit) ? (int) $maasaiProductLimit : 12;
+    $maasaiProductLimit = max(1, min(48, $maasaiProductLimit));
+
     $maasaiProducts = Product::with(['category', 'categories', 'tags', 'galleryImages', 'alternateImages', 'images'])
         ->where('status', 'active')
-        ->where(function ($query) {
-            $query
-                ->whereRaw('LOWER(name) LIKE ?', ['%maasai%'])
-                ->orWhereRaw('LOWER(name) LIKE ?', ['%shuka%'])
-                ->orWhereRaw('LOWER(description) LIKE ?', ['%maasai%'])
-                ->orWhereRaw('LOWER(description) LIKE ?', ['%shuka%'])
-                ->orWhereHas('category', function ($categoryQuery) {
-                    $categoryQuery
-                        ->whereRaw('LOWER(slug) LIKE ?', ['%maasai%'])
-                        ->orWhereRaw('LOWER(slug) LIKE ?', ['%shuka%'])
-                        ->orWhereRaw('LOWER(name) LIKE ?', ['%maasai%'])
-                        ->orWhereRaw('LOWER(name) LIKE ?', ['%shuka%']);
-                })
-                ->orWhereHas('categories', function ($categoryQuery) {
-                    $categoryQuery
-                        ->whereRaw('LOWER(slug) LIKE ?', ['%maasai%'])
-                        ->orWhereRaw('LOWER(slug) LIKE ?', ['%shuka%'])
-                        ->orWhereRaw('LOWER(name) LIKE ?', ['%maasai%'])
-                        ->orWhereRaw('LOWER(name) LIKE ?', ['%shuka%']);
-                })
-                ->orWhereHas('tags', function ($tagQuery) {
-                    $tagQuery
-                        ->whereRaw('LOWER(slug) LIKE ?', ['%maasai%'])
-                        ->orWhereRaw('LOWER(slug) LIKE ?', ['%shuka%'])
-                        ->orWhereRaw('LOWER(name) LIKE ?', ['%maasai%'])
-                        ->orWhereRaw('LOWER(name) LIKE ?', ['%shuka%']);
-                });
+        ->when($maasaiCategoryIds->isNotEmpty(), function ($query) use ($maasaiCategoryIds) {
+            $query->where(function ($categoryQuery) use ($maasaiCategoryIds) {
+                $categoryQuery
+                    ->whereIn('category_id', $maasaiCategoryIds)
+                    ->orWhereHas('categories', fn ($relatedCategoryQuery) => $relatedCategoryQuery->whereIn('categories.id', $maasaiCategoryIds));
+            });
+        }, function ($query) {
+            $query->where(function ($keywordQuery) {
+                $keywordQuery
+                    ->whereRaw('LOWER(name) LIKE ?', ['%maasai%'])
+                    ->orWhereRaw('LOWER(name) LIKE ?', ['%shuka%'])
+                    ->orWhereRaw('LOWER(description) LIKE ?', ['%maasai%'])
+                    ->orWhereRaw('LOWER(description) LIKE ?', ['%shuka%'])
+                    ->orWhereHas('category', function ($categoryQuery) {
+                        $categoryQuery
+                            ->whereRaw('LOWER(slug) LIKE ?', ['%maasai%'])
+                            ->orWhereRaw('LOWER(slug) LIKE ?', ['%shuka%'])
+                            ->orWhereRaw('LOWER(name) LIKE ?', ['%maasai%'])
+                            ->orWhereRaw('LOWER(name) LIKE ?', ['%shuka%']);
+                    })
+                    ->orWhereHas('categories', function ($categoryQuery) {
+                        $categoryQuery
+                            ->whereRaw('LOWER(slug) LIKE ?', ['%maasai%'])
+                            ->orWhereRaw('LOWER(slug) LIKE ?', ['%shuka%'])
+                            ->orWhereRaw('LOWER(name) LIKE ?', ['%maasai%'])
+                            ->orWhereRaw('LOWER(name) LIKE ?', ['%shuka%']);
+                    })
+                    ->orWhereHas('tags', function ($tagQuery) {
+                        $tagQuery
+                            ->whereRaw('LOWER(slug) LIKE ?', ['%maasai%'])
+                            ->orWhereRaw('LOWER(slug) LIKE ?', ['%shuka%'])
+                            ->orWhereRaw('LOWER(name) LIKE ?', ['%maasai%'])
+                            ->orWhereRaw('LOWER(name) LIKE ?', ['%shuka%']);
+                    });
+            });
         })
         ->orderByDesc('created_at')
-        ->take(12)
+        ->take($maasaiProductLimit)
         ->get();
 
     return view('maasai', [

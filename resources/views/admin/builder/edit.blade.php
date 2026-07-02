@@ -466,6 +466,156 @@
                                         @endforeach
                                     </div>
                                 </div>
+                            @elseif ($type === 'maasai_page')
+                                @php
+                                    $maasaiDefaults = \App\Support\PageDefaults::maasai()['sections'][0]['data'] ?? [];
+                                    $slides = $data['slides'] ?? ($maasaiDefaults['slides'] ?? []);
+                                    if (empty($slides)) {
+                                        $slides = [
+                                            ['kicker' => '', 'title' => '', 'body' => '', 'image' => '', 'alt' => '', 'primary' => ['label' => '', 'url' => '']],
+                                        ];
+                                    }
+                                    $maasaiCategories = $data['categories'] ?? ($maasaiDefaults['categories'] ?? []);
+                                    if (empty($maasaiCategories)) {
+                                        $maasaiCategories = [
+                                            ['title' => '', 'body' => '', 'image' => '', 'url' => '#maasai-products'],
+                                        ];
+                                    }
+                                    $howItWorks = $data['how_it_works'] ?? ($maasaiDefaults['how_it_works'] ?? []);
+                                    $howItWorksSteps = $howItWorks['steps'] ?? [];
+                                    if (empty($howItWorksSteps)) {
+                                        $howItWorksSteps = [
+                                            ['title' => '', 'body' => ''],
+                                            ['title' => '', 'body' => ''],
+                                            ['title' => '', 'body' => ''],
+                                            ['title' => '', 'body' => ''],
+                                        ];
+                                    }
+                                    $productCollection = $data['product_collection'] ?? ($maasaiDefaults['product_collection'] ?? []);
+                                    $selectedMaasaiCategoryIds = collect($data['product_category_ids'] ?? [])
+                                        ->filter(fn ($categoryId) => is_numeric($categoryId))
+                                        ->map(fn ($categoryId) => (string) ((int) $categoryId))
+                                        ->all();
+                                    if (empty($selectedMaasaiCategoryIds) && is_numeric($data['product_category_id'] ?? null)) {
+                                        $selectedMaasaiCategoryIds = [(string) ((int) $data['product_category_id'])];
+                                    }
+                                    $maasaiProductLimit = $data['product_limit'] ?? 12;
+                                    $fallbackProducts = $data['products'] ?? ($maasaiDefaults['products'] ?? []);
+                                    if (empty($fallbackProducts)) {
+                                        $fallbackProducts = [
+                                            ['name' => '', 'price' => '', 'image' => ''],
+                                        ];
+                                    }
+                                    $cta = $data['cta'] ?? ($maasaiDefaults['cta'] ?? []);
+                                @endphp
+                                <div class="rounded-xl border border-slate-200 p-4">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Hero Slides</p>
+                                    <div class="mt-3 grid gap-4">
+                                        @foreach ($slides as $slideIndex => $slide)
+                                            <div class="rounded-xl border border-slate-200 p-4">
+                                                <p class="mb-3 text-sm font-semibold text-slate-700">Slide {{ $slideIndex + 1 }}</p>
+                                                <div class="grid gap-3 sm:grid-cols-2">
+                                                    <input type="text" name="sections[{{ $index }}][data][slides][{{ $slideIndex }}][kicker]" value="{{ $slide['kicker'] ?? '' }}" placeholder="Kicker" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                    <input type="text" name="sections[{{ $index }}][data][slides][{{ $slideIndex }}][title]" value="{{ $slide['title'] ?? '' }}" placeholder="Title" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                </div>
+                                                <textarea name="sections[{{ $index }}][data][slides][{{ $slideIndex }}][body]" rows="2" placeholder="Body" class="mt-3 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">{{ $slide['body'] ?? '' }}</textarea>
+                                                <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                                                    <input type="text" name="sections[{{ $index }}][data][slides][{{ $slideIndex }}][image]" value="{{ $slide['image'] ?? '' }}" placeholder="Image URL" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                    <input type="text" name="sections[{{ $index }}][data][slides][{{ $slideIndex }}][alt]" value="{{ $slide['alt'] ?? '' }}" placeholder="Image alt text" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                </div>
+                                                <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                                                    <input type="text" name="sections[{{ $index }}][data][slides][{{ $slideIndex }}][primary][label]" value="{{ $slide['primary']['label'] ?? '' }}" placeholder="Button label" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                    <input type="text" name="sections[{{ $index }}][data][slides][{{ $slideIndex }}][primary][url]" value="{{ $slide['primary']['url'] ?? '' }}" placeholder="Button URL" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+
+                                <div class="rounded-xl border border-slate-200 p-4">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">How It Works</p>
+                                    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                                        <input type="text" name="sections[{{ $index }}][data][how_it_works][kicker]" value="{{ $howItWorks['kicker'] ?? '' }}" placeholder="Kicker" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                        <input type="text" name="sections[{{ $index }}][data][how_it_works][title]" value="{{ $howItWorks['title'] ?? '' }}" placeholder="Title" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                    </div>
+                                    <div class="mt-3 grid gap-3">
+                                        @foreach ($howItWorksSteps as $stepIndex => $step)
+                                            <div class="grid gap-3 sm:grid-cols-2">
+                                                <input type="text" name="sections[{{ $index }}][data][how_it_works][steps][{{ $stepIndex }}][title]" value="{{ $step['title'] ?? '' }}" placeholder="Step title" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                <input type="text" name="sections[{{ $index }}][data][how_it_works][steps][{{ $stepIndex }}][body]" value="{{ $step['body'] ?? '' }}" placeholder="Step description" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+
+                                <div class="rounded-xl border border-slate-200 p-4">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Category Cards</p>
+                                    <div class="mt-3 grid gap-4">
+                                        @foreach ($maasaiCategories as $categoryIndex => $maasaiCategory)
+                                            <div class="grid gap-3 sm:grid-cols-4">
+                                                <input type="text" name="sections[{{ $index }}][data][categories][{{ $categoryIndex }}][title]" value="{{ $maasaiCategory['title'] ?? '' }}" placeholder="Title" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                <input type="text" name="sections[{{ $index }}][data][categories][{{ $categoryIndex }}][body]" value="{{ $maasaiCategory['body'] ?? '' }}" placeholder="Description" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                <input type="text" name="sections[{{ $index }}][data][categories][{{ $categoryIndex }}][image]" value="{{ $maasaiCategory['image'] ?? '' }}" placeholder="Image URL" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                <input type="text" name="sections[{{ $index }}][data][categories][{{ $categoryIndex }}][url]" value="{{ $maasaiCategory['url'] ?? '' }}" placeholder="Link URL" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+
+                                <div class="rounded-xl border border-slate-200 p-4">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Product Collection</p>
+                                    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                                        <input type="text" name="sections[{{ $index }}][data][product_collection][kicker]" value="{{ $productCollection['kicker'] ?? '' }}" placeholder="Kicker" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                        <input type="text" name="sections[{{ $index }}][data][product_collection][title]" value="{{ $productCollection['title'] ?? '' }}" placeholder="Title" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                        <input type="text" name="sections[{{ $index }}][data][product_collection][view_all_label]" value="{{ $productCollection['view_all_label'] ?? '' }}" placeholder="View all label" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                        <input type="text" name="sections[{{ $index }}][data][product_collection][view_all_url]" value="{{ $productCollection['view_all_url'] ?? '' }}" placeholder="View all URL" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                    </div>
+                                    <div class="mt-3 grid gap-3 sm:grid-cols-[1fr_180px]">
+                                        <div>
+                                            <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Product categories</label>
+                                            <input type="hidden" name="sections[{{ $index }}][data][_product_categories_managed]" value="1">
+                                            <select name="sections[{{ $index }}][data][product_category_ids][]" multiple class="h-40 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                @foreach ($categories as $category)
+                                                    <option value="{{ $category->id }}" @selected(in_array((string) $category->id, $selectedMaasaiCategoryIds, true))>{{ $category->name }}</option>
+                                                @endforeach
+                                            </select>
+                                            <p class="mt-1 text-xs text-slate-500">Hold Ctrl or Cmd to choose multiple. Leave empty to use the default Maasai/Shuka keyword search.</p>
+                                        </div>
+                                        <div>
+                                            <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Product limit</label>
+                                            <input type="number" name="sections[{{ $index }}][data][product_limit]" value="{{ $maasaiProductLimit }}" min="1" max="48" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="rounded-xl border border-slate-200 p-4">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Fallback Products</p>
+                                    <p class="mt-1 text-xs text-slate-500">These show only when no live products match the selected source.</p>
+                                    <div class="mt-3 grid gap-3">
+                                        @foreach ($fallbackProducts as $productIndex => $fallbackProduct)
+                                            <div class="grid gap-3 sm:grid-cols-[1fr_140px_1fr]">
+                                                <input type="text" name="sections[{{ $index }}][data][products][{{ $productIndex }}][name]" value="{{ $fallbackProduct['name'] ?? '' }}" placeholder="Name" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                <input type="number" name="sections[{{ $index }}][data][products][{{ $productIndex }}][price]" value="{{ $fallbackProduct['price'] ?? '' }}" min="0" step="1" placeholder="Price" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                <input type="text" name="sections[{{ $index }}][data][products][{{ $productIndex }}][image]" value="{{ $fallbackProduct['image'] ?? '' }}" placeholder="Image URL" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+
+                                <div class="rounded-xl border border-slate-200 p-4">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">CTA</p>
+                                    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                                        <input type="text" name="sections[{{ $index }}][data][cta][kicker]" value="{{ $cta['kicker'] ?? '' }}" placeholder="Kicker" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                        <input type="text" name="sections[{{ $index }}][data][cta][title]" value="{{ $cta['title'] ?? '' }}" placeholder="Title" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                    </div>
+                                    <textarea name="sections[{{ $index }}][data][cta][body]" rows="2" placeholder="Body" class="mt-3 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">{{ $cta['body'] ?? '' }}</textarea>
+                                    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                                        <input type="text" name="sections[{{ $index }}][data][cta][primary][label]" value="{{ $cta['primary']['label'] ?? '' }}" placeholder="Primary label" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                        <input type="text" name="sections[{{ $index }}][data][cta][primary][url]" value="{{ $cta['primary']['url'] ?? '' }}" placeholder="Primary URL" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                        <input type="text" name="sections[{{ $index }}][data][cta][secondary][label]" value="{{ $cta['secondary']['label'] ?? '' }}" placeholder="Secondary label" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                        <input type="text" name="sections[{{ $index }}][data][cta][secondary][url]" value="{{ $cta['secondary']['url'] ?? '' }}" placeholder="Secondary URL" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                    </div>
+                                </div>
                             @elseif ($type === 'embroidery_page')
                                 @php
                                     $hero = $data['hero'] ?? [];
@@ -1640,6 +1790,7 @@
                         <option value="design_studio">Design studio</option>
                         <option value="footer_notice">Footer notice</option>
                         <option value="shop_header">Shop header</option>
+                        <option value="maasai_page">Maasai page</option>
                         <option value="embroidery_page">Embroidery page</option>
                         <option value="jersey_page">Jersey page</option>
                         <option value="corporate_page">Corporate page</option>

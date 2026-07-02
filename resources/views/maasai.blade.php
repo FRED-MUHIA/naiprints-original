@@ -22,15 +22,13 @@
                     $data = $section['data'] ?? [];
                     $slides = $data['slides'] ?? ($defaults['slides'] ?? []);
                     $categories = $data['categories'] ?? ($defaults['categories'] ?? []);
+                    $howItWorks = $data['how_it_works'] ?? ($defaults['how_it_works'] ?? []);
+                    $howItWorksSteps = $howItWorks['steps'] ?? [];
+                    $productCollection = $data['product_collection'] ?? ($defaults['product_collection'] ?? []);
                     $fallbackProducts = $data['products'] ?? ($defaults['products'] ?? []);
+                    $cta = $data['cta'] ?? ($defaults['cta'] ?? []);
                     $realProducts = $maasaiProducts ?? collect();
                     $displayProducts = $realProducts->isNotEmpty() ? $realProducts : collect($fallbackProducts);
-                    $howItWorks = [
-                        ['title' => 'Choose', 'body' => 'Select a gift, garment, or team bundle.'],
-                        ['title' => 'Personalise', 'body' => 'Add names, artwork, colors, and placement notes.'],
-                        ['title' => 'Approve', 'body' => 'We send a digital mockup before production.'],
-                        ['title' => 'Receive', 'body' => 'Pick up in Nairobi or ship nationwide.'],
-                    ];
                 @endphp
 
                 <section class="maasai-hero" data-maasai-slider>
@@ -73,11 +71,11 @@
 
                 <section class="mx-auto max-w-6xl px-4 py-12">
                     <div class="maasai-section-head">
-                        <p class="section-kicker">How It Works</p>
-                        <h2 class="section-title">Personalized pieces in four simple steps</h2>
+                        <p class="section-kicker">{{ $howItWorks['kicker'] ?? '' }}</p>
+                        <h2 class="section-title">{{ $howItWorks['title'] ?? '' }}</h2>
                     </div>
                     <div class="maasai-steps">
-                        @foreach ($howItWorks as $index => $step)
+                        @foreach ($howItWorksSteps as $index => $step)
                             <div class="maasai-step">
                                 <span class="maasai-step-number">{{ $index + 1 }}</span>
                                 <div>
@@ -106,8 +104,8 @@
 
                 <section id="maasai-products" class="mx-auto max-w-6xl px-4 pb-14">
                     <div class="maasai-section-head">
-                        <p class="section-kicker">Featured Collection</p>
-                        <h2 class="section-title">Personalised keepsakes and apparel</h2>
+                        <p class="section-kicker">{{ $productCollection['kicker'] ?? '' }}</p>
+                        <h2 class="section-title">{{ $productCollection['title'] ?? '' }}</h2>
                     </div>
                     <div class="maasai-product-grid">
                         @foreach ($displayProducts as $product)
@@ -183,7 +181,7 @@
                         @endforeach
                     </div>
                     <div class="mt-8 text-center">
-                        <a href="{{ route('shop') }}" class="btn-primary">View All</a>
+                        <a href="{{ $productCollection['view_all_url'] ?? route('shop') }}" class="btn-primary">{{ $productCollection['view_all_label'] ?? 'View All' }}</a>
                     </div>
                 </section>
 
@@ -191,15 +189,19 @@
                     <div class="mx-auto max-w-6xl px-4">
                         <div class="cta-card maasai-cta-card">
                             <div>
-                                <p class="cta-kicker">Custom Orders</p>
-                                <h2 class="mt-4 text-3xl font-semibold text-white">Need names, logos, or a bulk set?</h2>
+                                <p class="cta-kicker">{{ $cta['kicker'] ?? '' }}</p>
+                                <h2 class="mt-4 text-3xl font-semibold text-white">{{ $cta['title'] ?? '' }}</h2>
                                 <p class="mt-3 text-sm text-white/80">
-                                    Share your brief and Nai Prints will prepare a mockup, pricing, and production timeline.
+                                    {{ $cta['body'] ?? '' }}
                                 </p>
                             </div>
                             <div class="mt-6 flex flex-wrap gap-3">
-                                <a href="{{ route('contact.show') }}" class="btn-primary">Start Your Order</a>
-                                <a href="{{ route('corporate') }}" class="btn-secondary">Corporate Gifts</a>
+                                @if (!empty($cta['primary']['label']))
+                                    <a href="{{ $cta['primary']['url'] ?? route('contact.show') }}" class="btn-primary">{{ $cta['primary']['label'] }}</a>
+                                @endif
+                                @if (!empty($cta['secondary']['label']))
+                                    <a href="{{ $cta['secondary']['url'] ?? route('corporate') }}" class="btn-secondary">{{ $cta['secondary']['label'] }}</a>
+                                @endif
                             </div>
                         </div>
                     </div>

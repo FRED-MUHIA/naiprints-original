@@ -77,6 +77,9 @@ class PageBuilderController extends Controller
             'sections.*.data.mockups.*.*.*_file' => ['nullable', 'image', 'max:4096'],
             'sections.*.data.mockups.*.*.*.*_file' => ['nullable', 'image', 'max:4096'],
             'sections.*.data.product_category_id' => ['nullable', 'integer', 'exists:categories,id'],
+            'sections.*.data.product_category_ids' => ['nullable', 'array'],
+            'sections.*.data.product_category_ids.*' => ['integer', 'exists:categories,id'],
+            'sections.*.data.product_limit' => ['nullable', 'integer', 'min:1', 'max:48'],
             'sections.*.data.gift_finder.product_category_id' => ['nullable', 'integer', 'exists:categories,id'],
             'add_section_type' => ['nullable', 'string', 'max:50'],
         ]);
@@ -97,6 +100,7 @@ class PageBuilderController extends Controller
             $sections[] = PageDefaults::section($data['add_section_type']);
         }
 
+        $sections = $this->normalizeMaasaiPageSections($sections, $inputSections);
         $sections = $this->mergeTileUploads($sections, $request->file('sections', []));
         $sections = $this->mergeProductStepUploads($sections, $request->file('sections', []));
         $sections = $this->mergeSaleFeatureUploads($sections, $request->file('sections', []));
@@ -269,11 +273,41 @@ class PageBuilderController extends Controller
         $shop = Page::ensure('shop', 'Shop', PageDefaults::shop());
         $checkout = Page::ensure('checkout', 'Checkout', PageDefaults::checkout());
         $embroidery = Page::ensure('embroidery', 'Embroidery', PageDefaults::embroidery());
+        $maasai = Page::ensure('maasai', 'Maasai', PageDefaults::maasai());
         $jersey = Page::ensure('jersey', 'Jersey', PageDefaults::jersey());
         $mockup = Page::ensure('mockup', 'Mockup', PageDefaults::mockup());
         $corporate = Page::ensure('corporate', 'Corporate', PageDefaults::corporate());
 
         return Page::orderBy('title')->get();
+    }
+
+    private function normalizeMaasaiPageSections(array $sections, array $inputSections): array
+    {
+        foreach ($sections as $sectionIndex => $section) {
+            if (($section['type'] ?? '') !== 'maasai_page') {
+                continue;
+            }
+
+            $inputData = $inputSections[$sectionIndex]['data'] ?? [];
+            $categoriesManaged = is_array($inputData) && array_key_exists('_product_categories_managed', $inputData);
+            if ($categoriesManaged) {
+                $categoryIds = $inputData['product_category_ids'] ?? [];
+                if (!is_array($categoryIds)) {
+                    $categoryIds = [];
+                }
+
+                $sections[$sectionIndex]['data']['product_category_ids'] = collect($categoryIds)
+                    ->filter(fn ($categoryId) => is_numeric($categoryId))
+                    ->map(fn ($categoryId) => (int) $categoryId)
+                    ->unique()
+                    ->values()
+                    ->all();
+            }
+
+            unset($sections[$sectionIndex]['data']['_product_categories_managed']);
+        }
+
+        return $sections;
     }
 
     private function mergeTileUploads(array $sections, array $sectionFiles): array
