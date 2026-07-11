@@ -167,6 +167,12 @@
                         </div>
                     @endif
 
+                    @if (session('warning'))
+                        <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                            {{ session('warning') }}
+                        </div>
+                    @endif
+
                     @if ($errors->any())
                         <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                             <p class="font-semibold">Please fix the following:</p>

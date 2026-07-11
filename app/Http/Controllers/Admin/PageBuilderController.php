@@ -9,6 +9,7 @@ use App\Models\Page;
 use App\Models\Product;
 use App\Support\PageDefaults;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class PageBuilderController extends Controller
@@ -132,11 +133,11 @@ class PageBuilderController extends Controller
         $validator = validator($request->all(), [
             'header' => ['array'],
             'header.logo_url' => ['nullable', 'string', 'max:2048'],
-            'header.logo_url_file' => ['nullable', 'image', 'max:4096'],
+            'header.logo_url_file' => ['nullable', 'file', 'max:2048'],
             'header.favicon_url' => ['nullable', 'string', 'max:2048'],
-            'header.favicon_url_file' => ['nullable', 'image', 'max:4096'],
+            'header.favicon_url_file' => ['nullable', 'file', 'max:2048'],
             'header.top_strip_image' => ['nullable', 'string', 'max:2048'],
-            'header.top_strip_image_file' => ['nullable', 'image', 'max:4096'],
+            'header.top_strip_image_file' => ['nullable', 'file', 'max:2048'],
             'footer' => ['array'],
             'purchase_popups' => ['array'],
             'purchase_popups.items' => ['array'],
@@ -157,9 +158,10 @@ class PageBuilderController extends Controller
         $purchasePopups = GlobalSection::ensure('purchase_popups', PageDefaults::purchasePopups());
 
         $headerPayload = $request->input('header', null);
+        $headerUploadWarning = false;
         if (is_array($headerPayload)) {
             $headerPayload = $this->normalizeHeaderPayload($headerPayload);
-            $headerPayload = $this->mergeHeaderUploads($headerPayload, $request);
+            [$headerPayload, $headerUploadWarning] = $this->mergeHeaderUploads($headerPayload, $request);
             $header->update([
                 'content' => $this->mergeGlobalContent((array) ($header->content ?? []), $headerPayload),
             ]);
@@ -203,8 +205,14 @@ class PageBuilderController extends Controller
             ]);
         }
 
-        return redirect()->route('admin.builder.index')
+        $redirect = redirect()->route('admin.builder.index')
             ->with('success', 'Global sections updated.');
+
+        if ($headerUploadWarning) {
+            $redirect->with('warning', 'Some header image uploads were skipped. Please use JPG, PNG, WebP, GIF, or SVG files up to 2MB.');
+        }
+
+        return $redirect;
     }
 
     private function mergeGlobalContent(array $existing, array $payload): array
@@ -283,6 +291,8 @@ class PageBuilderController extends Controller
             'favicon_url_file' => ['key' => 'favicon_url', 'directory' => 'global/header'],
             'top_strip_image_file' => ['key' => 'top_strip_image', 'directory' => 'global/header'],
         ];
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'];
+        $hadWarning = false;
 
         foreach ($uploadMap as $fileKey => $meta) {
             $file = $request->file('header.' . $fileKey);
@@ -290,11 +300,25 @@ class PageBuilderController extends Controller
                 continue;
             }
 
-            $path = $file->store($meta['directory'], 'public');
-            $payload[$meta['key']] = Storage::url($path);
+            $extension = strtolower((string) $file->getClientOriginalExtension());
+            if (!in_array($extension, $allowedExtensions, true)) {
+                $hadWarning = true;
+                continue;
+            }
+
+            try {
+                $path = $file->store($meta['directory'], 'public');
+                $payload[$meta['key']] = Storage::url($path);
+            } catch (\Throwable $exception) {
+                $hadWarning = true;
+                Log::warning('Header image upload failed.', [
+                    'field' => $fileKey,
+                    'message' => $exception->getMessage(),
+                ]);
+            }
         }
 
-        return $payload;
+        return [$payload, $hadWarning];
     }
 
     private function ensureDefaults()
