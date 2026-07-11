@@ -34,9 +34,17 @@
                 <section class="maasai-hero" data-maasai-slider>
                     <div class="maasai-slider">
                         @foreach ($slides as $index => $slide)
+                            @php
+                                $defaultSlide = $defaults['slides'][$index] ?? [];
+                                $overlayImage = $slide['overlay_image'] ?? ($defaultSlide['overlay_image'] ?? null);
+                                $overlayAlt = $slide['overlay_alt'] ?? ($defaultSlide['overlay_alt'] ?? ($slide['alt'] ?? ''));
+                            @endphp
                             <article class="maasai-slide {{ $index === 0 ? 'is-active' : '' }}" data-maasai-slide>
                                 <img src="{{ $slide['image'] ?? '' }}" alt="{{ $slide['alt'] ?? '' }}" class="maasai-slide-image">
                                 <div class="maasai-slide-overlay"></div>
+                                @if (!empty($overlayImage))
+                                    <img src="{{ $overlayImage }}" alt="{{ $overlayAlt }}" class="maasai-slide-floating-image">
+                                @endif
                                 <div class="maasai-slide-copy">
                                     @if (!empty($slide['kicker']))
                                         <p class="maasai-kicker">{{ $slide['kicker'] }}</p>

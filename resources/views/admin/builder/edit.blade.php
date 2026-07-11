@@ -512,6 +512,9 @@
                                     <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Hero Slides</p>
                                     <div class="mt-3 grid gap-4">
                                         @foreach ($slides as $slideIndex => $slide)
+                                            @php
+                                                $defaultSlide = $maasaiDefaults['slides'][$slideIndex] ?? [];
+                                            @endphp
                                             <div class="rounded-xl border border-slate-200 p-4">
                                                 <p class="mb-3 text-sm font-semibold text-slate-700">Slide {{ $slideIndex + 1 }}</p>
                                                 <div class="grid gap-3 sm:grid-cols-2">
@@ -522,6 +525,10 @@
                                                 <div class="mt-3 grid gap-3 sm:grid-cols-2">
                                                     <input type="text" name="sections[{{ $index }}][data][slides][{{ $slideIndex }}][image]" value="{{ $slide['image'] ?? '' }}" placeholder="Image URL" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
                                                     <input type="text" name="sections[{{ $index }}][data][slides][{{ $slideIndex }}][alt]" value="{{ $slide['alt'] ?? '' }}" placeholder="Image alt text" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                </div>
+                                                <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                                                    <input type="text" name="sections[{{ $index }}][data][slides][{{ $slideIndex }}][overlay_image]" value="{{ $slide['overlay_image'] ?? ($defaultSlide['overlay_image'] ?? '') }}" placeholder="Bouncing overlay image URL" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                    <input type="text" name="sections[{{ $index }}][data][slides][{{ $slideIndex }}][overlay_alt]" value="{{ $slide['overlay_alt'] ?? ($defaultSlide['overlay_alt'] ?? '') }}" placeholder="Bouncing overlay alt text" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
                                                 </div>
                                                 <div class="mt-3 grid gap-3 sm:grid-cols-2">
                                                     <input type="text" name="sections[{{ $index }}][data][slides][{{ $slideIndex }}][primary][label]" value="{{ $slide['primary']['label'] ?? '' }}" placeholder="Button label" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">

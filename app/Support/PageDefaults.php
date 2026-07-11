@@ -238,6 +238,8 @@ class PageDefaults
                                 'body' => 'Personalized shuka-inspired keepsakes, apparel, and corporate gifts produced by Nai Prints in Nairobi.',
                                 'image' => '/images/maasai/maasai-gifts.png',
                                 'alt' => 'Maasai-inspired gift collection with shuka textiles',
+                                'overlay_image' => '/images/maasai/maasai-gifts.png',
+                                'overlay_alt' => 'Custom Maasai-inspired gift preview',
                                 'primary' => ['label' => 'Shop Custom Gifts', 'url' => '/shop'],
                             ],
                             [
@@ -246,6 +248,8 @@ class PageDefaults
                                 'body' => 'Blankets, bibs, hoodies, and plush gifts with shuka-inspired trim and optional name personalization.',
                                 'image' => '/images/maasai/maasai-kids.png',
                                 'alt' => 'Baby and kids keepsakes with Maasai-inspired trim',
+                                'overlay_image' => '/images/maasai/maasai-kids.png',
+                                'overlay_alt' => 'Kids gift set with shuka-inspired trim',
                                 'primary' => ['label' => 'View Kids Gifts', 'url' => '/shop'],
                             ],
                             [
@@ -254,6 +258,8 @@ class PageDefaults
                                 'body' => 'Polos, hoodies, caps, totes, and group gifts finished with bold red-blue textile accents.',
                                 'image' => '/images/maasai/maasai-corporate.png',
                                 'alt' => 'Adult and corporate apparel with Maasai-inspired accents',
+                                'overlay_image' => '/images/maasai/maasai-corporate.png',
+                                'overlay_alt' => 'Corporate apparel with Maasai-inspired accents',
                                 'primary' => ['label' => 'Request Bulk Order', 'url' => '/contact'],
                             ],
                         ],
