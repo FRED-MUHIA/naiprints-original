@@ -94,6 +94,13 @@
                     $categoryNames = collect([$product->category->name]);
                 }
                 $categoryName = $categoryNames->first() ?? 'T-shirt';
+                $categoryIdentity = $product->categories
+                    ->push($product->category)
+                    ->filter()
+                    ->map(fn ($category) => strtolower(trim(($category->slug ?? '') . ' ' . ($category->name ?? ''))))
+                    ->join(' ');
+                $isMaasaiProduct = str_contains($categoryIdentity, 'maasai');
+                $selectionImages = $isMaasaiProduct ? $product->selectionImages->values() : collect();
                 $stockLabel = $product->stock ? 'In stock' : 'Made to order';
                 $soldCount = rand(5, 30);
                 $viewerCount = rand(12, 45);
@@ -225,8 +232,28 @@
                                 </div>
                             </div>
 
-                            @if ($colorOptions->isNotEmpty() || $sizeOptions->isNotEmpty())
+                            @if ($selectionImages->isNotEmpty() || $colorOptions->isNotEmpty() || $sizeOptions->isNotEmpty())
                                 <div class="product-options">
+                                    @if ($selectionImages->isNotEmpty())
+                                        <div class="product-option">
+                                            <h4>Choose - <span data-selection-current>{{ $selectionImages->first()->label }}</span></h4>
+                                            <div class="selection-image-options" data-option-group="selection">
+                                                @foreach ($selectionImages as $selectionImage)
+                                                    @php
+                                                        $selectionUrl = \Illuminate\Support\Facades\Storage::url($selectionImage->image_path);
+                                                    @endphp
+                                                    <button class="selection-image-option @if ($loop->first) is-active @endif"
+                                                            type="button"
+                                                            title="{{ $selectionImage->label }}"
+                                                            data-option-item
+                                                            data-option-value="{{ $selectionImage->label }}"
+                                                            data-option-image="{{ $selectionUrl }}">
+                                                        <img src="{{ $selectionUrl }}" alt="{{ $selectionImage->label }}">
+                                                    </button>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endif
                                     @if ($colorOptions->isNotEmpty())
                                         <div class="product-option">
                                             <h4>Color</h4>

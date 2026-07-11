@@ -32,23 +32,32 @@
                         </div>
                         <div>
                             <label class="text-sm font-semibold text-slate-700">Primary category</label>
-                            <select name="category_id" class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-brand focus:outline-none">
+                            <select name="category_id" class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-brand focus:outline-none" data-primary-category-select>
                                 <option value="">Uncategorized</option>
                                 @foreach ($categories as $category)
-                                    <option value="{{ $category->id }}" @selected((string) $oldPrimaryCategory === (string) $category->id)>{{ $category->name }}</option>
+                                    @php
+                                        $isMaasaiCategory = str_contains(strtolower((string) ($category->slug ?? $category->name)), 'maasai')
+                                            || str_contains(strtolower((string) $category->name), 'maasai');
+                                    @endphp
+                                    <option value="{{ $category->id }}" data-is-maasai="{{ $isMaasaiCategory ? '1' : '0' }}" @selected((string) $oldPrimaryCategory === (string) $category->id)>{{ $category->name }}</option>
                                 @endforeach
                             </select>
                             <p class="mt-2 text-xs text-slate-500">Used for legacy display and breadcrumb fallbacks.</p>
                         </div>
                         <div>
                             <label class="text-sm font-semibold text-slate-700">Categories (multiple)</label>
-                            <select name="category_ids[]" multiple size="6" class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-brand focus:outline-none">
+                            <select name="category_ids[]" multiple size="6" class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-brand focus:outline-none" data-product-category-select>
                                 @foreach ($categories as $category)
-                                    <option value="{{ $category->id }}" @selected(in_array((int) $category->id, $oldCategoryIds, true))>{{ $category->name }}</option>
+                                    @php
+                                        $isMaasaiCategory = str_contains(strtolower((string) ($category->slug ?? $category->name)), 'maasai')
+                                            || str_contains(strtolower((string) $category->name), 'maasai');
+                                    @endphp
+                                    <option value="{{ $category->id }}" data-is-maasai="{{ $isMaasaiCategory ? '1' : '0' }}" @selected(in_array((int) $category->id, $oldCategoryIds, true))>{{ $category->name }}</option>
                                 @endforeach
                             </select>
                             <p class="mt-2 text-xs text-slate-500">Hold Ctrl (Windows) or Cmd (Mac) to select more than one.</p>
                         </div>
+                        @include('admin.products._selection-images')
                         <div>
                             <label class="text-sm font-semibold text-slate-700">Brand</label>
                             <select name="brand_id" class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-brand focus:outline-none">

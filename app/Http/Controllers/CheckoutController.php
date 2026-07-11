@@ -57,6 +57,8 @@ class CheckoutController extends Controller
                     'qty' => max(0, $qty),
                     'image' => trim((string) ($item['image'] ?? '')),
                     'url' => trim((string) ($item['url'] ?? '')),
+                    'selection' => trim((string) ($item['selection'] ?? '')),
+                    'selection_image' => trim((string) ($item['selectionImage'] ?? $item['selection_image'] ?? '')),
                     'color' => trim((string) ($item['color'] ?? '')),
                     'size' => trim((string) ($item['size'] ?? '')),
                 ];
@@ -104,6 +106,9 @@ class CheckoutController extends Controller
             $invoiceItemsHaveProductId = Schema::hasColumn('invoice_items', 'product_id');
             $items = $cleanItems->values()->map(function ($item, $index) use ($invoiceItemsHaveProductId) {
                 $descriptionParts = [];
+                if (!empty($item['selection'])) {
+                    $descriptionParts[] = 'Selection: ' . $item['selection'];
+                }
                 if (!empty($item['color'])) {
                     $descriptionParts[] = 'Color: ' . $item['color'];
                 }
@@ -326,6 +331,8 @@ class CheckoutController extends Controller
                         'name' => $item['name'] ?? null,
                         'price' => (float) ($item['price'] ?? 0),
                         'qty' => (float) ($item['qty'] ?? 0),
+                        'selection' => $item['selection'] ?? null,
+                        'selection_image' => $item['selection_image'] ?? null,
                         'color' => $item['color'] ?? null,
                         'size' => $item['size'] ?? null,
                     ];

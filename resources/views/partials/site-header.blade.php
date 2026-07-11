@@ -131,7 +131,11 @@
 
         <nav class="site-nav hidden items-center text-slate-700 lg:flex">
             @foreach ($menu as $item)
-                <a class="nav-link" href="{{ $item['url'] ?? '#' }}">{{ $item['label'] ?? 'Menu' }}</a>
+                @php
+                    $isMaasaiMenuItem = strtolower($item['label'] ?? '') === 'maasai'
+                        || trim((string) ($item['url'] ?? '')) === '/maasai';
+                @endphp
+                <a class="nav-link {{ $isMaasaiMenuItem ? 'nav-link-maasai' : '' }}" href="{{ $item['url'] ?? '#' }}">{{ $item['label'] ?? 'Menu' }}</a>
                 @if (!$loop->last)
                     <span class="nav-separator" aria-hidden="true">|</span>
                 @endif
@@ -166,7 +170,11 @@
     <div id="mobile-menu" class="mobile-menu lg:hidden" data-mobile-menu>
         <div class="mobile-menu-inner">
             @foreach ($menu as $item)
-                <a class="mobile-menu-link" href="{{ $item['url'] ?? '#' }}">{{ $item['label'] ?? 'Menu' }}</a>
+                @php
+                    $isMaasaiMenuItem = strtolower($item['label'] ?? '') === 'maasai'
+                        || trim((string) ($item['url'] ?? '')) === '/maasai';
+                @endphp
+                <a class="mobile-menu-link {{ $isMaasaiMenuItem ? 'nav-link-maasai' : '' }}" href="{{ $item['url'] ?? '#' }}">{{ $item['label'] ?? 'Menu' }}</a>
             @endforeach
         </div>
     </div>

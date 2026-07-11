@@ -43,7 +43,7 @@
         @foreach ($items as $item)
             @php
                 $lineTotal = (float) ($item['price'] ?? 0) * (float) ($item['qty'] ?? 0);
-                $variant = collect([$item['color'] ?? '', $item['size'] ?? ''])->filter()->implode(' / ');
+                $variant = collect([$item['selection'] ?? '', $item['color'] ?? '', $item['size'] ?? ''])->filter()->implode(' / ');
             @endphp
             <tr>
                 <td style="padding:12px 14px;font-size:13px;color:#1e293b;border-bottom:1px solid #eef2f7;">

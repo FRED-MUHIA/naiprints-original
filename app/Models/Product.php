@@ -82,6 +82,11 @@ class Product extends Model
             ->orderBy('position');
     }
 
+    public function selectionImages(): HasMany
+    {
+        return $this->hasMany(ProductSelectionImage::class)->orderBy('position');
+    }
+
     public function attributes(): BelongsToMany
     {
         return $this->belongsToMany(Attribute::class)

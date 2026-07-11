@@ -870,7 +870,7 @@ Route::get('/products/{product}', function (string $productKey) {
     $footer = GlobalSection::ensure('footer', PageDefaults::footer());
     $purchasePopups = GlobalSection::ensure('purchase_popups', PageDefaults::purchasePopups());
     $purchasePopupProducts = resolvePurchasePopupProducts($purchasePopups->content ?? []);
-    $product->load(['category', 'categories', 'brand', 'alternateImages', 'galleryImages', 'attributes', 'sizes', 'tags']);
+    $product->load(['category', 'categories', 'brand', 'alternateImages', 'galleryImages', 'selectionImages', 'attributes', 'sizes', 'tags']);
     $relatedCategoryIds = $product->categories
         ->pluck('id')
         ->map(fn ($id) => (int) $id)

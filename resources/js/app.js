@@ -721,20 +721,26 @@ document.addEventListener('DOMContentLoaded', () => {
             const panel = button.closest('[data-product-panel]');
             const selectedColor = panel?.dataset.selectedColor || '';
             const selectedSize = panel?.dataset.selectedSize || '';
+            const selectedSelection = panel?.dataset.selectedSelection || '';
+            const selectedSelectionImage = panel?.dataset.selectedSelectionImage || '';
             const qtyInput = panel?.querySelector('[data-qty-input]');
             if (qtyInput) {
                 const parsed = Number.parseInt(qtyInput.value || '1', 10);
                 quantity = Number.isNaN(parsed) || parsed < 1 ? 1 : parsed;
             }
             const variantId =
-                selectedColor || selectedSize ? `${productId}::${selectedColor}::${selectedSize}` : productId;
+                selectedColor || selectedSize || selectedSelection
+                    ? `${productId}::${selectedSelection}::${selectedColor}::${selectedSize}`
+                    : productId;
             addToCart({
                 id: variantId,
                 baseId: productId,
                 name: productName || 'Product',
                 price: Number.isNaN(price) ? 0 : price,
-                image: productImage || '',
+                image: selectedSelectionImage || productImage || '',
                 url: productUrl || '',
+                selection: selectedSelection,
+                selectionImage: selectedSelectionImage,
                 color: selectedColor,
                 size: selectedSize,
                 qty: quantity,
@@ -763,6 +769,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const price = Number.parseFloat(button.dataset.productPrice || '0') || 0;
         const selectedColor = panel?.dataset.selectedColor || '';
         const selectedSize = panel?.dataset.selectedSize || '';
+        const selectedSelection = panel?.dataset.selectedSelection || '';
         const total = price * quantity;
         const lines = [
             'Hello Nai Prints, I would like to place a WhatsApp order.',
@@ -771,6 +778,7 @@ document.addEventListener('DOMContentLoaded', () => {
             button.dataset.productSku ? `SKU: ${button.dataset.productSku}` : '',
             button.dataset.productCategory ? `Category: ${button.dataset.productCategory}` : '',
             `Quantity: ${quantity}`,
+            selectedSelection ? `Selection: ${selectedSelection}` : '',
             selectedColor ? `Color: ${selectedColor}` : '',
             selectedSize ? `Size: ${selectedSize}` : '',
             `Unit price: ${formatMoney(price)}`,
@@ -848,6 +856,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 panel.dataset.selectedColor = value;
             } else if (groupType === 'size') {
                 panel.dataset.selectedSize = value;
+            } else if (groupType === 'selection') {
+                panel.dataset.selectedSelection = value;
+                panel.dataset.selectedSelectionImage = item.dataset.optionImage || '';
+
+                const scope = group.closest('[data-product-scope]');
+                const currentLabel = scope?.querySelector('[data-selection-current]');
+                if (currentLabel) {
+                    currentLabel.textContent = value;
+                }
+
+                const mainImage = scope?.querySelector('[data-gallery-main]');
+                if (mainImage && item.dataset.optionImage) {
+                    mainImage.setAttribute('src', item.dataset.optionImage);
+                }
             } else {
                 panel.dataset.selectedOption = value;
             }
@@ -1455,7 +1477,7 @@ document.addEventListener('DOMContentLoaded', () => {
         name.textContent = item.name || 'Product';
         name.href = item.url || '#';
 
-        const variantParts = [item.color, item.size].filter(Boolean);
+        const variantParts = [item.selection, item.color, item.size].filter(Boolean);
         const variant = document.createElement('p');
         variant.className = 'cart-item-variant';
         variant.textContent = variantParts.length > 0 ? variantParts.join(' / ') : 'Standard';
@@ -1596,6 +1618,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         qty: item.qty,
                         image: item.image,
                         url: item.url,
+                        selection: item.selection,
+                        selectionImage: item.selectionImage,
                         color: item.color,
                         size: item.size,
                     }))

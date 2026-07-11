@@ -8,6 +8,7 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductImage;
+use App\Models\ProductSelectionImage;
 use App\Models\Size;
 use App\Models\Tag;
 use Illuminate\Http\Request;
@@ -65,6 +66,9 @@ class ProductController extends Controller
 
         $this->syncAlternateImages($product, $request);
         $this->syncGallery($product, $request);
+        if ($this->hasMaasaiCategory($categoryIds)) {
+            $this->syncSelectionImages($product, $request);
+        }
         $this->syncRelations($product, $request);
 
         return redirect()->route('admin.products.index')
@@ -76,7 +80,7 @@ class ProductController extends Controller
      */
     public function edit(Product $product)
     {
-        $product->load(['tags', 'attributes', 'sizes', 'alternateImages', 'galleryImages', 'categories']);
+        $product->load(['tags', 'attributes', 'sizes', 'alternateImages', 'galleryImages', 'selectionImages', 'categories']);
         $brands = Brand::orderBy('name')->get();
         $categories = Category::orderBy('name')->get();
         $tags = Tag::orderBy('name')->get();
@@ -113,6 +117,9 @@ class ProductController extends Controller
 
         $this->syncAlternateImages($product, $request);
         $this->syncGallery($product, $request);
+        if ($this->hasMaasaiCategory($categoryIds)) {
+            $this->syncSelectionImages($product, $request);
+        }
 
         if ($request->boolean('sync_relations', true)) {
             $this->syncRelations($product, $request);
@@ -131,6 +138,9 @@ class ProductController extends Controller
             Storage::disk('public')->delete($product->image_path);
         }
         foreach ($product->images as $image) {
+            Storage::disk('public')->delete($image->image_path);
+        }
+        foreach ($product->selectionImages as $image) {
             Storage::disk('public')->delete($image->image_path);
         }
         $product->delete();
@@ -158,6 +168,13 @@ class ProductController extends Controller
             'gallery_images.*' => ['image', 'max:2048'],
             'remove_gallery' => ['array'],
             'remove_gallery.*' => ['integer', 'exists:product_images,id'],
+            'selection_images' => ['array'],
+            'selection_images.*.label' => ['nullable', 'string', 'max:120'],
+            'selection_images.*.position' => ['nullable', 'integer', 'min:0'],
+            'selection_images.*.remove' => ['nullable'],
+            'new_selection_images' => ['array'],
+            'new_selection_images.*.label' => ['nullable', 'string', 'max:120'],
+            'new_selection_images.*.image' => ['nullable', 'image', 'max:4096'],
             'description' => ['nullable', 'string'],
             'meta_title' => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:255'],
@@ -224,6 +241,22 @@ class ProductController extends Controller
     private function syncCategories(Product $product, array $categoryIds): void
     {
         $product->categories()->sync($categoryIds);
+    }
+
+    private function hasMaasaiCategory(array $categoryIds): bool
+    {
+        if (empty($categoryIds)) {
+            return false;
+        }
+
+        return Category::query()
+            ->whereIn('id', $categoryIds)
+            ->where(function ($query) {
+                $query
+                    ->whereRaw('LOWER(slug) LIKE ?', ['%maasai%'])
+                    ->orWhereRaw('LOWER(name) LIKE ?', ['%maasai%']);
+            })
+            ->exists();
     }
 
     private function parseColorOptions(?string $raw): ?array
@@ -352,6 +385,56 @@ class ProductController extends Controller
                     'type' => 'alternate',
                 ]);
             }
+        }
+    }
+
+    private function syncSelectionImages(Product $product, Request $request): void
+    {
+        foreach ($request->input('selection_images', []) as $imageId => $payload) {
+            $image = ProductSelectionImage::where('product_id', $product->id)
+                ->whereKey($imageId)
+                ->first();
+
+            if (!$image) {
+                continue;
+            }
+
+            if (!empty($payload['remove'])) {
+                Storage::disk('public')->delete($image->image_path);
+                $image->delete();
+                continue;
+            }
+
+            $label = trim((string) ($payload['label'] ?? ''));
+            if ($label !== '') {
+                $image->label = $label;
+            }
+
+            if (isset($payload['position']) && is_numeric($payload['position'])) {
+                $image->position = max(0, (int) $payload['position']);
+            }
+
+            $image->save();
+        }
+
+        $newRows = $request->input('new_selection_images', []);
+        $newFiles = $request->file('new_selection_images', []);
+        $nextPosition = (int) $product->selectionImages()->max('position');
+
+        foreach ($newFiles as $index => $payload) {
+            $file = is_array($payload) ? ($payload['image'] ?? null) : null;
+            if (!$file) {
+                continue;
+            }
+
+            $label = trim((string) ($newRows[$index]['label'] ?? ''));
+            $nextPosition++;
+
+            $product->selectionImages()->create([
+                'label' => $label !== '' ? $label : 'Option ' . $nextPosition,
+                'image_path' => $file->store('products/selections', 'public'),
+                'position' => $nextPosition,
+            ]);
         }
     }
 }
