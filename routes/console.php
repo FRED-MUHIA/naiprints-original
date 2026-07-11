@@ -55,6 +55,22 @@ Artisan::command('admin:password {password? : The new admin password} {--usernam
     return Command::SUCCESS;
 })->purpose('Set the configured admin username and password hash');
 
+Artisan::command('site:ensure-maasai-category', function () {
+    $category = \App\Models\Category::updateOrCreate(
+        ['slug' => 'maasai'],
+        [
+            'name' => 'Maasai',
+            'display_type' => 'collection',
+            'description' => 'Maasai-inspired personalized gifts and apparel.',
+            'meta_description' => 'Shop Maasai-inspired personalized gifts and apparel from Nai Prints.',
+        ]
+    );
+
+    $this->info("Maasai category is ready. ID: {$category->id}");
+
+    return Command::SUCCESS;
+})->purpose('Create or update the Maasai product category');
+
 if (!function_exists('setEnvValue')) {
     function setEnvValue(string $contents, string $key, string $value): string
     {
