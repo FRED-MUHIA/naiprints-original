@@ -705,6 +705,16 @@
                                         <input type="text" name="sections[{{ $index }}][data][cta][title]" value="{{ $cta['title'] ?? '' }}" placeholder="Title" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
                                     </div>
                                     <textarea name="sections[{{ $index }}][data][cta][body]" rows="2" placeholder="Body" class="mt-3 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">{{ $cta['body'] ?? '' }}</textarea>
+                                    <div class="mt-3 grid gap-3 sm:grid-cols-3">
+                                        <input type="text" name="sections[{{ $index }}][data][cta][image]" value="{{ $cta['image'] ?? '' }}" placeholder="Image URL" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                        <input type="text" name="sections[{{ $index }}][data][cta][image_alt]" value="{{ $cta['image_alt'] ?? '' }}" placeholder="Image alt text" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                        <input type="file" name="sections[{{ $index }}][data][cta][image_file]" accept="image/*" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                    </div>
+                                    @if (!empty($cta['image']))
+                                        <div class="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                                            <img src="{{ $cta['image'] }}" alt="{{ $cta['image_alt'] ?? 'Current CTA image' }}" class="h-32 w-full object-cover">
+                                        </div>
+                                    @endif
                                     <div class="mt-3 grid gap-3 sm:grid-cols-2">
                                         <input type="text" name="sections[{{ $index }}][data][cta][primary][label]" value="{{ $cta['primary']['label'] ?? '' }}" placeholder="Primary label" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
                                         <input type="text" name="sections[{{ $index }}][data][cta][primary][url]" value="{{ $cta['primary']['url'] ?? '' }}" placeholder="Primary URL" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">

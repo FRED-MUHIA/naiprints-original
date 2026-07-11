@@ -354,6 +354,8 @@ class PageDefaults
                             'kicker' => 'Custom Orders',
                             'title' => 'Need names, logos, or a bulk set?',
                             'body' => 'Share your brief and Nai Prints will prepare a mockup, pricing, and production timeline.',
+                            'image' => '',
+                            'image_alt' => 'Custom Maasai-inspired order preview',
                             'primary' => ['label' => 'Start Your Order', 'url' => '/contact'],
                             'secondary' => ['label' => 'Corporate Gifts', 'url' => '/corporate'],
                         ],

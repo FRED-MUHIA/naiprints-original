@@ -85,6 +85,9 @@ class PageBuilderController extends Controller
             'sections.*.data.gift_finder.product_category_id' => ['nullable', 'integer', 'exists:categories,id'],
             'sections.*.data.pattern_strip_image' => ['nullable', 'string', 'max:2048'],
             'sections.*.data.pattern_strip_image_file' => ['nullable', 'file', 'max:2048'],
+            'sections.*.data.cta.image' => ['nullable', 'string', 'max:2048'],
+            'sections.*.data.cta.image_alt' => ['nullable', 'string', 'max:255'],
+            'sections.*.data.cta.image_file' => ['nullable', 'file', 'max:2048'],
             'add_section_type' => ['nullable', 'string', 'max:50'],
         ]);
         $validator->excludeUnvalidatedArrayKeys = false;
@@ -419,25 +422,42 @@ class PageBuilderController extends Controller
             }
 
             $file = $sectionPayload['data']['pattern_strip_image_file'] ?? null;
-            if (!$file) {
-                continue;
+            if ($file) {
+                $extension = strtolower((string) $file->getClientOriginalExtension());
+                if (!in_array($extension, $allowedExtensions, true)) {
+                    $hadWarning = true;
+                } else {
+                    try {
+                        $path = $file->store('page-builder/maasai', 'public');
+                        $sections[$sectionIndex]['data']['pattern_strip_image'] = Storage::url($path);
+                    } catch (\Throwable $exception) {
+                        $hadWarning = true;
+                        Log::warning('Maasai pattern strip upload failed.', [
+                            'section' => $sectionIndex,
+                            'message' => $exception->getMessage(),
+                        ]);
+                    }
+                }
             }
 
-            $extension = strtolower((string) $file->getClientOriginalExtension());
-            if (!in_array($extension, $allowedExtensions, true)) {
-                $hadWarning = true;
-                continue;
-            }
+            $ctaImageFile = $sectionPayload['data']['cta']['image_file'] ?? null;
+            if ($ctaImageFile) {
+                $extension = strtolower((string) $ctaImageFile->getClientOriginalExtension());
+                if (!in_array($extension, $allowedExtensions, true)) {
+                    $hadWarning = true;
+                    continue;
+                }
 
-            try {
-                $path = $file->store('page-builder/maasai', 'public');
-                $sections[$sectionIndex]['data']['pattern_strip_image'] = Storage::url($path);
-            } catch (\Throwable $exception) {
-                $hadWarning = true;
-                Log::warning('Maasai pattern strip upload failed.', [
-                    'section' => $sectionIndex,
-                    'message' => $exception->getMessage(),
-                ]);
+                try {
+                    $path = $ctaImageFile->store('page-builder/maasai', 'public');
+                    $sections[$sectionIndex]['data']['cta']['image'] = Storage::url($path);
+                } catch (\Throwable $exception) {
+                    $hadWarning = true;
+                    Log::warning('Maasai CTA image upload failed.', [
+                        'section' => $sectionIndex,
+                        'message' => $exception->getMessage(),
+                    ]);
+                }
             }
         }
 
@@ -453,6 +473,9 @@ class PageBuilderController extends Controller
 
             if (array_key_exists('pattern_strip_image_file', $section['data'] ?? [])) {
                 unset($sections[$sectionIndex]['data']['pattern_strip_image_file']);
+            }
+            if (array_key_exists('image_file', $section['data']['cta'] ?? [])) {
+                unset($sections[$sectionIndex]['data']['cta']['image_file']);
             }
         }
 

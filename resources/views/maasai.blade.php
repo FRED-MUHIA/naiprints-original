@@ -35,6 +35,8 @@
                         ->filter(fn ($step) => is_array($step) && (trim((string) ($step['title'] ?? '')) !== '' || trim((string) ($step['body'] ?? '')) !== ''))
                         ->values();
                     $cta = $data['cta'] ?? ($defaults['cta'] ?? []);
+                    $ctaImage = trim((string) ($cta['image'] ?? ''));
+                    $ctaImageAlt = trim((string) ($cta['image_alt'] ?? 'Custom Maasai-inspired order preview'));
                     $patternStripImage = trim((string) ($data['pattern_strip_image'] ?? ($defaults['pattern_strip_image'] ?? '')));
                     $realProducts = $maasaiProducts ?? collect();
                     $displayProducts = $realProducts->isNotEmpty() ? $realProducts : collect($fallbackProducts);
@@ -213,22 +215,29 @@
 
                 <section class="maasai-cta">
                     <div class="mx-auto max-w-6xl px-4">
-                        <div class="cta-card maasai-cta-card">
-                            <div>
-                                <p class="cta-kicker">{{ $cta['kicker'] ?? '' }}</p>
-                                <h2 class="mt-4 text-3xl font-semibold text-white">{{ $cta['title'] ?? '' }}</h2>
-                                <p class="mt-3 text-sm text-white/80">
-                                    {{ $cta['body'] ?? '' }}
-                                </p>
+                        <div class="cta-card maasai-cta-card {{ $ctaImage !== '' ? 'maasai-cta-card-with-image' : '' }}">
+                            <div class="maasai-cta-copy">
+                                <div>
+                                    <p class="cta-kicker">{{ $cta['kicker'] ?? '' }}</p>
+                                    <h2 class="mt-4 text-3xl font-semibold text-white">{{ $cta['title'] ?? '' }}</h2>
+                                    <p class="mt-3 text-sm text-white/80">
+                                        {{ $cta['body'] ?? '' }}
+                                    </p>
+                                </div>
+                                <div class="mt-6 flex flex-wrap gap-3">
+                                    @if (!empty($cta['primary']['label']))
+                                        <a href="{{ $cta['primary']['url'] ?? route('contact.show') }}" class="btn-primary">{{ $cta['primary']['label'] }}</a>
+                                    @endif
+                                    @if (!empty($cta['secondary']['label']))
+                                        <a href="{{ $cta['secondary']['url'] ?? route('corporate') }}" class="btn-secondary">{{ $cta['secondary']['label'] }}</a>
+                                    @endif
+                                </div>
                             </div>
-                            <div class="mt-6 flex flex-wrap gap-3">
-                                @if (!empty($cta['primary']['label']))
-                                    <a href="{{ $cta['primary']['url'] ?? route('contact.show') }}" class="btn-primary">{{ $cta['primary']['label'] }}</a>
-                                @endif
-                                @if (!empty($cta['secondary']['label']))
-                                    <a href="{{ $cta['secondary']['url'] ?? route('corporate') }}" class="btn-secondary">{{ $cta['secondary']['label'] }}</a>
-                                @endif
-                            </div>
+                            @if ($ctaImage !== '')
+                                <div class="maasai-cta-image-wrap">
+                                    <img src="{{ $ctaImage }}" alt="{{ $ctaImageAlt }}" class="maasai-cta-image">
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </section>
