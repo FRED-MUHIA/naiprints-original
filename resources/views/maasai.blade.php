@@ -77,6 +77,7 @@
                         </div>
                     @endif
                 </section>
+                <div class="maasai-pattern-strip" aria-hidden="true"></div>
 
                 <section class="mx-auto max-w-6xl px-4 py-12">
                     <div class="maasai-section-head">
