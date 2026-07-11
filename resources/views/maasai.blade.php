@@ -103,6 +103,9 @@
                 </section>
 
                 <section id="maasai-products" class="mx-auto max-w-6xl px-4 pb-14">
+                    @php
+                        $usdToKesRate = max((float) config('services.currency.usd_to_kes_rate', 130), 0.01);
+                    @endphp
                     <div class="maasai-section-head">
                         <p class="section-kicker">{{ $productCollection['kicker'] ?? '' }}</p>
                         <h2 class="section-title">{{ $productCollection['title'] ?? '' }}</h2>
@@ -113,6 +116,7 @@
                                 $isModel = $product instanceof \App\Models\Product;
                                 $name = $isModel ? $product->name : ($product['name'] ?? 'Custom Maasai-inspired gift');
                                 $price = (float) ($isModel ? $product->price : ($product['price'] ?? 0));
+                                $usdPrice = $price / $usdToKesRate;
                                 $productId = $isModel ? (string) $product->getKey() : 'maasai-fallback-' . $loop->iteration;
                                 $detailUrl = $isModel ? route('products.show', ['product' => $product->slug ?: $product->getKey()]) : route('contact.show');
                                 $imageUrl = $isModel ? ($product->image_url ?? null) : ($product['image'] ?? null);
@@ -147,7 +151,10 @@
                                             <a href="{{ $detailUrl }}" class="text-sm font-semibold text-slate-700 hover:text-brand">
                                                 {{ $name }}
                                             </a>
-                                            <p class="text-lg font-semibold">KSh {{ number_format($price, 0) }}</p>
+                                            <div class="mt-1">
+                                                <p class="text-lg font-semibold text-slate-950">KSh {{ number_format($price, 0) }}</p>
+                                                <p class="text-xs font-semibold text-slate-500">USD {{ number_format($usdPrice, 2) }}</p>
+                                            </div>
                                         </div>
                                         <div class="flex items-center gap-2">
                                             <button class="add-button wishlist-button" type="button"

@@ -51,6 +51,10 @@ return [
         'key' => env('NAI_API_KEY'),
     ],
 
+    'currency' => [
+        'usd_to_kes_rate' => env('USD_TO_KES_RATE', 130),
+    ],
+
     'mpesa' => [
         'environment' => env('MPESA_ENVIRONMENT'),
         'consumer_key' => env('MPESA_CONSUMER_KEY'),
