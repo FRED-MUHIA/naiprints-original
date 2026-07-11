@@ -56,6 +56,14 @@ Artisan::command('admin:password {password? : The new admin password} {--usernam
 })->purpose('Set the configured admin username and password hash');
 
 Artisan::command('site:ensure-maasai-category', function () {
+    if (!\Illuminate\Support\Facades\Schema::hasTable('product_selection_images')) {
+        Artisan::call('migrate', [
+            '--path' => 'database/migrations/2026_07_11_000001_create_product_selection_images_table.php',
+            '--force' => true,
+        ]);
+        $this->line(trim(Artisan::output()));
+    }
+
     $category = \App\Models\Category::updateOrCreate(
         ['slug' => 'maasai'],
         [
@@ -67,9 +75,10 @@ Artisan::command('site:ensure-maasai-category', function () {
     );
 
     $this->info("Maasai category is ready. ID: {$category->id}");
+    $this->info('Maasai selection images table is ready.');
 
     return Command::SUCCESS;
-})->purpose('Create or update the Maasai product category');
+})->purpose('Create or update the Maasai product category and selection-image storage');
 
 if (!function_exists('setEnvValue')) {
     function setEnvValue(string $contents, string $key, string $value): string

@@ -23,7 +23,13 @@
     <h2 class="text-lg font-semibold">Selection images</h2>
     <p class="mt-2 text-sm text-slate-500">Upload visual choices customers can select on the product page before ordering.</p>
 
-    @if ($selectionImages->isNotEmpty())
+    @unless ($hasSelectionImagesTable)
+        <div class="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Selection image storage is not ready yet. Run <strong>php artisan site:ensure-maasai-category</strong> on the server, then upload again.
+        </div>
+    @endunless
+
+    @if ($hasSelectionImagesTable && $selectionImages->isNotEmpty())
         <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             @foreach ($selectionImages as $image)
                 <div class="rounded-2xl border border-slate-200 p-3">
@@ -47,7 +53,7 @@
         </div>
     @endif
 
-    <div class="mt-5 grid gap-3">
+    <div class="mt-5 grid gap-3 {{ $hasSelectionImagesTable ? '' : 'hidden' }}">
         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Add choices</p>
         @for ($selectionIndex = 0; $selectionIndex < 6; $selectionIndex++)
             @php

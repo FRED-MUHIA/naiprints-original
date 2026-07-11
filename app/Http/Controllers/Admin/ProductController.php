@@ -180,7 +180,7 @@ class ProductController extends Controller
             'selection_images.*.remove' => ['nullable'],
             'new_selection_images' => ['array'],
             'new_selection_images.*.label' => ['nullable', 'string', 'max:120'],
-            'new_selection_images.*.image' => ['nullable', 'image', 'max:4096'],
+            'new_selection_images.*.image' => ['nullable', 'image', 'max:8192'],
             'description' => ['nullable', 'string'],
             'meta_title' => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:255'],
