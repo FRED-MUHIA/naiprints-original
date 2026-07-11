@@ -8618,20 +8618,51 @@
     background: linear-gradient(90deg, rgba(11, 31, 77, 0.9) 0%, rgba(11, 31, 77, 0.56) 30%, rgba(11, 31, 77, 0.16) 46%, rgba(11, 31, 77, 0) 62%);
 }
 
-.maasai-slide-floating-image {
+.maasai-slide-floating {
     position: absolute;
     top: 50%;
     right: clamp(1rem, 5vw, 5.25rem);
     z-index: 3;
     width: clamp(7rem, 14vw, 12rem);
     aspect-ratio: 1 / 1;
-    border: 2px solid rgba(255, 255, 255, 0.75);
-    border-radius: 8px;
-    object-fit: cover;
-    box-shadow: 0 24px 60px -30px rgba(0, 0, 0, 0.8);
     pointer-events: none;
     transform: translateY(-50%);
     animation: maasai-overlay-bounce 2.8s ease-in-out infinite;
+}
+
+.maasai-slide-floating::before,
+.maasai-slide-floating::after {
+    content: "";
+    position: absolute;
+    inset: -1.15rem;
+    z-index: -1;
+    background:
+        radial-gradient(circle, rgba(255, 255, 255, 0.98) 0 0.11rem, transparent 0.13rem) 12% 28% / 1.4rem 1.4rem no-repeat,
+        radial-gradient(circle, rgba(255, 214, 102, 0.95) 0 0.13rem, transparent 0.16rem) 84% 16% / 1.6rem 1.6rem no-repeat,
+        radial-gradient(circle, rgba(255, 133, 179, 0.95) 0 0.11rem, transparent 0.14rem) 92% 72% / 1.5rem 1.5rem no-repeat,
+        radial-gradient(circle, rgba(255, 255, 255, 0.92) 0 0.1rem, transparent 0.13rem) 24% 88% / 1.3rem 1.3rem no-repeat;
+    opacity: 0;
+    transform: scale(0.72);
+    animation: maasai-glitter-throw 1.55s ease-out infinite;
+}
+
+.maasai-slide-floating::after {
+    inset: -1.85rem;
+    background:
+        radial-gradient(circle, rgba(255, 214, 102, 0.95) 0 0.1rem, transparent 0.13rem) 18% 12% / 1.25rem 1.25rem no-repeat,
+        radial-gradient(circle, rgba(255, 255, 255, 0.95) 0 0.12rem, transparent 0.15rem) 76% 28% / 1.4rem 1.4rem no-repeat,
+        radial-gradient(circle, rgba(255, 133, 179, 0.9) 0 0.1rem, transparent 0.13rem) 68% 92% / 1.25rem 1.25rem no-repeat,
+        radial-gradient(circle, rgba(255, 255, 255, 0.88) 0 0.09rem, transparent 0.12rem) 6% 64% / 1.15rem 1.15rem no-repeat;
+    animation-delay: 0.58s;
+}
+
+.maasai-slide-floating-image {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    border-radius: 8px;
+    object-fit: cover;
+    box-shadow: 0 24px 60px -30px rgba(0, 0, 0, 0.8);
 }
 
 .maasai-slide-copy {
@@ -8723,6 +8754,26 @@
 
     50% {
         transform: translateY(calc(-50% - 0.8rem));
+    }
+}
+
+@keyframes maasai-glitter-throw {
+    0% {
+        opacity: 0;
+        transform: scale(0.68) translate(0, 0) rotate(0deg);
+    }
+
+    20% {
+        opacity: 1;
+    }
+
+    70% {
+        opacity: 0.86;
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(1.2) translate(0.45rem, -0.85rem) rotate(16deg);
     }
 }
 
@@ -8876,12 +8927,17 @@
         background: linear-gradient(180deg, rgba(11, 31, 77, 0.18) 0%, rgba(11, 31, 77, 0.9) 62%, rgba(11, 31, 77, 0.98) 100%);
     }
 
-    .maasai-slide-floating-image {
+    .maasai-slide-floating {
         top: 1.5rem;
         right: 1rem;
         width: 5.5rem;
         transform: none;
         animation-name: maasai-overlay-bounce-mobile;
+    }
+
+    .maasai-slide-floating::before,
+    .maasai-slide-floating::after {
+        inset: -0.9rem;
     }
 
     .maasai-slide-copy h1 {

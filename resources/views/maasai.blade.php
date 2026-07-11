@@ -43,7 +43,9 @@
                                 <img src="{{ $slide['image'] ?? '' }}" alt="{{ $slide['alt'] ?? '' }}" class="maasai-slide-image">
                                 <div class="maasai-slide-overlay"></div>
                                 @if (!empty($overlayImage))
-                                    <img src="{{ $overlayImage }}" alt="{{ $overlayAlt }}" class="maasai-slide-floating-image">
+                                    <span class="maasai-slide-floating" aria-hidden="{{ empty($overlayAlt) ? 'true' : 'false' }}">
+                                        <img src="{{ $overlayImage }}" alt="{{ $overlayAlt }}" class="maasai-slide-floating-image">
+                                    </span>
                                 @endif
                                 <div class="maasai-slide-copy">
                                     @if (!empty($slide['kicker']))
