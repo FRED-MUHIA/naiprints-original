@@ -870,7 +870,15 @@ Route::get('/products/{product}', function (string $productKey) {
     $footer = GlobalSection::ensure('footer', PageDefaults::footer());
     $purchasePopups = GlobalSection::ensure('purchase_popups', PageDefaults::purchasePopups());
     $purchasePopupProducts = resolvePurchasePopupProducts($purchasePopups->content ?? []);
-    $product->load(['category', 'categories', 'brand', 'alternateImages', 'galleryImages', 'selectionImages', 'attributes', 'sizes', 'tags']);
+    $product->load(['category', 'categories', 'brand', 'alternateImages', 'galleryImages', 'attributes', 'sizes', 'tags']);
+    $productCategoryIdentity = $product->categories
+        ->push($product->category)
+        ->filter()
+        ->map(fn ($category) => strtolower(trim(($category->slug ?? '') . ' ' . ($category->name ?? ''))))
+        ->join(' ');
+    if (str_contains($productCategoryIdentity, 'maasai') && Schema::hasTable('product_selection_images')) {
+        $product->load('selectionImages');
+    }
     $relatedCategoryIds = $product->categories
         ->pluck('id')
         ->map(fn ($id) => (int) $id)

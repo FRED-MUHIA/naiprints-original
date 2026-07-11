@@ -1,5 +1,6 @@
 @php
-    $selectionImages = isset($product)
+    $hasSelectionImagesTable = \Illuminate\Support\Facades\Schema::hasTable('product_selection_images');
+    $selectionImages = isset($product) && $hasSelectionImagesTable && $product->relationLoaded('selectionImages')
         ? $product->selectionImages->values()
         : collect();
     $selectionCategoryIds = collect($selectedCategoryIds ?? $oldCategoryIds ?? [])

@@ -100,7 +100,7 @@
                     ->map(fn ($category) => strtolower(trim(($category->slug ?? '') . ' ' . ($category->name ?? ''))))
                     ->join(' ');
                 $isMaasaiProduct = str_contains($categoryIdentity, 'maasai');
-                $selectionImages = $isMaasaiProduct ? $product->selectionImages->values() : collect();
+                $selectionImages = $isMaasaiProduct && $product->relationLoaded('selectionImages') ? $product->selectionImages->values() : collect();
                 $stockLabel = $product->stock ? 'In stock' : 'Made to order';
                 $soldCount = rand(5, 30);
                 $viewerCount = rand(12, 45);

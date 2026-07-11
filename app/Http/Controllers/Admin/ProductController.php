@@ -12,6 +12,7 @@ use App\Models\ProductSelectionImage;
 use App\Models\Size;
 use App\Models\Tag;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -80,7 +81,10 @@ class ProductController extends Controller
      */
     public function edit(Product $product)
     {
-        $product->load(['tags', 'attributes', 'sizes', 'alternateImages', 'galleryImages', 'selectionImages', 'categories']);
+        $product->load(['tags', 'attributes', 'sizes', 'alternateImages', 'galleryImages', 'categories']);
+        if (Schema::hasTable('product_selection_images')) {
+            $product->load('selectionImages');
+        }
         $brands = Brand::orderBy('name')->get();
         $categories = Category::orderBy('name')->get();
         $tags = Tag::orderBy('name')->get();
@@ -140,8 +144,10 @@ class ProductController extends Controller
         foreach ($product->images as $image) {
             Storage::disk('public')->delete($image->image_path);
         }
-        foreach ($product->selectionImages as $image) {
-            Storage::disk('public')->delete($image->image_path);
+        if (Schema::hasTable('product_selection_images')) {
+            foreach ($product->selectionImages as $image) {
+                Storage::disk('public')->delete($image->image_path);
+            }
         }
         $product->delete();
 
@@ -390,6 +396,10 @@ class ProductController extends Controller
 
     private function syncSelectionImages(Product $product, Request $request): void
     {
+        if (!Schema::hasTable('product_selection_images')) {
+            return;
+        }
+
         foreach ($request->input('selection_images', []) as $imageId => $payload) {
             $image = ProductSelectionImage::where('product_id', $product->id)
                 ->whereKey($imageId)
