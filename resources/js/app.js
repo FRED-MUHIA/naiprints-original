@@ -661,6 +661,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const getCartSubtotal = (items) =>
         items.reduce((total, item) => total + (Number(item.price) || 0) * (Number(item.qty) || 0), 0);
 
+    const readFileAsDataUrl = (file) =>
+        new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.addEventListener('load', () => resolve(String(reader.result || '')));
+            reader.addEventListener('error', () => reject(reader.error || new Error('Unable to read file.')));
+            reader.readAsDataURL(file);
+        });
+
     let renderCartPopup = null;
     let renderCheckout = null;
     let cartToastTimer = null;
@@ -707,7 +715,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('[data-add-to-cart]').forEach((button) => {
         button.dataset.cartBound = '1';
-        button.addEventListener('click', (event) => {
+        button.addEventListener('click', async (event) => {
             event.preventDefault();
             event.stopPropagation();
 
@@ -723,14 +731,42 @@ document.addEventListener('DOMContentLoaded', () => {
             const selectedSize = panel?.dataset.selectedSize || '';
             const selectedSelection = panel?.dataset.selectedSelection || '';
             const selectedSelectionImage = panel?.dataset.selectedSelectionImage || '';
+            const customNote = (panel?.querySelector('[data-maasai-custom-note]')?.value || '').trim();
+            const customFile = panel?.querySelector('[data-maasai-custom-image]')?.files?.[0] || null;
+            const customImageStatus = panel?.querySelector('[data-maasai-custom-image-status]');
+            let customImageData = '';
+            let customImageName = '';
+            if (customFile) {
+                if (!customFile.type.startsWith('image/') || customFile.size > 1572864) {
+                    if (customImageStatus) {
+                        customImageStatus.textContent = 'Please upload an image file up to 1.5MB.';
+                        customImageStatus.classList.add('is-error');
+                    }
+                    return;
+                }
+                try {
+                    customImageData = await readFileAsDataUrl(customFile);
+                    customImageName = customFile.name || 'customer-upload';
+                    if (customImageStatus) {
+                        customImageStatus.textContent = `${customImageName} ready for checkout.`;
+                        customImageStatus.classList.remove('is-error');
+                    }
+                } catch (error) {
+                    if (customImageStatus) {
+                        customImageStatus.textContent = 'We could not read that image. Please choose another one.';
+                        customImageStatus.classList.add('is-error');
+                    }
+                    return;
+                }
+            }
             const qtyInput = panel?.querySelector('[data-qty-input]');
             if (qtyInput) {
                 const parsed = Number.parseInt(qtyInput.value || '1', 10);
                 quantity = Number.isNaN(parsed) || parsed < 1 ? 1 : parsed;
             }
             const variantId =
-                selectedColor || selectedSize || selectedSelection
-                    ? `${productId}::${selectedSelection}::${selectedColor}::${selectedSize}`
+                selectedColor || selectedSize || selectedSelection || customNote || customImageData
+                    ? `${productId}::${selectedSelection}::${selectedColor}::${selectedSize}::${customNote || ''}::${customImageData ? Date.now() : ''}`
                     : productId;
             addToCart({
                 id: variantId,
@@ -741,6 +777,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 url: productUrl || '',
                 selection: selectedSelection,
                 selectionImage: selectedSelectionImage,
+                customNote,
+                customImageData,
+                customImageName,
                 color: selectedColor,
                 size: selectedSize,
                 qty: quantity,
@@ -770,6 +809,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const selectedColor = panel?.dataset.selectedColor || '';
         const selectedSize = panel?.dataset.selectedSize || '';
         const selectedSelection = panel?.dataset.selectedSelection || '';
+        const customNote = (panel?.querySelector('[data-maasai-custom-note]')?.value || '').trim();
+        const customFile = panel?.querySelector('[data-maasai-custom-image]')?.files?.[0] || null;
         const total = price * quantity;
         const lines = [
             'Hello Nai Prints, I would like to place a WhatsApp order.',
@@ -781,6 +822,8 @@ document.addEventListener('DOMContentLoaded', () => {
             selectedSelection ? `Selection: ${selectedSelection}` : '',
             selectedColor ? `Color: ${selectedColor}` : '',
             selectedSize ? `Size: ${selectedSize}` : '',
+            customNote ? `Note: ${customNote}` : '',
+            customFile ? 'Customer image: I selected an upload and can send it here.' : '',
             `Unit price: ${formatMoney(price)}`,
             `Estimated total: ${formatMoney(total)}`,
             button.dataset.productUrl ? `Product link: ${button.dataset.productUrl}` : '',
@@ -1477,7 +1520,13 @@ document.addEventListener('DOMContentLoaded', () => {
         name.textContent = item.name || 'Product';
         name.href = item.url || '#';
 
-        const variantParts = [item.selection, item.color, item.size].filter(Boolean);
+        const variantParts = [
+            item.selection,
+            item.color,
+            item.size,
+            item.customNote ? `Note: ${item.customNote}` : '',
+            item.customImageData || item.customImage ? 'Customer image uploaded' : '',
+        ].filter(Boolean);
         const variant = document.createElement('p');
         variant.className = 'cart-item-variant';
         variant.textContent = variantParts.length > 0 ? variantParts.join(' / ') : 'Standard';
@@ -1620,6 +1669,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         url: item.url,
                         selection: item.selection,
                         selectionImage: item.selectionImage,
+                        customNote: item.customNote,
+                        customImageData: item.customImageData,
+                        customImageName: item.customImageName,
                         color: item.color,
                         size: item.size,
                     }))

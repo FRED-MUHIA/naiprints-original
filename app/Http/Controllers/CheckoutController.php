@@ -17,6 +17,7 @@ use App\Support\PageDefaults;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class CheckoutController extends Controller
@@ -48,6 +49,7 @@ class CheckoutController extends Controller
                 $price = (float) ($item['price'] ?? 0);
                 $productId = $item['baseId'] ?? $item['product_id'] ?? $item['id'] ?? null;
                 $productId = is_numeric($productId) ? (int) $productId : null;
+                $customImagePath = $this->storeCustomizationImage((string) ($item['customImageData'] ?? ''));
 
                 return [
                     'id' => (string) ($item['id'] ?? ''),
@@ -59,6 +61,8 @@ class CheckoutController extends Controller
                     'url' => trim((string) ($item['url'] ?? '')),
                     'selection' => trim((string) ($item['selection'] ?? '')),
                     'selection_image' => trim((string) ($item['selectionImage'] ?? $item['selection_image'] ?? '')),
+                    'custom_note' => Str::limit(trim((string) ($item['customNote'] ?? $item['custom_note'] ?? '')), 500, ''),
+                    'custom_image' => $customImagePath ? Storage::url($customImagePath) : '',
                     'color' => trim((string) ($item['color'] ?? '')),
                     'size' => trim((string) ($item['size'] ?? '')),
                 ];
@@ -108,6 +112,12 @@ class CheckoutController extends Controller
                 $descriptionParts = [];
                 if (!empty($item['selection'])) {
                     $descriptionParts[] = 'Selection: ' . $item['selection'];
+                }
+                if (!empty($item['custom_note'])) {
+                    $descriptionParts[] = 'Customer note: ' . $item['custom_note'];
+                }
+                if (!empty($item['custom_image'])) {
+                    $descriptionParts[] = 'Customer image: ' . $item['custom_image'];
                 }
                 if (!empty($item['color'])) {
                     $descriptionParts[] = 'Color: ' . $item['color'];
@@ -333,6 +343,8 @@ class CheckoutController extends Controller
                         'qty' => (float) ($item['qty'] ?? 0),
                         'selection' => $item['selection'] ?? null,
                         'selection_image' => $item['selection_image'] ?? null,
+                        'custom_note' => $item['custom_note'] ?? null,
+                        'custom_image' => $item['custom_image'] ?? null,
                         'color' => $item['color'] ?? null,
                         'size' => $item['size'] ?? null,
                     ];
@@ -343,5 +355,37 @@ class CheckoutController extends Controller
             'total' => round((float) $invoice->total, 2),
             'placed_at' => now()->toIso8601String(),
         ];
+    }
+
+    private function storeCustomizationImage(string $dataUrl): ?string
+    {
+        if ($dataUrl === '' || strlen($dataUrl) > 2200000) {
+            return null;
+        }
+
+        if (!preg_match('/^data:image\/(png|jpe?g|webp);base64,([A-Za-z0-9+\/=]+)$/', $dataUrl, $matches)) {
+            return null;
+        }
+
+        $extension = match (strtolower($matches[1])) {
+            'jpeg', 'jpg' => 'jpg',
+            'png' => 'png',
+            'webp' => 'webp',
+            default => null,
+        };
+
+        if (!$extension) {
+            return null;
+        }
+
+        $binary = base64_decode($matches[2], true);
+        if ($binary === false || strlen($binary) > 1572864) {
+            return null;
+        }
+
+        $path = 'orders/customizations/' . Str::uuid() . '.' . $extension;
+        Storage::disk('public')->put($path, $binary);
+
+        return $path;
     }
 }

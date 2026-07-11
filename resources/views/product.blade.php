@@ -288,6 +288,19 @@
                             @endif
 
                             <div class="purchase" data-product-panel>
+                                @if ($isMaasaiProduct)
+                                    <div class="maasai-order-customization">
+                                        <div>
+                                            <label class="maasai-custom-label" for="maasai-custom-image">Upload your reference image</label>
+                                            <input id="maasai-custom-image" class="maasai-custom-input" type="file" accept="image/*" data-maasai-custom-image>
+                                            <p class="maasai-custom-help" data-maasai-custom-image-status>JPG, PNG, or WEBP up to 1.5MB.</p>
+                                        </div>
+                                        <div>
+                                            <label class="maasai-custom-label" for="maasai-custom-note">Add a note</label>
+                                            <textarea id="maasai-custom-note" class="maasai-custom-textarea" rows="3" placeholder="Names, colors, placement, or special instructions" data-maasai-custom-note></textarea>
+                                        </div>
+                                    </div>
+                                @endif
                                 <div class="quantity" data-qty-control>
                                     <button type="button" class="qty-btn" data-qty-decrease aria-label="Decrease quantity">-</button>
                                     <input class="qty-input" type="text" value="1" data-qty-input readonly>

@@ -43,13 +43,24 @@
         @foreach ($items as $item)
             @php
                 $lineTotal = (float) ($item['price'] ?? 0) * (float) ($item['qty'] ?? 0);
-                $variant = collect([$item['selection'] ?? '', $item['color'] ?? '', $item['size'] ?? ''])->filter()->implode(' / ');
+                $variant = collect([
+                    $item['selection'] ?? '',
+                    $item['color'] ?? '',
+                    $item['size'] ?? '',
+                    !empty($item['custom_note'] ?? '') ? 'Note: ' . $item['custom_note'] : '',
+                    !empty($item['custom_image'] ?? '') ? 'Customer image uploaded' : '',
+                ])->filter()->implode(' / ');
             @endphp
             <tr>
                 <td style="padding:12px 14px;font-size:13px;color:#1e293b;border-bottom:1px solid #eef2f7;">
                     <div style="font-weight:700;">{{ $item['name'] ?? 'Product' }}</div>
                     @if ($variant)
                         <div style="font-size:12px;color:#64748b;margin-top:2px;">{{ $variant }}</div>
+                    @endif
+                    @if (!empty($item['custom_image'] ?? ''))
+                        <div style="font-size:12px;color:#64748b;margin-top:2px;">
+                            Image: <a href="{{ $item['custom_image'] }}" style="color:#e11d2e;">View upload</a>
+                        </div>
                     @endif
                 </td>
                 <td align="center" style="padding:12px 14px;font-size:13px;color:#1e293b;border-bottom:1px solid #eef2f7;">{{ $item['qty'] ?? 0 }}</td>

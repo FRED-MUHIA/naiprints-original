@@ -2705,6 +2705,36 @@
         @apply flex flex-wrap items-center gap-4;
     }
 
+    .maasai-order-customization {
+        @apply grid w-full gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-2;
+    }
+
+    .maasai-custom-label {
+        @apply text-xs font-semibold uppercase tracking-[0.2em] text-slate-500;
+    }
+
+    .maasai-custom-input,
+    .maasai-custom-textarea {
+        @apply mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none;
+    }
+
+    .maasai-custom-input:focus,
+    .maasai-custom-textarea:focus {
+        border-color: var(--brand-red);
+    }
+
+    .maasai-custom-textarea {
+        resize: vertical;
+    }
+
+    .maasai-custom-help {
+        @apply mt-2 text-xs text-slate-500;
+    }
+
+    .maasai-custom-help.is-error {
+        color: var(--brand-red);
+    }
+
     .quantity {
         @apply flex h-12 shrink-0 items-center justify-between rounded-full bg-slate-100 px-2 py-2;
         flex-basis: 140px;
