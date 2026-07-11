@@ -506,6 +506,14 @@
                                             ['name' => '', 'price' => '', 'image' => ''],
                                         ];
                                     }
+                                    $testimonials = $data['testimonials'] ?? ($maasaiDefaults['testimonials'] ?? []);
+                                    $testimonialItems = $testimonials['items'] ?? [];
+                                    if (!is_array($testimonialItems)) {
+                                        $testimonialItems = [];
+                                    }
+                                    while (count($testimonialItems) < 6) {
+                                        $testimonialItems[] = ['name' => '', 'date' => '', 'rating' => 5, 'body' => '', 'avatar' => '', 'source' => 'Google'];
+                                    }
                                     $cta = $data['cta'] ?? ($maasaiDefaults['cta'] ?? []);
                                 @endphp
                                 <div class="rounded-xl border border-slate-200 p-4">
@@ -607,6 +615,41 @@
                                             </div>
                                         @endforeach
                                     </div>
+                                </div>
+
+                                <div class="rounded-xl border border-slate-200 p-4">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Testimonials</p>
+                                    <p class="mt-1 text-xs text-slate-500">Reviews shown on the Maasai page before the footer. Empty review rows are ignored.</p>
+                                    <input type="hidden" name="sections[{{ $index }}][data][_testimonials_managed]" value="1">
+                                    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                                        <input type="text" name="sections[{{ $index }}][data][testimonials][kicker]" value="{{ $testimonials['kicker'] ?? '' }}" placeholder="Kicker" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                        <input type="text" name="sections[{{ $index }}][data][testimonials][title]" value="{{ $testimonials['title'] ?? '' }}" placeholder="Title" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                    </div>
+                                    <div class="mt-4 grid gap-4"
+                                         data-maasai-testimonial-list
+                                         data-maasai-section="{{ $index }}"
+                                         data-maasai-testimonial-next-index="{{ count($testimonialItems) }}">
+                                        @foreach ($testimonialItems as $testimonialIndex => $testimonial)
+                                            <div class="rounded-xl border border-slate-200 p-4">
+                                                <p class="mb-3 text-sm font-semibold text-slate-700">Review {{ $testimonialIndex + 1 }}</p>
+                                                <div class="grid gap-3 sm:grid-cols-[1fr_140px_120px]">
+                                                    <input type="text" name="sections[{{ $index }}][data][testimonials][items][{{ $testimonialIndex }}][name]" value="{{ $testimonial['name'] ?? '' }}" placeholder="Customer name" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                    <input type="text" name="sections[{{ $index }}][data][testimonials][items][{{ $testimonialIndex }}][date]" value="{{ $testimonial['date'] ?? '' }}" placeholder="Date" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                    <input type="number" name="sections[{{ $index }}][data][testimonials][items][{{ $testimonialIndex }}][rating]" value="{{ $testimonial['rating'] ?? 5 }}" min="1" max="5" step="1" placeholder="Rating" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                </div>
+                                                <textarea name="sections[{{ $index }}][data][testimonials][items][{{ $testimonialIndex }}][body]" rows="2" placeholder="Review text" class="mt-3 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">{{ $testimonial['body'] ?? '' }}</textarea>
+                                                <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                                                    <input type="text" name="sections[{{ $index }}][data][testimonials][items][{{ $testimonialIndex }}][avatar]" value="{{ $testimonial['avatar'] ?? '' }}" placeholder="Avatar image URL" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                    <input type="text" name="sections[{{ $index }}][data][testimonials][items][{{ $testimonialIndex }}][source]" value="{{ $testimonial['source'] ?? 'Google' }}" placeholder="Source e.g. Google" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                    <button type="button"
+                                            class="mt-4 admin-btn-outline text-xs uppercase tracking-[0.3em]"
+                                            data-maasai-testimonial-add>
+                                        Add review
+                                    </button>
                                 </div>
 
                                 <div class="rounded-xl border border-slate-200 p-4">
@@ -1855,6 +1898,66 @@
                 `;
                 list.appendChild(wrapper);
                 list.dataset.templateNextIndex = String(nextIndex + 1);
+            });
+        });
+
+        document.querySelectorAll('[data-maasai-testimonial-add]').forEach((button) => {
+            const container = button.closest('.rounded-xl') ?? button.parentElement;
+            const list = container ? container.querySelector('[data-maasai-testimonial-list]') : null;
+            if (!list) {
+                return;
+            }
+
+            button.addEventListener('click', () => {
+                const sectionIndex = list.dataset.maasaiSection;
+                if (sectionIndex === undefined) {
+                    return;
+                }
+                let nextIndex = Number.parseInt(list.dataset.maasaiTestimonialNextIndex || '0', 10);
+                if (Number.isNaN(nextIndex)) {
+                    nextIndex = list.children.length;
+                }
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'rounded-xl border border-slate-200 p-4';
+                wrapper.innerHTML = `
+                    <p class="mb-3 text-sm font-semibold text-slate-700">Review ${nextIndex + 1}</p>
+                    <div class="grid gap-3 sm:grid-cols-[1fr_140px_120px]">
+                        <input type="text"
+                               name="sections[${sectionIndex}][data][testimonials][items][${nextIndex}][name]"
+                               placeholder="Customer name"
+                               class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                        <input type="text"
+                               name="sections[${sectionIndex}][data][testimonials][items][${nextIndex}][date]"
+                               placeholder="Date"
+                               class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                        <input type="number"
+                               name="sections[${sectionIndex}][data][testimonials][items][${nextIndex}][rating]"
+                               value="5"
+                               min="1"
+                               max="5"
+                               step="1"
+                               placeholder="Rating"
+                               class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                    </div>
+                    <textarea name="sections[${sectionIndex}][data][testimonials][items][${nextIndex}][body]"
+                              rows="2"
+                              placeholder="Review text"
+                              class="mt-3 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"></textarea>
+                    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                        <input type="text"
+                               name="sections[${sectionIndex}][data][testimonials][items][${nextIndex}][avatar]"
+                               placeholder="Avatar image URL"
+                               class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                        <input type="text"
+                               name="sections[${sectionIndex}][data][testimonials][items][${nextIndex}][source]"
+                               value="Google"
+                               placeholder="Source e.g. Google"
+                               class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                    </div>
+                `;
+                list.appendChild(wrapper);
+                list.dataset.maasaiTestimonialNextIndex = String(nextIndex + 1);
             });
         });
 

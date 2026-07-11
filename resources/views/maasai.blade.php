@@ -26,6 +26,10 @@
                     $howItWorksSteps = $howItWorks['steps'] ?? [];
                     $productCollection = $data['product_collection'] ?? ($defaults['product_collection'] ?? []);
                     $fallbackProducts = $data['products'] ?? ($defaults['products'] ?? []);
+                    $testimonials = $data['testimonials'] ?? ($defaults['testimonials'] ?? []);
+                    $testimonialItems = collect($testimonials['items'] ?? [])
+                        ->filter(fn ($testimonial) => is_array($testimonial) && trim((string) ($testimonial['name'] ?? '')) !== '' && trim((string) ($testimonial['body'] ?? '')) !== '')
+                        ->values();
                     $cta = $data['cta'] ?? ($defaults['cta'] ?? []);
                     $realProducts = $maasaiProducts ?? collect();
                     $displayProducts = $realProducts->isNotEmpty() ? $realProducts : collect($fallbackProducts);
@@ -54,11 +58,6 @@
                                     <h1>{{ $slide['title'] ?? '' }}</h1>
                                     @if (!empty($slide['body']))
                                         <p class="maasai-slide-body">{{ $slide['body'] }}</p>
-                                    @endif
-                                    @if (!empty($slide['primary']['label']))
-                                        <a href="{{ $slide['primary']['url'] ?? '/shop' }}" class="btn-primary">
-                                            {{ $slide['primary']['label'] }}
-                                        </a>
                                     @endif
                                 </div>
                             </article>
@@ -151,22 +150,22 @@
                                         @endif
                                     </a>
                                 </div>
-                                <div class="mt-4 space-y-3">
-                                    <div class="flex items-center justify-between text-xs text-slate-500">
+                                <div class="maasai-product-content mt-4 space-y-3">
+                                    <div class="maasai-product-meta flex items-center justify-between text-xs text-slate-500">
                                         <span>Nai Prints</span>
                                         <span>Maasai-inspired</span>
                                     </div>
-                                    <div class="flex items-start justify-between gap-3">
-                                        <div>
-                                            <a href="{{ $detailUrl }}" class="text-sm font-semibold text-slate-700 hover:text-brand">
+                                    <div class="maasai-product-info flex items-start justify-between gap-3">
+                                        <div class="maasai-product-copy">
+                                            <a href="{{ $detailUrl }}" class="maasai-product-name text-sm font-semibold text-slate-700 hover:text-brand">
                                                 {{ $name }}
                                             </a>
                                             <div class="mt-1">
-                                                <p class="text-lg font-semibold text-slate-950">KSh {{ number_format($price, 0) }}</p>
-                                                <p class="text-xs font-semibold text-slate-500">USD {{ number_format($usdPrice, 2) }}</p>
+                                                <p class="maasai-product-price text-lg font-semibold text-slate-950">KSh {{ number_format($price, 0) }}</p>
+                                                <p class="maasai-product-usd text-xs font-semibold text-slate-500">USD {{ number_format($usdPrice, 2) }}</p>
                                             </div>
                                         </div>
-                                        <div class="flex items-center gap-2">
+                                        <div class="maasai-product-actions flex items-center gap-2">
                                             <button class="add-button wishlist-button" type="button"
                                                     aria-label="Add to wishlist"
                                                     data-wishlist-toggle
@@ -223,6 +222,73 @@
                         </div>
                     </div>
                 </section>
+
+                @if ($testimonialItems->isNotEmpty())
+                    <section class="maasai-testimonials" aria-labelledby="maasai-testimonials-title">
+                        <div class="mx-auto max-w-6xl px-4">
+                            <div class="maasai-testimonials-head">
+                                <div>
+                                    @if (!empty($testimonials['kicker']))
+                                        <p class="section-kicker">{{ $testimonials['kicker'] }}</p>
+                                    @endif
+                                    <h2 id="maasai-testimonials-title" class="section-title">{{ $testimonials['title'] ?? 'Customer reviews' }}</h2>
+                                </div>
+                            </div>
+                            <div class="maasai-testimonials-carousel" data-category-carousel>
+                                <button class="carousel-btn maasai-testimonial-arrow" type="button" aria-label="Previous testimonials" data-carousel-prev>
+                                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M12.78 15.78a.75.75 0 0 1-1.06 0l-5-5a.75.75 0 0 1 0-1.06l5-5a.75.75 0 0 1 1.06 1.06L8.31 10l4.47 4.47a.75.75 0 0 1 0 1.06Z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                                <div class="maasai-testimonials-track" data-carousel-track>
+                                    @foreach ($testimonialItems as $testimonial)
+                                        @php
+                                            $name = trim((string) ($testimonial['name'] ?? 'Customer'));
+                                            $initials = collect(explode(' ', $name))
+                                                ->filter()
+                                                ->take(2)
+                                                ->map(fn ($part) => strtoupper(substr($part, 0, 1)))
+                                                ->join('');
+                                            $rating = max(1, min(5, (int) ($testimonial['rating'] ?? 5)));
+                                            $source = trim((string) ($testimonial['source'] ?? ''));
+                                        @endphp
+                                        <article class="maasai-testimonial-card" data-carousel-item>
+                                            <div class="maasai-testimonial-top">
+                                                <div class="maasai-testimonial-avatar">
+                                                    @if (!empty($testimonial['avatar']))
+                                                        <img src="{{ $testimonial['avatar'] }}" alt="{{ $name }}">
+                                                    @else
+                                                        <span>{{ $initials ?: 'NP' }}</span>
+                                                    @endif
+                                                </div>
+                                                <div class="maasai-testimonial-person">
+                                                    <h3>{{ $name }}</h3>
+                                                    @if (!empty($testimonial['date']))
+                                                        <p>{{ $testimonial['date'] }}</p>
+                                                    @endif
+                                                </div>
+                                                @if ($source !== '')
+                                                    <span class="maasai-testimonial-source" aria-label="{{ $source }}">{{ strtoupper(substr($source, 0, 1)) }}</span>
+                                                @endif
+                                            </div>
+                                            <div class="maasai-testimonial-stars" aria-label="{{ $rating }} out of 5 stars">
+                                                @for ($star = 1; $star <= 5; $star++)
+                                                    <span class="{{ $star <= $rating ? '' : 'is-muted' }}" aria-hidden="true">&#9733;</span>
+                                                @endfor
+                                            </div>
+                                            <p class="maasai-testimonial-text">{{ $testimonial['body'] }}</p>
+                                        </article>
+                                    @endforeach
+                                </div>
+                                <button class="carousel-btn maasai-testimonial-arrow" type="button" aria-label="Next testimonials" data-carousel-next>
+                                    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M7.22 4.22a.75.75 0 0 1 1.06 0l5 5a.75.75 0 0 1 0 1.06l-5 5a.75.75 0 0 1-1.06-1.06L11.69 10 7.22 5.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+                @endif
             </main>
 
             @include('partials.site-footer', ['globalFooter' => $globalFooter ?? []])

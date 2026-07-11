@@ -80,6 +80,7 @@ class PageBuilderController extends Controller
             'sections.*.data.product_category_ids' => ['nullable', 'array'],
             'sections.*.data.product_category_ids.*' => ['integer', 'exists:categories,id'],
             'sections.*.data.product_limit' => ['nullable', 'integer', 'min:1', 'max:48'],
+            'sections.*.data.testimonials.items.*.rating' => ['nullable', 'integer', 'min:1', 'max:5'],
             'sections.*.data.gift_finder.product_category_id' => ['nullable', 'integer', 'exists:categories,id'],
             'add_section_type' => ['nullable', 'string', 'max:50'],
         ]);
@@ -304,7 +305,44 @@ class PageBuilderController extends Controller
                     ->all();
             }
 
+            $testimonialsManaged = is_array($inputData) && array_key_exists('_testimonials_managed', $inputData);
+            if ($testimonialsManaged) {
+                $testimonials = $sections[$sectionIndex]['data']['testimonials'] ?? [];
+                if (!is_array($testimonials)) {
+                    $testimonials = [];
+                }
+
+                $items = $testimonials['items'] ?? [];
+                if (!is_array($items)) {
+                    $items = [];
+                }
+
+                $testimonials['kicker'] = trim((string) ($testimonials['kicker'] ?? ''));
+                $testimonials['title'] = trim((string) ($testimonials['title'] ?? ''));
+                $testimonials['items'] = collect($items)
+                    ->filter(fn ($item) => is_array($item))
+                    ->map(function ($item) {
+                        $rating = $item['rating'] ?? 5;
+                        $rating = is_numeric($rating) ? (int) $rating : 5;
+
+                        return [
+                            'name' => trim((string) ($item['name'] ?? '')),
+                            'date' => trim((string) ($item['date'] ?? '')),
+                            'rating' => max(1, min(5, $rating)),
+                            'body' => trim((string) ($item['body'] ?? '')),
+                            'avatar' => trim((string) ($item['avatar'] ?? '')),
+                            'source' => trim((string) ($item['source'] ?? '')),
+                        ];
+                    })
+                    ->filter(fn ($item) => $item['name'] !== '' && $item['body'] !== '')
+                    ->values()
+                    ->all();
+
+                $sections[$sectionIndex]['data']['testimonials'] = $testimonials;
+            }
+
             unset($sections[$sectionIndex]['data']['_product_categories_managed']);
+            unset($sections[$sectionIndex]['data']['_testimonials_managed']);
         }
 
         return $sections;

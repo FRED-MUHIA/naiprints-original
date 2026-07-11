@@ -297,6 +297,36 @@ class PageDefaults
                             ['name' => 'Home Gift Throw and Mug Set', 'price' => 4250, 'image' => '/images/maasai/maasai-gifts.png'],
                             ['name' => 'Custom Polo with Shuka Detail', 'price' => 2850, 'image' => '/images/maasai/maasai-corporate.png'],
                         ],
+                        'testimonials' => [
+                            'kicker' => 'Customer Stories',
+                            'title' => 'What customers say about Nai Prints',
+                            'items' => [
+                                [
+                                    'name' => 'Jeruto Kosgey',
+                                    'date' => 'Dec, 2025',
+                                    'rating' => 5,
+                                    'body' => 'Excellent service as always!',
+                                    'avatar' => '',
+                                    'source' => 'Google',
+                                ],
+                                [
+                                    'name' => 'Clarence Muchemi',
+                                    'date' => 'Dec, 2025',
+                                    'rating' => 5,
+                                    'body' => 'Great and quality gift hampers. The service is top notch and reliable.',
+                                    'avatar' => '',
+                                    'source' => 'Google',
+                                ],
+                                [
+                                    'name' => 'Darryl Tindi',
+                                    'date' => 'Dec, 2025',
+                                    'rating' => 5,
+                                    'body' => "Beautiful blanket for my daughter's baby dedication. Better than expected.",
+                                    'avatar' => '',
+                                    'source' => 'Google',
+                                ],
+                            ],
+                        ],
                         'cta' => [
                             'kicker' => 'Custom Orders',
                             'title' => 'Need names, logos, or a bulk set?',

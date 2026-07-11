@@ -369,6 +369,14 @@
         background-color: rgba(226, 232, 240, 0.7);
     }
 
+    .mobile-menu-link.nav-link-maasai,
+    .mobile-menu-link.nav-link-maasai:hover {
+        background: linear-gradient(90deg, #d71920 0%, #111827 42%, #0b4ea2 72%, #d71920 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
     .mobile-bottom-nav {
         position: fixed;
         left: 0;
@@ -2682,6 +2690,10 @@
     .new-price {
         @apply text-2xl font-semibold;
         color: var(--brand-red);
+    }
+
+    .product-usd-price {
+        @apply text-sm font-semibold text-slate-500;
     }
 
     .discount-pill {
@@ -8968,6 +8980,128 @@
         linear-gradient(90deg, #e11d2e, #ff85b3);
 }
 
+.maasai-testimonials {
+    background: #ffffff;
+    padding: 0 0 3.5rem;
+}
+
+.maasai-testimonials-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.maasai-testimonials-carousel {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.maasai-testimonials-track {
+    display: flex;
+    width: 100%;
+    gap: 1.5rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    padding: 0.25rem 0 0.75rem;
+    cursor: grab;
+    scrollbar-width: none;
+}
+
+.maasai-testimonials-track.is-dragging {
+    cursor: grabbing;
+    scroll-snap-type: none;
+}
+
+.maasai-testimonials-track::-webkit-scrollbar {
+    display: none;
+}
+
+.maasai-testimonial-card {
+    flex: 0 0 min(360px, calc((100% - 3rem) / 3));
+    min-width: 280px;
+    scroll-snap-align: start;
+    padding: 1rem;
+    color: #28324a;
+}
+
+.maasai-testimonial-top {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.maasai-testimonial-avatar {
+    display: grid;
+    place-items: center;
+    width: 2.45rem;
+    height: 2.45rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #0b1f4d, #e11d2e);
+    color: #ffffff;
+    font-size: 0.78rem;
+    font-weight: 900;
+}
+
+.maasai-testimonial-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.maasai-testimonial-person h3 {
+    overflow: hidden;
+    color: #1f2a44;
+    font-size: 0.95rem;
+    font-weight: 900;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.maasai-testimonial-person p {
+    margin-top: 0.15rem;
+    color: #8b94a8;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.maasai-testimonial-source {
+    background: linear-gradient(90deg, #4285f4 0 25%, #db4437 25% 50%, #f4b400 50% 75%, #0f9d58 75%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-size: 1.25rem;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.maasai-testimonial-stars {
+    display: flex;
+    gap: 0.1rem;
+    margin-top: 0.8rem;
+    color: #f6c700;
+    font-size: 1.05rem;
+    line-height: 1;
+}
+
+.maasai-testimonial-stars .is-muted {
+    color: #d6dce8;
+}
+
+.maasai-testimonial-text {
+    margin-top: 0.7rem;
+    color: #3d465e;
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
 @media (max-width: 1024px) {
     .maasai-steps,
     .maasai-category-grid,
@@ -8987,8 +9121,12 @@
         min-height: 390px;
     }
 
+    .maasai-slide-image {
+        object-position: center top;
+    }
+
     .maasai-slide-overlay {
-        background: linear-gradient(180deg, rgba(11, 31, 77, 0.18) 0%, rgba(11, 31, 77, 0.9) 62%, rgba(11, 31, 77, 0.98) 100%);
+        background: linear-gradient(180deg, rgba(11, 31, 77, 0.04) 0%, rgba(11, 31, 77, 0.14) 46%, rgba(11, 31, 77, 0.72) 100%);
     }
 
     .maasai-slide-floating {
@@ -9013,19 +9151,90 @@
         font-size: 0.86rem;
     }
 
-    .maasai-slide-copy .btn-primary {
-        padding: 0.35rem 0.7rem;
-        font-size: 0.7rem;
+    .maasai-steps,
+    .maasai-category-grid {
+        grid-template-columns: 1fr;
     }
 
-    .maasai-steps,
-    .maasai-category-grid,
     .maasai-product-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+
+    .maasai-product-card {
+        padding: 0.55rem;
+        border-radius: 14px;
+    }
+
+    .maasai-product-card .shop-card-media {
+        border-radius: 12px;
+    }
+
+    .maasai-product-content {
+        margin-top: 0.65rem;
+    }
+
+    .maasai-product-meta {
+        gap: 0.35rem;
+        font-size: 0.64rem;
+        line-height: 1.2;
+    }
+
+    .maasai-product-info {
+        flex-direction: column;
+        gap: 0.55rem;
+    }
+
+    .maasai-product-copy {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .maasai-product-name {
+        display: -webkit-box;
+        overflow: hidden;
+        font-size: 0.78rem;
+        line-height: 1.25;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+
+    .maasai-product-price {
+        font-size: 0.92rem;
+        line-height: 1.2;
+    }
+
+    .maasai-product-usd {
+        font-size: 0.68rem;
+        line-height: 1.2;
+    }
+
+    .maasai-product-actions {
+        gap: 0.4rem;
+    }
+
+    .maasai-product-card .add-button {
+        width: 2rem;
+        height: 2rem;
+        flex: 0 0 2rem;
     }
 
     .maasai-step {
         min-height: auto;
+    }
+
+    .maasai-testimonials {
+        padding-bottom: 2.75rem;
+    }
+
+    .maasai-testimonials-track {
+        gap: 1rem;
+    }
+
+    .maasai-testimonial-card {
+        flex-basis: 82%;
+        min-width: 0;
+        padding: 0.85rem;
     }
 }
 

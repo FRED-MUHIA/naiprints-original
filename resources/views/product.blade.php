@@ -100,6 +100,8 @@
                     ->map(fn ($category) => strtolower(trim(($category->slug ?? '') . ' ' . ($category->name ?? ''))))
                     ->join(' ');
                 $isMaasaiProduct = str_contains($categoryIdentity, 'maasai');
+                $usdToKesRate = max((float) config('services.currency.usd_to_kes_rate', 130), 0.01);
+                $finalUsdPrice = $finalPrice / $usdToKesRate;
                 $selectionImages = $isMaasaiProduct && $product->relationLoaded('selectionImages') ? $product->selectionImages->values() : collect();
                 $stockLabel = $product->stock ? 'In stock' : 'Made to order';
                 $soldCount = rand(5, 30);
@@ -219,6 +221,9 @@
                                     <span class="old-price">KSh {{ number_format($basePrice, 2) }}</span>
                                 @endif
                                 <span class="new-price">KSh {{ number_format($finalPrice, 2) }}</span>
+                                @if ($isMaasaiProduct)
+                                    <span class="product-usd-price">USD {{ number_format($finalUsdPrice, 2) }}</span>
+                                @endif
                                 @if ($hasDiscount)
                                     <span class="discount-pill">{{ $discountPercent }}% OFF</span>
                                 @endif
@@ -232,7 +237,7 @@
                                 </div>
                             </div>
 
-                            @if ($selectionImages->isNotEmpty() || $colorOptions->isNotEmpty() || $sizeOptions->isNotEmpty())
+                            @if ($selectionImages->isNotEmpty() || $colorOptions->isNotEmpty() || (!$isMaasaiProduct && $sizeOptions->isNotEmpty()))
                                 <div class="product-options">
                                     @if ($selectionImages->isNotEmpty())
                                         <div class="product-option">
@@ -271,7 +276,7 @@
                                             </div>
                                         </div>
                                     @endif
-                                    @if ($sizeOptions->isNotEmpty())
+                                    @if (!$isMaasaiProduct && $sizeOptions->isNotEmpty())
                                         <div class="product-option">
                                             <h4>Size</h4>
                                             <div class="size-options" data-option-group="size">
