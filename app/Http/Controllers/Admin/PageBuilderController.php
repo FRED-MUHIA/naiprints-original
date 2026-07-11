@@ -83,6 +83,8 @@ class PageBuilderController extends Controller
             'sections.*.data.product_limit' => ['nullable', 'integer', 'min:1', 'max:48'],
             'sections.*.data.testimonials.items.*.rating' => ['nullable', 'integer', 'min:1', 'max:5'],
             'sections.*.data.gift_finder.product_category_id' => ['nullable', 'integer', 'exists:categories,id'],
+            'sections.*.data.pattern_strip_image' => ['nullable', 'string', 'max:2048'],
+            'sections.*.data.pattern_strip_image_file' => ['nullable', 'file', 'max:2048'],
             'add_section_type' => ['nullable', 'string', 'max:50'],
         ]);
         $validator->excludeUnvalidatedArrayKeys = false;
@@ -103,6 +105,7 @@ class PageBuilderController extends Controller
         }
 
         $sections = $this->normalizeMaasaiPageSections($sections, $inputSections);
+        [$sections, $maasaiUploadWarning] = $this->mergeMaasaiPageUploads($sections, $request->file('sections', []));
         $sections = $this->mergeTileUploads($sections, $request->file('sections', []));
         $sections = $this->mergeProductStepUploads($sections, $request->file('sections', []));
         $sections = $this->mergeSaleFeatureUploads($sections, $request->file('sections', []));
@@ -118,14 +121,21 @@ class PageBuilderController extends Controller
         $sections = $this->stripCorporateUploadFields($sections);
         $sections = $this->stripMockupPageUploadFields($sections);
         $sections = $this->stripMockupUploadFields($sections);
+        $sections = $this->stripMaasaiUploadFields($sections);
 
         $page->update([
             'title' => $data['title'] ?: $page->title,
             'content' => ['sections' => $sections],
         ]);
 
-        return redirect()->route('admin.builder.edit', $page)
+        $redirect = redirect()->route('admin.builder.edit', $page)
             ->with('success', 'Page updated.');
+
+        if ($maasaiUploadWarning ?? false) {
+            $redirect->with('warning', 'Some Maasai page image uploads were skipped. Please use JPG, PNG, WebP, GIF, or SVG files up to 2MB.');
+        }
+
+        return $redirect;
     }
 
     public function updateGlobals(Request $request)
@@ -136,8 +146,6 @@ class PageBuilderController extends Controller
             'header.logo_url_file' => ['nullable', 'file', 'max:2048'],
             'header.favicon_url' => ['nullable', 'string', 'max:2048'],
             'header.favicon_url_file' => ['nullable', 'file', 'max:2048'],
-            'header.top_strip_image' => ['nullable', 'string', 'max:2048'],
-            'header.top_strip_image_file' => ['nullable', 'file', 'max:2048'],
             'footer' => ['array'],
             'purchase_popups' => ['array'],
             'purchase_popups.items' => ['array'],
@@ -226,7 +234,7 @@ class PageBuilderController extends Controller
     {
         $menuManaged = array_key_exists('_menu_managed', $payload);
         unset($payload['_menu_managed']);
-        unset($payload['logo_url_file'], $payload['favicon_url_file'], $payload['top_strip_image_file']);
+        unset($payload['logo_url_file'], $payload['favicon_url_file']);
 
         if ($menuManaged || array_key_exists('menu', $payload)) {
             $payload['menu'] = collect($payload['menu'] ?? [])
@@ -289,7 +297,6 @@ class PageBuilderController extends Controller
         $uploadMap = [
             'logo_url_file' => ['key' => 'logo_url', 'directory' => 'global/header'],
             'favicon_url_file' => ['key' => 'favicon_url', 'directory' => 'global/header'],
-            'top_strip_image_file' => ['key' => 'top_strip_image', 'directory' => 'global/header'],
         ];
         $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'];
         $hadWarning = false;
@@ -396,6 +403,57 @@ class PageBuilderController extends Controller
 
             unset($sections[$sectionIndex]['data']['_product_categories_managed']);
             unset($sections[$sectionIndex]['data']['_testimonials_managed']);
+        }
+
+        return $sections;
+    }
+
+    private function mergeMaasaiPageUploads(array $sections, array $sectionFiles): array
+    {
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'];
+        $hadWarning = false;
+
+        foreach ($sectionFiles as $sectionIndex => $sectionPayload) {
+            if (!isset($sections[$sectionIndex]) || ($sections[$sectionIndex]['type'] ?? '') !== 'maasai_page') {
+                continue;
+            }
+
+            $file = $sectionPayload['data']['pattern_strip_image_file'] ?? null;
+            if (!$file) {
+                continue;
+            }
+
+            $extension = strtolower((string) $file->getClientOriginalExtension());
+            if (!in_array($extension, $allowedExtensions, true)) {
+                $hadWarning = true;
+                continue;
+            }
+
+            try {
+                $path = $file->store('page-builder/maasai', 'public');
+                $sections[$sectionIndex]['data']['pattern_strip_image'] = Storage::url($path);
+            } catch (\Throwable $exception) {
+                $hadWarning = true;
+                Log::warning('Maasai pattern strip upload failed.', [
+                    'section' => $sectionIndex,
+                    'message' => $exception->getMessage(),
+                ]);
+            }
+        }
+
+        return [$sections, $hadWarning];
+    }
+
+    private function stripMaasaiUploadFields(array $sections): array
+    {
+        foreach ($sections as $sectionIndex => $section) {
+            if (($section['type'] ?? '') !== 'maasai_page') {
+                continue;
+            }
+
+            if (array_key_exists('pattern_strip_image_file', $section['data'] ?? [])) {
+                unset($sections[$sectionIndex]['data']['pattern_strip_image_file']);
+            }
         }
 
         return $sections;

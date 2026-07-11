@@ -515,6 +515,7 @@
                                         $testimonialItems[] = ['name' => '', 'date' => '', 'rating' => 5, 'body' => '', 'avatar' => '', 'source' => 'Google'];
                                     }
                                     $cta = $data['cta'] ?? ($maasaiDefaults['cta'] ?? []);
+                                    $patternStripImage = $data['pattern_strip_image'] ?? ($maasaiDefaults['pattern_strip_image'] ?? '');
                                 @endphp
                                 <div class="rounded-xl border border-slate-200 p-4">
                                     <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Hero Slides</p>
@@ -545,6 +546,20 @@
                                             </div>
                                         @endforeach
                                     </div>
+                                </div>
+
+                                <div class="rounded-xl border border-slate-200 p-4">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Pattern Strip</p>
+                                    <p class="mt-1 text-xs text-slate-500">Shown on the Maasai page immediately after the slider.</p>
+                                    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                                        <input type="text" name="sections[{{ $index }}][data][pattern_strip_image]" value="{{ $patternStripImage }}" placeholder="Pattern strip image URL" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                        <input type="file" name="sections[{{ $index }}][data][pattern_strip_image_file]" accept="image/*" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                    </div>
+                                    @if (!empty($patternStripImage))
+                                        <div class="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                                            <img src="{{ $patternStripImage }}" alt="Current Maasai pattern strip" class="h-8 w-full object-cover">
+                                        </div>
+                                    @endif
                                 </div>
 
                                 <div class="rounded-xl border border-slate-200 p-4">

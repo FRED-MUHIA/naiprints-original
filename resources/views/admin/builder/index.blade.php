@@ -40,16 +40,6 @@
                         <input type="text" name="header[favicon_url]" value="{{ $header->content['favicon_url'] ?? '' }}" class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-brand focus:outline-none">
                         <input type="file" name="header[favicon_url_file]" accept="image/*" class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-brand focus:outline-none">
                     </div>
-                    <div>
-                        <label class="text-sm font-semibold text-slate-700">Top Strip Image</label>
-                        <input type="text" name="header[top_strip_image]" value="{{ $header->content['top_strip_image'] ?? '' }}" placeholder="Pattern image URL" class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-brand focus:outline-none">
-                        <input type="file" name="header[top_strip_image_file]" accept="image/*" class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-brand focus:outline-none">
-                        @if (!empty($header->content['top_strip_image']))
-                            <div class="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
-                                <img src="{{ $header->content['top_strip_image'] }}" alt="Current top strip" class="h-8 w-full object-cover">
-                            </div>
-                        @endif
-                    </div>
                     <div class="grid gap-3 sm:grid-cols-2">
                         <div>
                             <label class="text-sm font-semibold text-slate-700">Announcement Speed (px/sec)</label>

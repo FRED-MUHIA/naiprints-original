@@ -263,6 +263,7 @@ class PageDefaults
                                 'primary' => ['label' => 'Request Bulk Order', 'url' => '/contact'],
                             ],
                         ],
+                        'pattern_strip_image' => '',
                         'categories' => [
                             ['title' => 'Babies & Kids', 'body' => 'Blankets, bibs, hoodies, and soft keepsakes.', 'image' => '/images/maasai/maasai-kids.png', 'url' => '#maasai-products'],
                             ['title' => 'Teens & Adults', 'body' => 'T-shirts, hoodies, polos, and daily wear.', 'image' => '/images/maasai/maasai-corporate.png', 'url' => '#maasai-products'],
@@ -773,7 +774,6 @@ class PageDefaults
         return [
             'logo_url' => '/images/logo.svg',
             'favicon_url' => '/images/logo.svg',
-            'top_strip_image' => '',
             'announcement_speed' => 120,
             'announcement_items' => [
                 ['text' => 'Wear Your Vibe'],

@@ -31,6 +31,7 @@
                         ->filter(fn ($testimonial) => is_array($testimonial) && trim((string) ($testimonial['name'] ?? '')) !== '' && trim((string) ($testimonial['body'] ?? '')) !== '')
                         ->values();
                     $cta = $data['cta'] ?? ($defaults['cta'] ?? []);
+                    $patternStripImage = trim((string) ($data['pattern_strip_image'] ?? ($defaults['pattern_strip_image'] ?? '')));
                     $realProducts = $maasaiProducts ?? collect();
                     $displayProducts = $realProducts->isNotEmpty() ? $realProducts : collect($fallbackProducts);
                 @endphp
@@ -77,7 +78,11 @@
                         </div>
                     @endif
                 </section>
-                <div class="maasai-pattern-strip" aria-hidden="true"></div>
+                <div class="maasai-pattern-strip {{ $patternStripImage !== '' ? 'maasai-pattern-strip-image' : '' }}" aria-hidden="true">
+                    @if ($patternStripImage !== '')
+                        <img src="{{ $patternStripImage }}" alt="" loading="lazy">
+                    @endif
+                </div>
 
                 <section class="mx-auto max-w-6xl px-4 py-12">
                     <div class="maasai-section-head">
