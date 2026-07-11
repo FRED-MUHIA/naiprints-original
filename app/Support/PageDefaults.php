@@ -328,6 +328,28 @@ class PageDefaults
                                 ],
                             ],
                         ],
+                        'content_steps' => [
+                            'kicker' => 'How It Works',
+                            'title' => 'Create personalized Maasai-inspired gifts in four steps',
+                            'items' => [
+                                [
+                                    'title' => 'Share your brief',
+                                    'body' => 'Tell us the gift, recipient, colors, names, and delivery date.',
+                                ],
+                                [
+                                    'title' => 'Approve the mockups',
+                                    'body' => 'We send visual proofs and placement notes for sign-off.',
+                                ],
+                                [
+                                    'title' => 'Production & quality checks',
+                                    'body' => 'Every piece is printed, inspected, and packed in-house.',
+                                ],
+                                [
+                                    'title' => 'Delivery & reorders',
+                                    'body' => 'We ship fast and keep your design on file for repeats.',
+                                ],
+                            ],
+                        ],
                         'cta' => [
                             'kicker' => 'Custom Orders',
                             'title' => 'Need names, logos, or a bulk set?',

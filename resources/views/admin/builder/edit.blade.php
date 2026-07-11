@@ -514,6 +514,19 @@
                                     while (count($testimonialItems) < 6) {
                                         $testimonialItems[] = ['name' => '', 'date' => '', 'rating' => 5, 'body' => '', 'avatar' => '', 'source' => 'Google'];
                                     }
+                                    $contentSteps = $data['content_steps'] ?? ($maasaiDefaults['content_steps'] ?? []);
+                                    $contentStepItems = $contentSteps['items'] ?? [];
+                                    if (!is_array($contentStepItems) || empty($contentStepItems)) {
+                                        $contentStepItems = [
+                                            ['title' => '', 'body' => ''],
+                                            ['title' => '', 'body' => ''],
+                                            ['title' => '', 'body' => ''],
+                                            ['title' => '', 'body' => ''],
+                                        ];
+                                    }
+                                    while (count($contentStepItems) < 4) {
+                                        $contentStepItems[] = ['title' => '', 'body' => ''];
+                                    }
                                     $cta = $data['cta'] ?? ($maasaiDefaults['cta'] ?? []);
                                     $patternStripImage = $data['pattern_strip_image'] ?? ($maasaiDefaults['pattern_strip_image'] ?? '');
                                 @endphp
@@ -665,6 +678,24 @@
                                             data-maasai-testimonial-add>
                                         Add review
                                     </button>
+                                </div>
+
+                                <div class="rounded-xl border border-slate-200 p-4">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Bottom Content Steps</p>
+                                    <p class="mt-1 text-xs text-slate-500">Shown near the bottom of the Maasai page before the footer.</p>
+                                    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                                        <input type="text" name="sections[{{ $index }}][data][content_steps][kicker]" value="{{ $contentSteps['kicker'] ?? '' }}" placeholder="Kicker" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                        <input type="text" name="sections[{{ $index }}][data][content_steps][title]" value="{{ $contentSteps['title'] ?? '' }}" placeholder="Title" class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                    </div>
+                                    <div class="mt-4 grid gap-4">
+                                        @foreach ($contentStepItems as $stepIndex => $step)
+                                            <div class="rounded-xl border border-slate-200 p-4">
+                                                <p class="mb-3 text-sm font-semibold text-slate-700">Step {{ $stepIndex + 1 }}</p>
+                                                <input type="text" name="sections[{{ $index }}][data][content_steps][items][{{ $stepIndex }}][title]" value="{{ $step['title'] ?? '' }}" placeholder="Step title" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">
+                                                <textarea name="sections[{{ $index }}][data][content_steps][items][{{ $stepIndex }}][body]" rows="2" placeholder="Step body" class="mt-3 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">{{ $step['body'] ?? '' }}</textarea>
+                                            </div>
+                                        @endforeach
+                                    </div>
                                 </div>
 
                                 <div class="rounded-xl border border-slate-200 p-4">

@@ -30,6 +30,10 @@
                     $testimonialItems = collect($testimonials['items'] ?? [])
                         ->filter(fn ($testimonial) => is_array($testimonial) && trim((string) ($testimonial['name'] ?? '')) !== '' && trim((string) ($testimonial['body'] ?? '')) !== '')
                         ->values();
+                    $contentSteps = $data['content_steps'] ?? ($defaults['content_steps'] ?? []);
+                    $contentStepItems = collect($contentSteps['items'] ?? [])
+                        ->filter(fn ($step) => is_array($step) && (trim((string) ($step['title'] ?? '')) !== '' || trim((string) ($step['body'] ?? '')) !== ''))
+                        ->values();
                     $cta = $data['cta'] ?? ($defaults['cta'] ?? []);
                     $patternStripImage = trim((string) ($data['pattern_strip_image'] ?? ($defaults['pattern_strip_image'] ?? '')));
                     $realProducts = $maasaiProducts ?? collect();
@@ -291,6 +295,30 @@
                                         <path fill-rule="evenodd" d="M7.22 4.22a.75.75 0 0 1 1.06 0l5 5a.75.75 0 0 1 0 1.06l-5 5a.75.75 0 0 1-1.06-1.06L11.69 10 7.22 5.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
                                     </svg>
                                 </button>
+                            </div>
+                        </div>
+                    </section>
+                @endif
+
+                @if ($contentStepItems->isNotEmpty())
+                    <section class="maasai-content-steps" aria-labelledby="maasai-content-steps-title">
+                        <div class="mx-auto max-w-6xl px-4">
+                            @if (!empty($contentSteps['kicker']))
+                                <p class="section-kicker">{{ $contentSteps['kicker'] }}</p>
+                            @endif
+                            <h2 id="maasai-content-steps-title" class="section-title">{{ $contentSteps['title'] ?? 'How it works' }}</h2>
+                            <div class="maasai-content-step-grid">
+                                @foreach ($contentStepItems as $index => $step)
+                                    <article class="maasai-content-step">
+                                        <p class="maasai-content-step-index">Step {{ $index + 1 }}</p>
+                                        @if (!empty($step['title']))
+                                            <h3>{{ $step['title'] }}</h3>
+                                        @endif
+                                        @if (!empty($step['body']))
+                                            <p>{{ $step['body'] }}</p>
+                                        @endif
+                                    </article>
+                                @endforeach
                             </div>
                         </div>
                     </section>
