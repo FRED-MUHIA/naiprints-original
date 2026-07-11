@@ -131,6 +131,12 @@ class PageBuilderController extends Controller
     {
         $validator = validator($request->all(), [
             'header' => ['array'],
+            'header.logo_url' => ['nullable', 'string', 'max:2048'],
+            'header.logo_url_file' => ['nullable', 'image', 'max:4096'],
+            'header.favicon_url' => ['nullable', 'string', 'max:2048'],
+            'header.favicon_url_file' => ['nullable', 'image', 'max:4096'],
+            'header.top_strip_image' => ['nullable', 'string', 'max:2048'],
+            'header.top_strip_image_file' => ['nullable', 'image', 'max:4096'],
             'footer' => ['array'],
             'purchase_popups' => ['array'],
             'purchase_popups.items' => ['array'],
@@ -153,6 +159,7 @@ class PageBuilderController extends Controller
         $headerPayload = $request->input('header', null);
         if (is_array($headerPayload)) {
             $headerPayload = $this->normalizeHeaderPayload($headerPayload);
+            $headerPayload = $this->mergeHeaderUploads($headerPayload, $request);
             $header->update([
                 'content' => $this->mergeGlobalContent((array) ($header->content ?? []), $headerPayload),
             ]);
@@ -211,6 +218,7 @@ class PageBuilderController extends Controller
     {
         $menuManaged = array_key_exists('_menu_managed', $payload);
         unset($payload['_menu_managed']);
+        unset($payload['logo_url_file'], $payload['favicon_url_file'], $payload['top_strip_image_file']);
 
         if ($menuManaged || array_key_exists('menu', $payload)) {
             $payload['menu'] = collect($payload['menu'] ?? [])
@@ -263,6 +271,27 @@ class PageBuilderController extends Controller
                 'label' => trim((string) ($payload['menu_strip_cta']['label'] ?? '')),
                 'url' => trim((string) ($payload['menu_strip_cta']['url'] ?? '')),
             ];
+        }
+
+        return $payload;
+    }
+
+    private function mergeHeaderUploads(array $payload, Request $request): array
+    {
+        $uploadMap = [
+            'logo_url_file' => ['key' => 'logo_url', 'directory' => 'global/header'],
+            'favicon_url_file' => ['key' => 'favicon_url', 'directory' => 'global/header'],
+            'top_strip_image_file' => ['key' => 'top_strip_image', 'directory' => 'global/header'],
+        ];
+
+        foreach ($uploadMap as $fileKey => $meta) {
+            $file = $request->file('header.' . $fileKey);
+            if (!$file) {
+                continue;
+            }
+
+            $path = $file->store($meta['directory'], 'public');
+            $payload[$meta['key']] = Storage::url($path);
         }
 
         return $payload;

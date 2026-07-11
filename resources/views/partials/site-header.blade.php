@@ -2,6 +2,7 @@
     $header = $globalHeader ?? [];
     $showMenuStrip = $showMenuStrip ?? true;
     $logoUrl = $header['logo_url'] ?? null;
+    $topStripImage = trim((string) ($header['top_strip_image'] ?? ''));
     $menu = collect($header['menu'] ?? [])
         ->filter(fn ($item) => is_array($item))
         ->map(function ($item) {
@@ -88,6 +89,12 @@
         ->all();
     $initialSearchEntries = array_slice($searchEntries, 0, 10);
 @endphp
+
+@if ($topStripImage !== '')
+    <div class="site-top-strip" aria-hidden="true">
+        <img src="{{ $topStripImage }}" alt="" loading="lazy">
+    </div>
+@endif
 
 @if (!empty($announcementItems))
     <div class="bg-brand text-white">

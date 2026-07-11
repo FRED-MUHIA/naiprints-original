@@ -9,10 +9,14 @@
     if (is_string($seoImage) && $seoImage !== '' && !str_starts_with($seoImage, 'http')) {
         $seoImage = url($seoImage);
     }
+    $seoFavicon = $favicon ?? ($globalHeader['favicon_url'] ?? '/images/logo.svg');
+    if (is_string($seoFavicon) && $seoFavicon !== '' && !str_starts_with($seoFavicon, 'http')) {
+        $seoFavicon = url($seoFavicon);
+    }
     $schemaData = $schema ?? null;
 @endphp
 
-<link rel="icon" href="{{ url('/images/logo.svg') }}">
+<link rel="icon" href="{{ $seoFavicon }}">
 <title>{{ $seoTitle }}</title>
 <meta name="description" content="{{ $seoDescription }}">
 <meta name="robots" content="{{ $seoRobots }}">

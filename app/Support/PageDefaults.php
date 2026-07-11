@@ -773,6 +773,7 @@ class PageDefaults
         return [
             'logo_url' => '/images/logo.svg',
             'favicon_url' => '/images/logo.svg',
+            'top_strip_image' => '',
             'announcement_speed' => 120,
             'announcement_items' => [
                 ['text' => 'Wear Your Vibe'],
