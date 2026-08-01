@@ -683,6 +683,9 @@
                                 <div class="mockup-artboard">
                                 <canvas id="mockup-canvas" width="600" height="600"></canvas>
                                 </div>
+                                <button class="mockup-mobile-remove" type="button" data-mobile-remove-selection aria-label="Remove selected design" hidden>
+                                    <span aria-hidden="true">×</span>
+                                </button>
                             </div>
                         </div>
                         <div class="mockup-flip-arrows" aria-label="Flip views">
@@ -1287,11 +1290,11 @@
                     const mobile = isMobileCanvas();
                     canvas.allowTouchScrolling = false;
                     canvas.selection = activeTool === 'select';
-                    canvas.targetFindTolerance = mobile ? 16 : 4;
-                    fabric.Object.prototype.cornerSize = mobile ? 18 : 13;
-                    fabric.Object.prototype.touchCornerSize = mobile ? 32 : 24;
-                    fabric.Object.prototype.padding = mobile ? 10 : 6;
-                    fabric.Object.prototype.borderScaleFactor = mobile ? 2.2 : 1.4;
+                    canvas.targetFindTolerance = mobile ? 28 : 4;
+                    fabric.Object.prototype.cornerSize = mobile ? 24 : 13;
+                    fabric.Object.prototype.touchCornerSize = mobile ? 48 : 24;
+                    fabric.Object.prototype.padding = mobile ? 14 : 6;
+                    fabric.Object.prototype.borderScaleFactor = mobile ? 2.4 : 1.4;
                     canvas.getObjects().forEach((obj) => {
                         obj.cornerSize = fabric.Object.prototype.cornerSize;
                         obj.touchCornerSize = fabric.Object.prototype.touchCornerSize;
@@ -1305,10 +1308,10 @@
                 fabric.Object.prototype.cornerColor = '#3b82f6';
                 fabric.Object.prototype.cornerStyle = 'circle';
                 fabric.Object.prototype.transparentCorners = false;
-                fabric.Object.prototype.cornerSize = isMobileCanvas() ? 18 : 13;
-                fabric.Object.prototype.touchCornerSize = isMobileCanvas() ? 32 : 24;
-                fabric.Object.prototype.padding = isMobileCanvas() ? 10 : 6;
-                fabric.Object.prototype.borderScaleFactor = isMobileCanvas() ? 2.2 : 1.4;
+                fabric.Object.prototype.cornerSize = isMobileCanvas() ? 24 : 13;
+                fabric.Object.prototype.touchCornerSize = isMobileCanvas() ? 48 : 24;
+                fabric.Object.prototype.padding = isMobileCanvas() ? 14 : 6;
+                fabric.Object.prototype.borderScaleFactor = isMobileCanvas() ? 2.4 : 1.4;
 
                 let currentMockup = 'tshirt';
                 let currentColorIndex = 0;
@@ -1353,6 +1356,7 @@
                 const stageToolbar = document.querySelector('.mockup-stage-toolbar');
                 const canvasWrap = document.querySelector('[data-canvas-wrap]');
                 const artboard = document.querySelector('.mockup-artboard');
+                const mobileRemoveBtn = document.querySelector('[data-mobile-remove-selection]');
                 const zoomRange = document.querySelector('[data-zoom-range]');
                 const zoomLabel = document.querySelector('[data-zoom-label]');
                 const undoBtn = document.querySelector('[data-undo]');
@@ -2246,7 +2250,7 @@
                         strokeWidth: GUIDE_PRINT_STROKE,
                         strokeUniform: false,
                         perPixelTargetFind: true,
-                        targetFindTolerance: isMobileCanvas() ? 16 : 4,
+                        targetFindTolerance: isMobileCanvas() ? 28 : 4,
                         selectable: true,
                         evented: true,
                         hasControls: true,
@@ -2284,7 +2288,7 @@
                         strokeWidth: GUIDE_PRINT_STROKE,
                         strokeUniform: false,
                         perPixelTargetFind: true,
-                        targetFindTolerance: isMobileCanvas() ? 16 : 4,
+                        targetFindTolerance: isMobileCanvas() ? 28 : 4,
                         selectable: true,
                         evented: true,
                         hasControls: true,
@@ -2467,153 +2471,26 @@
                     }
 
                     try {
-                        const temp = document.createElement('canvas');
-                        temp.width = sourceWidth;
-                        temp.height = sourceHeight;
-                        const tempContext = temp.getContext('2d', { willReadFrequently: true });
-                        tempContext.drawImage(element, 0, 0, sourceWidth, sourceHeight);
-                        const pixels = tempContext.getImageData(0, 0, sourceWidth, sourceHeight).data;
-                        const step = Math.max(1, Math.floor(Math.max(sourceWidth, sourceHeight) / 500));
-                        let alphaMinX = sourceWidth;
-                        let alphaMinY = sourceHeight;
-                        let alphaMaxX = 0;
-                        let alphaMaxY = 0;
-                        let alphaFound = false;
-
-                        for (let y = 0; y < sourceHeight; y += step) {
-                            for (let x = 0; x < sourceWidth; x += step) {
-                                const index = (y * sourceWidth + x) * 4;
-                                if (pixels[index + 3] > 12) {
-                                    alphaFound = true;
-                                    alphaMinX = Math.min(alphaMinX, x);
-                                    alphaMinY = Math.min(alphaMinY, y);
-                                    alphaMaxX = Math.max(alphaMaxX, x);
-                                    alphaMaxY = Math.max(alphaMaxY, y);
-                                }
-                            }
-                        }
-
-                        const alphaCrop = alphaFound
-                            ? {
-                                x: alphaMinX,
-                                y: alphaMinY,
-                                width: Math.max(step, alphaMaxX - alphaMinX + step),
-                                height: Math.max(step, alphaMaxY - alphaMinY + step),
-                            }
-                            : null;
-                        const visibleCrop = getVisibleImageBounds(fabricImage);
-                        let crop = visibleCrop
-                            && (visibleCrop.width < sourceWidth * 0.96 || visibleCrop.height < sourceHeight * 0.96)
-                            ? visibleCrop
-                            : alphaCrop
-                            && (alphaCrop.width < sourceWidth * 0.96 || alphaCrop.height < sourceHeight * 0.96)
-                            ? alphaCrop
-                            : { x: 0, y: 0, width: sourceWidth, height: sourceHeight };
-
-                        if (crop.x === 0 && crop.y === 0 && crop.width === sourceWidth && crop.height === sourceHeight) {
-                            const sampleLimit = Math.max(8, Math.min(24, Math.floor(Math.min(sourceWidth, sourceHeight) / 8)));
-                            const cornerSamples = [];
-                            for (let y = 0; y < sampleLimit; y += 2) {
-                                for (let x = 0; x < sampleLimit; x += 2) {
-                                    const index = (y * sourceWidth + x) * 4;
-                                    if (pixels[index + 3] > 200) {
-                                        cornerSamples.push([pixels[index], pixels[index + 1], pixels[index + 2]]);
-                                    }
-                                }
-                            }
-
-                            if (cornerSamples.length) {
-                                const corner = cornerSamples.reduce(
-                                    (total, sample) => [
-                                        total[0] + sample[0] / cornerSamples.length,
-                                        total[1] + sample[1] / cornerSamples.length,
-                                        total[2] + sample[2] / cornerSamples.length,
-                                    ],
-                                    [0, 0, 0]
-                                );
-                                const colorDistance = (index) => {
-                                    const red = pixels[index] - corner[0];
-                                    const green = pixels[index + 1] - corner[1];
-                                    const blue = pixels[index + 2] - corner[2];
-                                    return Math.sqrt(red * red + green * green + blue * blue);
-                                };
-                                const columnLooksLikeCornerBlock = (x) => {
-                                    let matches = 0;
-                                    let total = 0;
-                                    for (let y = 0; y < sourceHeight; y += Math.max(step, 3)) {
-                                        const index = (y * sourceWidth + x) * 4;
-                                        if (pixels[index + 3] > 180) {
-                                            total++;
-                                            if (colorDistance(index) < 42) {
-                                                matches++;
-                                            }
-                                        }
-                                    }
-                                    return total > 0 && matches / total > 0.08;
-                                };
-                                const rowLooksLikeCornerBlock = (y) => {
-                                    let matches = 0;
-                                    let total = 0;
-                                    for (let x = 0; x < sourceWidth; x += Math.max(step, 3)) {
-                                        const index = (y * sourceWidth + x) * 4;
-                                        if (pixels[index + 3] > 180) {
-                                            total++;
-                                            if (colorDistance(index) < 42) {
-                                                matches++;
-                                            }
-                                        }
-                                    }
-                                    return total > 0 && matches / total > 0.08;
-                                };
-                                let lastBlockX = 0;
-                                let lastBlockY = 0;
-                                for (let x = 0; x < sourceWidth; x += step) {
-                                    if (columnLooksLikeCornerBlock(x)) {
-                                        lastBlockX = x;
-                                    }
-                                }
-                                for (let y = 0; y < sourceHeight; y += step) {
-                                    if (rowLooksLikeCornerBlock(y)) {
-                                        lastBlockY = y;
-                                    }
-                                }
-                                const detectedWidth = Math.min(sourceWidth, lastBlockX + step);
-                                const detectedHeight = Math.min(sourceHeight, lastBlockY + step);
-                                if (
-                                    detectedWidth > sourceWidth * 0.25
-                                    && detectedHeight > sourceHeight * 0.25
-                                    && (detectedWidth < sourceWidth * 0.96 || detectedHeight < sourceHeight * 0.96)
-                                ) {
-                                    crop = {
-                                        x: 0,
-                                        y: 0,
-                                        width: detectedWidth,
-                                        height: detectedHeight,
-                                    };
-                                }
-                            }
-                        }
-
                         const output = document.createElement('canvas');
                         output.width = CANVAS_WIDTH;
                         output.height = CANVAS_HEIGHT;
                         const context = output.getContext('2d');
                         context.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-                        const targetFill = 0.9;
+                        const targetFill = 0.96;
                         const drawScale = Math.min(
-                            (CANVAS_WIDTH * targetFill) / crop.width,
-                            (CANVAS_HEIGHT * targetFill) / crop.height
+                            (CANVAS_WIDTH * targetFill) / sourceWidth,
+                            (CANVAS_HEIGHT * targetFill) / sourceHeight
                         );
-                        const drawWidth = crop.width * drawScale;
-                        const drawHeight = crop.height * drawScale;
+                        const drawWidth = sourceWidth * drawScale;
+                        const drawHeight = sourceHeight * drawScale;
                         const drawX = (CANVAS_WIDTH - drawWidth) / 2;
                         const drawY = (CANVAS_HEIGHT - drawHeight) / 2;
                         context.drawImage(
                             element,
-                            crop.x,
-                            crop.y,
-                            crop.width,
-                            crop.height,
+                            0,
+                            0,
+                            sourceWidth,
+                            sourceHeight,
                             drawX,
                             drawY,
                             drawWidth,
@@ -2699,40 +2576,14 @@
                         let originX = 'left';
                         let originY = 'top';
                         if (img.width > 0 && img.height > 0) {
-                            const visibleBounds = isMobileMockup ? getVisibleImageBounds(img) : null;
-                            const shouldCropTransparentPadding = isMobileMockup
-                                && visibleBounds
-                                && visibleBounds.source === 'alpha';
                             const fallbackScale = Math.min(CANVAS_WIDTH / img.width, CANVAS_HEIGHT / img.height);
-                            if (shouldCropTransparentPadding) {
-                                img.set({
-                                    cropX: visibleBounds.x,
-                                    cropY: visibleBounds.y,
-                                    width: visibleBounds.width,
-                                    height: visibleBounds.height,
-                                });
-                                scaleX = CANVAS_WIDTH / visibleBounds.width;
-                                scaleY = CANVAS_HEIGHT / visibleBounds.height;
-                                left = 0;
-                                top = 0;
-                                originX = 'left';
-                                originY = 'top';
-                            } else if (isMobileMockup && mobileImageFit) {
-                                scaleX = CANVAS_WIDTH / img.width;
-                                scaleY = CANVAS_HEIGHT / img.height;
-                                left = 0;
-                                top = 0;
-                                originX = 'left';
-                                originY = 'top';
-                            } else {
-                                const scale = fallbackScale * (Number.isFinite(mobileImageFit?.scale) ? mobileImageFit.scale : 1);
-                                scaleX = scale;
-                                scaleY = scale;
-                                left = CANVAS_WIDTH / 2 + imageOffsetX;
-                                top = CANVAS_HEIGHT / 2 + imageOffsetY;
-                                originX = 'center';
-                                originY = 'center';
-                            }
+                            const scale = fallbackScale * (Number.isFinite(mobileImageFit?.scale) ? mobileImageFit.scale : 1);
+                            scaleX = scale;
+                            scaleY = scale;
+                            left = CANVAS_WIDTH / 2 + imageOffsetX;
+                            top = CANVAS_HEIGHT / 2 + imageOffsetY;
+                            originX = 'center';
+                            originY = 'center';
                         }
                         img.set({
                             left,
@@ -3556,6 +3407,39 @@
                     canvas.renderAll();
                     saveState();
                     refreshBuilder();
+                    updateMobileRemoveControl();
+                };
+
+                const updateMobileRemoveControl = () => {
+                    if (!mobileRemoveBtn || !artboard) {
+                        return;
+                    }
+
+                    const active = canvas.getActiveObject();
+                    const shouldShow = isMobileCanvas() && active?.data?.role === 'design';
+                    mobileRemoveBtn.hidden = !shouldShow;
+                    mobileRemoveBtn.classList.toggle('is-visible', shouldShow);
+                    if (!shouldShow) {
+                        return;
+                    }
+
+                    active.setCoords();
+                    const bounds = active.getBoundingRect(true, true);
+                    const artboardRect = artboard.getBoundingClientRect();
+                    const scaleX = artboardRect.width / CANVAS_WIDTH;
+                    const scaleY = artboardRect.height / CANVAS_HEIGHT;
+                    const buttonSize = 42;
+                    const left = Math.max(
+                        buttonSize / 2,
+                        Math.min(artboardRect.width - buttonSize / 2, (bounds.left + bounds.width) * scaleX)
+                    );
+                    const top = Math.max(
+                        buttonSize / 2,
+                        Math.min(artboardRect.height - buttonSize / 2, bounds.top * scaleY)
+                    );
+
+                    mobileRemoveBtn.style.left = `${left}px`;
+                    mobileRemoveBtn.style.top = `${top}px`;
                 };
 
                 const moveLayer = (direction) => {
@@ -5515,6 +5399,133 @@
                     button.addEventListener('click', saveDesign);
                 });
 
+                const touchDistance = (touches) => {
+                    if (!touches || touches.length < 2) {
+                        return 0;
+                    }
+                    const dx = touches[0].clientX - touches[1].clientX;
+                    const dy = touches[0].clientY - touches[1].clientY;
+                    return Math.hypot(dx, dy);
+                };
+
+                const findCanvasTouchTarget = (event) => {
+                    const target = canvas.findTarget(event, false);
+                    const active = canvas.getActiveObject();
+                    if (target?.data?.role === 'design') {
+                        return target;
+                    }
+                    if (active?.data?.role === 'design') {
+                        return active;
+                    }
+                    return null;
+                };
+
+                let touchLongPressTimer = null;
+                let touchStartPoint = null;
+                let pinchGesture = null;
+
+                const clearTouchLongPress = () => {
+                    if (touchLongPressTimer) {
+                        window.clearTimeout(touchLongPressTimer);
+                        touchLongPressTimer = null;
+                    }
+                };
+
+                const bindMobileCanvasTouch = () => {
+                    const targetEl = canvas.upperCanvasEl;
+                    if (!targetEl) {
+                        return;
+                    }
+
+                    targetEl.addEventListener('touchstart', (event) => {
+                        if (!isMobileCanvas()) {
+                            return;
+                        }
+
+                        if (event.touches.length === 1) {
+                            const touch = event.touches[0];
+                            touchStartPoint = { x: touch.clientX, y: touch.clientY };
+                            clearTouchLongPress();
+                            touchLongPressTimer = window.setTimeout(() => {
+                                const target = findCanvasTouchTarget(event);
+                                if (!target) {
+                                    return;
+                                }
+                                canvas.setActiveObject(target);
+                                canvas.renderAll();
+                                showContextMenu(touch.clientX, touch.clientY, target);
+                            }, 520);
+                            return;
+                        }
+
+                        if (event.touches.length === 2) {
+                            clearTouchLongPress();
+                            const active = canvas.getActiveObject();
+                            if (active?.data?.role !== 'design' || active.data?.locked) {
+                                return;
+                            }
+                            event.preventDefault();
+                            pinchGesture = {
+                                object: active,
+                                distance: touchDistance(event.touches),
+                                scaleX: active.scaleX || 1,
+                                scaleY: active.scaleY || 1,
+                            };
+                        }
+                    }, { passive: false });
+
+                    targetEl.addEventListener('touchmove', (event) => {
+                        if (!isMobileCanvas()) {
+                            return;
+                        }
+
+                        if (touchStartPoint && event.touches.length === 1) {
+                            const touch = event.touches[0];
+                            const movement = Math.hypot(touch.clientX - touchStartPoint.x, touch.clientY - touchStartPoint.y);
+                            if (movement > 10) {
+                                clearTouchLongPress();
+                            }
+                        }
+
+                        if (!pinchGesture || event.touches.length !== 2) {
+                            return;
+                        }
+
+                        event.preventDefault();
+                        const nextDistance = touchDistance(event.touches);
+                        if (!nextDistance || !pinchGesture.distance) {
+                            return;
+                        }
+
+                        const ratio = Math.max(0.2, Math.min(5, nextDistance / pinchGesture.distance));
+                        pinchGesture.object.set({
+                            scaleX: pinchGesture.scaleX * ratio,
+                            scaleY: pinchGesture.scaleY * ratio,
+                        });
+                        pinchGesture.object.setCoords();
+                        canvas.requestRenderAll();
+                        updateMobileRemoveControl();
+                    }, { passive: false });
+
+                    targetEl.addEventListener('touchend', () => {
+                        clearTouchLongPress();
+                        touchStartPoint = null;
+                        if (pinchGesture) {
+                            pinchGesture.object.setCoords();
+                            saveState();
+                            pinchGesture = null;
+                        }
+                    });
+
+                    targetEl.addEventListener('touchcancel', () => {
+                        clearTouchLongPress();
+                        touchStartPoint = null;
+                        pinchGesture = null;
+                    });
+                };
+
+                bindMobileCanvasTouch();
+
                 canvas.upperCanvasEl.addEventListener('contextmenu', (event) => {
                     event.preventDefault();
                 });
@@ -5586,7 +5597,18 @@
                     }
                 });
 
-                document.querySelector('[data-delete]').addEventListener('click', deleteActive);
+                document.querySelectorAll('[data-delete]').forEach((button) => {
+                    button.addEventListener('click', deleteActive);
+                });
+                mobileRemoveBtn?.addEventListener('pointerdown', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                });
+                mobileRemoveBtn?.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    deleteActive();
+                });
                 document.querySelector('[data-duplicate]')?.addEventListener('click', () => {
                     const active = canvas.getActiveObject();
                     if (!active) {
@@ -5621,9 +5643,18 @@
                     if (printAreaRect) {
                         printAreaRect.set({ selectable: true, evented: true, hasControls: true });
                     }
+                    updateMobileRemoveControl();
                     canvas.renderAll();
                 });
-                canvas.on('object:modified', saveState);
+                canvas.on('selection:created', updateMobileRemoveControl);
+                canvas.on('selection:updated', updateMobileRemoveControl);
+                canvas.on('object:moving', updateMobileRemoveControl);
+                canvas.on('object:scaling', updateMobileRemoveControl);
+                canvas.on('object:rotating', updateMobileRemoveControl);
+                canvas.on('object:modified', () => {
+                    saveState();
+                    updateMobileRemoveControl();
+                });
                 canvas.on('text:changed', saveState);
                 canvas.on('text:editing:exited', saveState);
                 canvas.on('object:added', () => {
@@ -5631,6 +5662,7 @@
                     if (!isRestoring) {
                         updateOpacitySlider();
                     }
+                    updateMobileRemoveControl();
                 });
                 canvas.on('selection:created', (event) => {
                     if (event?.selected?.some((obj) => obj?.data?.role === 'design')) {
@@ -5675,6 +5707,7 @@
                 window.addEventListener('resize', () => {
                     applyCanvasInteractionMode();
                     fitToContainer();
+                    updateMobileRemoveControl();
                 });
 
                 setBackgroundTheme('light');
