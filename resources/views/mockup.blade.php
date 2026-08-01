@@ -1300,15 +1300,6 @@
                         obj.touchCornerSize = fabric.Object.prototype.touchCornerSize;
                         obj.padding = fabric.Object.prototype.padding;
                         obj.borderScaleFactor = fabric.Object.prototype.borderScaleFactor;
-                        if (obj?.data?.role === 'print-area') {
-                            obj.selectable = !mobile;
-                            obj.evented = !mobile;
-                            obj.hasControls = !mobile;
-                            obj.hasBorders = !mobile;
-                            if (mobile && canvas.getActiveObject() === obj) {
-                                canvas.discardActiveObject();
-                            }
-                        }
                         obj.setCoords();
                     });
                     canvas.renderAll();
@@ -2260,10 +2251,10 @@
                         strokeUniform: false,
                         perPixelTargetFind: true,
                         targetFindTolerance: isMobileCanvas() ? 28 : 4,
-                        selectable: !isMobileCanvas(),
-                        evented: !isMobileCanvas(),
-                        hasControls: !isMobileCanvas(),
-                        hasBorders: !isMobileCanvas(),
+                        selectable: true,
+                        evented: true,
+                        hasControls: true,
+                        hasBorders: true,
                         lockRotation: true,
                     });
                     safeAreaRect.set({
@@ -2298,10 +2289,10 @@
                         strokeUniform: false,
                         perPixelTargetFind: true,
                         targetFindTolerance: isMobileCanvas() ? 28 : 4,
-                        selectable: !isMobileCanvas(),
-                        evented: !isMobileCanvas(),
-                        hasControls: !isMobileCanvas(),
-                        hasBorders: !isMobileCanvas(),
+                        selectable: true,
+                        evented: true,
+                        hasControls: true,
+                        hasBorders: true,
                         lockRotation: true,
                         data: { role: 'print-area' },
                     });
@@ -2485,7 +2476,7 @@
                         output.height = CANVAS_HEIGHT;
                         const context = output.getContext('2d');
                         context.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-                        const targetFill = 0.96;
+                        const targetFill = 1;
                         const drawScale = Math.min(
                             (CANVAS_WIDTH * targetFill) / sourceWidth,
                             (CANVAS_HEIGHT * targetFill) / sourceHeight
@@ -2540,10 +2531,8 @@
                         canvas.add(baseImage);
                         renderPrintArea();
                         setGuidesVisible(guidesVisible);
-                        if (printAreaRect && !isMobileCanvas()) {
+                        if (printAreaRect) {
                             canvas.setActiveObject(printAreaRect);
-                        } else {
-                            canvas.discardActiveObject();
                         }
                         restoreViewDesigns(currentMockup, currentView, () => {
                             setLayerOrder();
@@ -2588,13 +2577,22 @@
                         let originY = 'top';
                         if (img.width > 0 && img.height > 0) {
                             const fallbackScale = Math.min(CANVAS_WIDTH / img.width, CANVAS_HEIGHT / img.height);
-                            const scale = fallbackScale * (Number.isFinite(mobileImageFit?.scale) ? mobileImageFit.scale : 1);
-                            scaleX = scale;
-                            scaleY = scale;
-                            left = CANVAS_WIDTH / 2 + imageOffsetX;
-                            top = CANVAS_HEIGHT / 2 + imageOffsetY;
-                            originX = 'center';
-                            originY = 'center';
+                            if (isMobileMockup && mobileImageFit) {
+                                scaleX = CANVAS_WIDTH / img.width;
+                                scaleY = CANVAS_HEIGHT / img.height;
+                                left = 0;
+                                top = 0;
+                                originX = 'left';
+                                originY = 'top';
+                            } else {
+                                const scale = fallbackScale * (Number.isFinite(mobileImageFit?.scale) ? mobileImageFit.scale : 1);
+                                scaleX = scale;
+                                scaleY = scale;
+                                left = CANVAS_WIDTH / 2 + imageOffsetX;
+                                top = CANVAS_HEIGHT / 2 + imageOffsetY;
+                                originX = 'center';
+                                originY = 'center';
+                            }
                         }
                         img.set({
                             left,
@@ -5653,10 +5651,10 @@
                     updateOpacitySlider();
                     if (printAreaRect) {
                         printAreaRect.set({
-                            selectable: !isMobileCanvas(),
-                            evented: !isMobileCanvas(),
-                            hasControls: !isMobileCanvas(),
-                            hasBorders: !isMobileCanvas(),
+                            selectable: true,
+                            evented: true,
+                            hasControls: true,
+                            hasBorders: true,
                         });
                     }
                     updateMobileRemoveControl();
