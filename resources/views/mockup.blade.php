@@ -2771,19 +2771,23 @@
                     if (!width || !height) {
                         return;
                     }
+                    if (isMobileCanvas()) {
+                        setZoom(100);
+                        return;
+                    }
                     const fitRatio = Math.min(width / CANVAS_WIDTH, height / CANVAS_HEIGHT, 1);
                     const fitPercent = Math.max(25, Math.round(fitRatio * 100));
                     setZoom(fitPercent);
                 };
 
                 const setZoom = (value, containerOverride = null) => {
-                    const zoom = Math.max(0.25, Math.min(2, value / 100));
+                    const zoom = isMobileCanvas() ? 1 : Math.max(0.25, Math.min(2, value / 100));
                     canvas.setZoom(zoom);
                     const viewport = resolveCanvasViewport(containerOverride);
                     const view = canvas.viewportTransform;
                     if (view) {
-                        const offsetX = (viewport.width - CANVAS_WIDTH * zoom) / 2;
-                        const offsetY = (viewport.height - CANVAS_HEIGHT * zoom) / 2;
+                        const offsetX = isMobileCanvas() ? 0 : (viewport.width - CANVAS_WIDTH * zoom) / 2;
+                        const offsetY = isMobileCanvas() ? 0 : (viewport.height - CANVAS_HEIGHT * zoom) / 2;
                         view[4] = Number.isFinite(offsetX) ? offsetX : 0;
                         view[5] = Number.isFinite(offsetY) ? offsetY : 0;
                         canvas.setViewportTransform(view);

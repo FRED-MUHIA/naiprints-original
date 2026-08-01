@@ -8001,6 +8001,14 @@
             touch-action: none;
         }
 
+        .mockup-artboard .canvas-container,
+        .mockup-artboard .lower-canvas,
+        .mockup-artboard .upper-canvas,
+        .mockup-artboard canvas {
+            width: var(--artboard-size) !important;
+            height: var(--artboard-size) !important;
+        }
+
         .mockup-artboard .canvas-container {
             touch-action: none !important;
             user-select: none;
