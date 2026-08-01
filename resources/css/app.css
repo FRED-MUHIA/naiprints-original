@@ -4412,6 +4412,12 @@
             box-shadow: none;
         }
 
+        .editor-shell .artboard-media,
+        .editor-shell .artboard-canvas {
+            transform: translate(-16%, -8%) scale(1.55);
+            transform-origin: top left;
+        }
+
         .artboard-canvas .canvas-container,
         .artboard-canvas .lower-canvas,
         .artboard-canvas .upper-canvas,
