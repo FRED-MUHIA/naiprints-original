@@ -2501,7 +2501,11 @@
                                 height: Math.max(step, alphaMaxY - alphaMinY + step),
                             }
                             : null;
-                        let crop = alphaCrop
+                        const visibleCrop = getVisibleImageBounds(fabricImage);
+                        let crop = visibleCrop
+                            && (visibleCrop.width < sourceWidth * 0.96 || visibleCrop.height < sourceHeight * 0.96)
+                            ? visibleCrop
+                            : alphaCrop
                             && (alphaCrop.width < sourceWidth * 0.96 || alphaCrop.height < sourceHeight * 0.96)
                             ? alphaCrop
                             : { x: 0, y: 0, width: sourceWidth, height: sourceHeight };
@@ -2594,16 +2598,26 @@
                         output.width = CANVAS_WIDTH;
                         output.height = CANVAS_HEIGHT;
                         const context = output.getContext('2d');
+                        context.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+                        const targetFill = 0.9;
+                        const drawScale = Math.min(
+                            (CANVAS_WIDTH * targetFill) / crop.width,
+                            (CANVAS_HEIGHT * targetFill) / crop.height
+                        );
+                        const drawWidth = crop.width * drawScale;
+                        const drawHeight = crop.height * drawScale;
+                        const drawX = (CANVAS_WIDTH - drawWidth) / 2;
+                        const drawY = (CANVAS_HEIGHT - drawHeight) / 2;
                         context.drawImage(
                             element,
                             crop.x,
                             crop.y,
                             crop.width,
                             crop.height,
-                            0,
-                            0,
-                            CANVAS_WIDTH,
-                            CANVAS_HEIGHT
+                            drawX,
+                            drawY,
+                            drawWidth,
+                            drawHeight
                         );
                         return output.toDataURL('image/png');
                     } catch (error) {
