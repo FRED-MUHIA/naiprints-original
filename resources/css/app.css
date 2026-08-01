@@ -7493,8 +7493,11 @@
 
     @media (max-width: 640px) {
         .mockup-tools-menu {
-            width: min(100%, calc(100vw - 20px));
-            left: 50%;
+            position: static;
+            width: 100%;
+            max-width: none;
+            transform: none;
+            margin-top: 8px;
         }
     }
 
@@ -7933,15 +7936,22 @@
             gap: 10px;
             padding: 12px;
             width: 100%;
-            overflow: hidden;
+            overflow: visible;
+            background: #fff5f5;
+            position: sticky;
+            top: 0;
+            z-index: 35;
         }
 
         .mockup-stage-tabs {
             width: 100%;
-            justify-content: flex-start;
-            flex-wrap: nowrap;
-            overflow-x: auto;
-            scrollbar-width: none;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+            padding: 0;
+            background: transparent;
+            border: 0;
+            overflow: visible;
         }
 
         .mockup-stage-tabs::-webkit-scrollbar {
@@ -7949,15 +7959,36 @@
         }
 
         .mockup-stage-tab {
-            flex: 0 0 auto;
-            padding: 8px 14px;
-            white-space: nowrap;
+            min-width: 0;
+            min-height: 44px;
+            padding: 9px 10px;
+            white-space: normal;
+            line-height: 1.15;
+            text-align: center;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            background: #ffffff;
+            color: #0f172a;
+            box-shadow: 0 10px 20px -18px rgba(15, 23, 42, 0.45);
+        }
+
+        .mockup-stage-toolbar.is-tools-open .mockup-stage-tab[data-tools-toggle],
+        .mockup-stage-tab.is-active {
+            border-color: rgba(225, 29, 46, 0.45);
+            background: #fff1f2;
+            color: var(--mockup-accent);
         }
 
         .mockup-stage-actions {
             width: 100%;
-            justify-content: center;
-            flex-wrap: wrap;
+            justify-content: flex-start;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            padding-bottom: 2px;
+            scrollbar-width: none;
+        }
+
+        .mockup-stage-actions::-webkit-scrollbar {
+            display: none;
         }
 
         .mockup-panel-tabs {
@@ -7982,9 +8013,13 @@
         }
 
         .mockup-tools-menu {
-            left: 8px;
-            right: 8px;
-            width: auto;
+            position: static;
+            left: auto;
+            right: auto;
+            width: 100%;
+            max-width: none;
+            transform: none;
+            margin: 0;
         }
 
         .mockup-text-toolbar {
