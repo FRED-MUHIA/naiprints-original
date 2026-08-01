@@ -7933,21 +7933,20 @@
         .mockup-stage-toolbar {
             flex-direction: column;
             align-items: stretch;
-            gap: 10px;
-            padding: 12px;
+            gap: 6px;
+            padding: 6px 10px 8px;
             width: 100%;
             overflow: visible;
             background: #fff5f5;
-            position: sticky;
-            top: 0;
-            z-index: 35;
+            position: relative;
+            z-index: 20;
         }
 
         .mockup-stage-tabs {
             width: 100%;
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 8px;
+            gap: 6px;
             padding: 0;
             background: transparent;
             border: 0;
@@ -7960,15 +7959,16 @@
 
         .mockup-stage-tab {
             min-width: 0;
-            min-height: 44px;
-            padding: 9px 10px;
-            white-space: normal;
-            line-height: 1.15;
+            min-height: 34px;
+            padding: 5px 8px;
+            white-space: nowrap;
+            line-height: 1;
             text-align: center;
+            font-size: 0.78rem;
             border: 1px solid rgba(148, 163, 184, 0.3);
             background: #ffffff;
             color: #0f172a;
-            box-shadow: 0 10px 20px -18px rgba(15, 23, 42, 0.45);
+            box-shadow: 0 8px 16px -16px rgba(15, 23, 42, 0.45);
         }
 
         .mockup-stage-toolbar.is-tools-open .mockup-stage-tab[data-tools-toggle],
@@ -7983,8 +7983,21 @@
             justify-content: flex-start;
             flex-wrap: nowrap;
             overflow-x: auto;
-            padding-bottom: 2px;
+            gap: 6px;
+            padding-bottom: 0;
             scrollbar-width: none;
+        }
+
+        .mockup-stage .mockup-icon-btn {
+            width: 32px;
+            height: 32px;
+            min-width: 32px;
+            border-radius: 10px;
+        }
+
+        .mockup-stage .mockup-icon-btn svg {
+            width: 16px;
+            height: 16px;
         }
 
         .mockup-stage-actions::-webkit-scrollbar {
@@ -8047,8 +8060,9 @@
 
         .mockup-canvas-panel {
             width: 100%;
-            padding: 0 10px 12px;
-            --artboard-gap: 10px;
+            padding: 0 8px 8px;
+            gap: 4px;
+            --artboard-gap: 6px;
             --artboard-size: min(600px, calc(100vw - 44px));
         }
 
@@ -8095,12 +8109,19 @@
             position: static;
             transform: none;
             flex-direction: row;
-            gap: 10px;
-            margin-top: 10px;
+            gap: 8px;
+            margin-top: 4px;
+            padding: 5px 8px;
+        }
+
+        .mockup-flip-btn {
+            width: 30px;
+            height: 30px;
         }
 
         .mockup-flip-label {
             letter-spacing: 0.12em;
+            font-size: 0.68rem;
         }
 
         .mockup-add-page {
@@ -8126,12 +8147,17 @@
         }
 
         .mockup-stage-tabs {
-            gap: 6px;
+            gap: 5px;
+        }
+
+        .mockup-stage-tab {
+            font-size: 0.72rem;
+            padding-inline: 6px;
         }
 
         .mockup-canvas-panel {
-            --artboard-gap: 8px;
-            --artboard-size: min(600px, calc(100vw - 32px));
+            --artboard-gap: 5px;
+            --artboard-size: min(600px, calc(100vw - 28px));
         }
     }
 
