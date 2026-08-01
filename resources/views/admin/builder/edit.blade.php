@@ -1406,7 +1406,7 @@
                                             <div class="rounded-xl border border-slate-200 p-4">
                                                 <p class="text-sm font-semibold text-slate-700">{{ $productLabel }}</p>
                                                 <p class="mt-1 text-xs text-slate-500">
-                                                    One color per line. Accepted formats: "Name|#hex", "Name:#hex", or "#hex Name".
+                                                    One color per line. Use "Name|#hex", "Name:#hex", or "#hex Name" for exact custom colors. Common names like Red, Orange, Yellow, Green, Blue, Black, and White are also supported.
                                                 </p>
                                                 <textarea
                                                     name="sections[{{ $index }}][data][product_colors][{{ $productKey }}]"
@@ -1795,7 +1795,7 @@
                                 <div class="rounded-2xl border border-slate-200 p-4">
                                     <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Product Colors</p>
                                     <p class="mt-2 text-xs text-slate-500">
-                                        One color per line. Accepted formats: "Name|#hex", "Name:#hex", or "#hex Name".
+                                        One color per line. Use "Name|#hex", "Name:#hex", or "#hex Name" for exact custom colors. Common names like Red, Orange, Yellow, Green, Blue, Black, and White are also supported.
                                     </p>
                                     <div class="mt-3 grid gap-4" data-product-colors-list data-product-section="{{ $index }}">
                                         @foreach ($mockupProducts as $productKey => $productLabel)

@@ -4,10 +4,12 @@ const DESIGNER_MOCKUPS = DESIGNER_CONFIG.mockups || {};
 const DESIGNER_COLORS = DESIGNER_CONFIG.colors || {};
 const DESIGNER_PRODUCTS = DESIGNER_CONFIG.products || {};
 const DESIGNER_PRINT_AREAS = DESIGNER_CONFIG.print_areas || {};
-const HISTORY_STORAGE_KEY = 'nai_designer_project_history';
+const SAVED_DESIGNS_STORAGE_KEY = 'nai_designer_saved_designs';
+const LEGACY_HISTORY_STORAGE_KEY = 'nai_designer_project_history';
+const CART_STORAGE_KEY = 'nai_cart';
 const UPLOAD_STORAGE_KEY = 'nai_designer_uploads';
-const HISTORY_TTL_MS = 24 * 60 * 60 * 1000;
-const HISTORY_MAX_ENTRIES = 20;
+const HISTORY_TTL_MS = Number.POSITIVE_INFINITY;
+const HISTORY_MAX_ENTRIES = 50;
 const UPLOAD_MAX_ENTRIES = 40;
 const VIEW_EXPORT_SCALE = 3;
 const SHOW_GUIDE_HELP = true;
@@ -22,11 +24,40 @@ const GUIDE_ACTIVE_FILL = 'rgba(15, 23, 42, 0.03)';
 
 const isNonEmptyString = (value) => typeof value === 'string' && value.trim() !== '';
 
+const NAMED_COLOR_HEX = {
+    white: '#ffffff',
+    black: '#000000',
+    red: '#ff0000',
+    orange: '#ffa500',
+    yellow: '#ffff00',
+    green: '#008000',
+    blue: '#0000ff',
+    purple: '#800080',
+    violet: '#800080',
+    pink: '#ffc0cb',
+    magenta: '#ff00ff',
+    grey: '#808080',
+    gray: '#808080',
+    navy: '#000080',
+    brown: '#a52a2a',
+    cream: '#fffdd0',
+    ivory: '#fffff0',
+    maroon: '#800000',
+    teal: '#008080',
+    cyan: '#00ffff',
+    lime: '#00ff00',
+    gold: '#ffd700',
+    silver: '#c0c0c0',
+};
+
 const normalizeHexColor = (value) => {
     if (!isNonEmptyString(value)) {
         return '';
     }
     const raw = value.trim().toLowerCase();
+    if (NAMED_COLOR_HEX[raw]) {
+        return NAMED_COLOR_HEX[raw];
+    }
     const hex = raw.startsWith('#') ? raw.slice(1) : raw;
     if (/^[0-9a-f]{3}$/.test(hex)) {
         return `#${hex
@@ -43,6 +74,14 @@ const normalizeHexColor = (value) => {
 const coerceNumber = (value, fallback = null) => {
     const num = Number(value);
     return Number.isFinite(num) ? num : fallback;
+};
+
+const cloneSerializable = (value, fallback = null) => {
+    try {
+        return JSON.parse(JSON.stringify(value ?? fallback));
+    } catch (error) {
+        return fallback;
+    }
 };
 
 const normalizePrintAreas = (input) => {
@@ -272,17 +311,19 @@ const parseColorToken = (token) => {
         if (!value) {
             return null;
         }
-        return { name: name || value, value };
+        const normalized = normalizeHexColor(value);
+        return normalized ? { name: name || value, value: normalized } : null;
     }
 
     const hexMatch = raw.match(/#?[0-9a-fA-F]{3,6}/);
     if (hexMatch) {
-        const value = hexMatch[0];
+        const value = normalizeHexColor(hexMatch[0]);
         const name = raw.replace(hexMatch[0], '').trim();
         return { name: name || value, value };
     }
 
-    return { name: raw, value: raw };
+    const named = normalizeHexColor(raw);
+    return named ? { name: raw, value: named } : null;
 };
 
 const normalizeColorInput = (input) => {
@@ -297,7 +338,7 @@ const normalizeColorInput = (input) => {
                 }
                 if (entry && typeof entry === 'object') {
                     const name = entry.name || entry.label || entry.title || entry.key;
-                    const value = entry.value || entry.hex || entry.color;
+                    const value = normalizeHexColor(entry.value || entry.hex || entry.color || name || '');
                     return value ? { name: name || value, value } : null;
                 }
                 return null;
@@ -306,7 +347,10 @@ const normalizeColorInput = (input) => {
     }
     if (typeof input === 'object') {
         return Object.entries(input)
-            .map(([key, value]) => (isNonEmptyString(value) ? { name: key, value: value.trim() } : null))
+            .map(([key, value]) => {
+                const normalized = normalizeHexColor(value || key);
+                return normalized ? { name: key, value: normalized } : null;
+            })
             .filter(Boolean);
     }
     if (typeof input === 'string') {
@@ -597,7 +641,10 @@ const mountDesigner = () => {
         const activeRail = ref('Products');
         const projectHistory = ref([]);
         const uploads = ref([]);
+        const designerNotice = ref('');
+        const mobilePanelOpen = ref(false);
         let historyRefreshTimer = null;
+        let designerNoticeTimer = null;
         const viewDesigns = reactive({});
 
         const toolItems = [
@@ -650,10 +697,10 @@ const mountDesigner = () => {
 
         const readStoredHistory = () => {
             try {
-                const raw = localStorage.getItem(HISTORY_STORAGE_KEY);
-                if (!raw) {
-                    return [];
-                }
+                const raw =
+                    localStorage.getItem(SAVED_DESIGNS_STORAGE_KEY) ||
+                    localStorage.getItem(LEGACY_HISTORY_STORAGE_KEY);
+                if (!raw) return [];
                 const parsed = JSON.parse(raw);
                 return Array.isArray(parsed) ? parsed : [];
             } catch (error) {
@@ -676,12 +723,14 @@ const mountDesigner = () => {
 
         const pruneHistory = (entries) => {
             const now = Date.now();
-            return entries.filter((entry) => entry && now - (entry.timestamp || 0) <= HISTORY_TTL_MS);
+            return entries
+                .filter((entry) => entry && (!entry.timestamp || now - entry.timestamp <= HISTORY_TTL_MS))
+                .slice(0, HISTORY_MAX_ENTRIES);
         };
 
         const writeStoredHistory = (entries) => {
             try {
-                localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(entries));
+                localStorage.setItem(SAVED_DESIGNS_STORAGE_KEY, JSON.stringify(entries));
             } catch (error) {
                 // Ignore storage errors.
             }
@@ -716,6 +765,9 @@ const mountDesigner = () => {
             if (!timestamp) {
                 return '';
             }
+            if (!Number.isFinite(HISTORY_TTL_MS)) {
+                return 'Saved';
+            }
             const remaining = timestamp + HISTORY_TTL_MS - Date.now();
             if (remaining <= 0) {
                 return 'Expired';
@@ -724,33 +776,45 @@ const mountDesigner = () => {
             return `Expires in ${hours}h`;
         };
 
-        const saveProjectSnapshot = () => {
-            if (!canvas || !currentProduct.value || !currentView.value) {
-                return;
+        const showDesignerNotice = (message) => {
+            designerNotice.value = message;
+            if (designerNoticeTimer) {
+                clearTimeout(designerNoticeTimer);
             }
-            const snapshot = canvas.toJSON(['dataId', 'name', 'locked', 'isGuide']);
-            const entry = {
-                id: `proj-${Date.now()}`,
-                timestamp: Date.now(),
-                productId: currentProduct.value.id,
-                productName: currentProduct.value.name,
-                viewId: currentView.value.id,
-                viewLabel: currentView.value.label,
-                colorValue: selectedColor.value?.value || '',
-                snapshot,
-            };
+            designerNoticeTimer = window.setTimeout(() => {
+                designerNotice.value = '';
+            }, 2600);
+        };
+
+        const getEntrySignature = (entry) =>
+            JSON.stringify({
+                productId: entry?.productId || '',
+                colorValue: entry?.colorValue || '',
+                viewDesigns: entry?.viewDesigns || (entry?.snapshot ? { [entry.viewId || 'front']: entry.snapshot } : {}),
+                printAreas: entry?.printAreas || {},
+            });
+
+        const saveProjectSnapshot = async () => {
+            if (!canvas || !currentProduct.value || !currentView.value) {
+                return null;
+            }
+            const entry = await buildSavedDesignEntry();
+            if (!entry) {
+                return null;
+            }
 
             const existing = pruneHistory(readStoredHistory());
             const latest = existing[0];
-            const latestSnapshot = latest ? JSON.stringify(latest.snapshot) : '';
-            const currentSnapshot = JSON.stringify(snapshot);
-            if (latestSnapshot && latestSnapshot === currentSnapshot) {
-                return;
+            if (latest && getEntrySignature(latest) === getEntrySignature(entry)) {
+                showDesignerNotice('Design already saved.');
+                return latest;
             }
 
             const nextEntries = [entry, ...existing].slice(0, HISTORY_MAX_ENTRIES);
             writeStoredHistory(nextEntries);
             projectHistory.value = nextEntries;
+            showDesignerNotice('Design saved.');
+            return entry;
         };
 
 
@@ -934,12 +998,19 @@ const mountDesigner = () => {
 
         const selectRail = (label) => {
             activeRail.value = label;
+            if (window.matchMedia?.('(max-width: 640px)')?.matches) {
+                mobilePanelOpen.value = true;
+            }
             if (label === 'Projects') {
                 refreshProjectHistory();
             }
             if (label === 'Uploads') {
                 refreshUploads();
             }
+        };
+
+        const closeMobilePanel = () => {
+            mobilePanelOpen.value = false;
         };
 
         const selectTool = (toolId) => {
@@ -958,7 +1029,7 @@ const mountDesigner = () => {
             projectHistory.value = pruneHistory(nextEntries);
         };
 
-        const loadHistoryEntry = (entryId) => {
+        const loadHistoryEntry = async (entryId) => {
             const entries = pruneHistory(readStoredHistory());
             const entry = entries.find((item) => item?.id === entryId);
             if (!entry) {
@@ -978,23 +1049,21 @@ const mountDesigner = () => {
             if (!canvas) {
                 return;
             }
-            isRestoring = true;
-            guideRect = null;
-            clipRect = null;
-            canvas.loadFromJSON(entry.snapshot, () => {
-                canvas.getObjects().forEach((obj) => {
-                    if (obj.isGuide) {
-                        obj.selectable = false;
-                        obj.evented = false;
-                        obj.excludeFromExport = true;
-                    }
-                });
-                applyPrintArea();
-                canvas.requestRenderAll();
-                syncLayers();
-                updateActiveObject(null);
-                isRestoring = false;
-            });
+
+            const savedViews =
+                cloneSerializable(entry.viewDesigns, null) ||
+                (entry.snapshot ? { [entry.viewId || selectedViewId.value]: entry.snapshot } : {});
+            Object.keys(viewDesigns).forEach((key) => delete viewDesigns[key]);
+            viewDesigns[product.id] = savedViews;
+
+            Object.keys(customPrintAreas).forEach((key) => delete customPrintAreas[key]);
+            if (entry.printAreas && typeof entry.printAreas === 'object') {
+                customPrintAreas[product.id] = cloneSerializable(entry.printAreas, {});
+            }
+
+            await refreshPhotoBounds();
+            await loadViewDesign(product.id, selectedViewId.value);
+            showDesignerNotice('Design loaded.');
         };
 
         const syncLayers = () => {
@@ -1377,6 +1446,127 @@ const mountDesigner = () => {
         const loadViewDesign = async (productId, viewId) => {
             const json = viewDesigns[productId]?.[viewId] || null;
             await loadCanvasFromJson(json);
+        };
+
+        const buildSavedDesignEntry = async () => {
+            if (!canvas || !currentProduct.value || !currentView.value) {
+                return null;
+            }
+
+            saveCurrentViewDesign();
+            const product = currentProduct.value;
+            const view = currentView.value;
+            const productDesigns = cloneSerializable(viewDesigns[product.id] || {}, {});
+            if (!productDesigns[view.id]) {
+                productDesigns[view.id] = serializeCanvas();
+            }
+            await refreshPhotoBounds();
+
+            return {
+                id: `design-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                timestamp: Date.now(),
+                productId: product.id,
+                productName: product.name,
+                viewId: view.id,
+                viewLabel: view.label,
+                colorName: selectedColor.value?.name || '',
+                colorValue: selectedColor.value?.value || '',
+                printAreas: cloneSerializable(customPrintAreas[product.id] || {}, {}),
+                viewDesigns: productDesigns,
+                preview: await renderCurrentMockupDataUrl('image/jpeg', 0.86),
+            };
+        };
+
+        const readCart = () => {
+            try {
+                const parsed = JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || '[]');
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (error) {
+                return [];
+            }
+        };
+
+        const writeCart = (items) => {
+            try {
+                localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+                return true;
+            } catch (error) {
+                showDesignerNotice('Cart storage is full. Try removing older cart items.');
+                return false;
+            }
+        };
+
+        const getSavedEntryViewCount = (entry) =>
+            Object.keys(entry?.viewDesigns || {}).filter(
+                (viewId) => (entry.viewDesigns?.[viewId]?.objects || []).length > 0
+            ).length;
+
+        const buildDesignerCartItem = (entry) => {
+            const colorLabel = entry.colorName || entry.colorValue || 'Default color';
+            const viewCount = Math.max(1, getSavedEntryViewCount(entry));
+            return {
+                id: `designer-${entry.id}`,
+                name: `Custom ${entry.productName || 'product'} design`,
+                price: Number(DESIGNER_CONFIG.design_price || 0),
+                qty: 1,
+                image: '',
+                url: DESIGNER_CONFIG.checkout_url || '/checkout',
+                selection: `${entry.viewLabel || 'Design'} view`,
+                customNote: `${entry.productName || 'Product'} / ${colorLabel} / ${viewCount} saved view${viewCount === 1 ? '' : 's'}`,
+                customImageData: entry.preview || '',
+                customImageName: `${entry.productId || 'design'}-${entry.id}.jpg`,
+                color: colorLabel,
+                designerDesignId: entry.id,
+            };
+        };
+
+        const mergeDesignerCartItem = (items, entry) => {
+            const item = buildDesignerCartItem(entry);
+            const existing = items.find((cartItem) => cartItem.id === item.id);
+            if (existing) {
+                existing.qty = (Number(existing.qty) || 1) + 1;
+                return;
+            }
+            items.push(item);
+        };
+
+        const addCurrentDesignToCart = async () => {
+            const entry = await saveProjectSnapshot();
+            if (!entry) {
+                return;
+            }
+
+            const cartItems = readCart();
+            mergeDesignerCartItem(cartItems, entry);
+            if (writeCart(cartItems)) {
+                showDesignerNotice('Design added to cart.');
+            }
+        };
+
+        const addSavedDesignToCart = (entryId) => {
+            const entry = pruneHistory(readStoredHistory()).find((item) => item?.id === entryId);
+            if (!entry) {
+                refreshProjectHistory();
+                return;
+            }
+            const cartItems = readCart();
+            mergeDesignerCartItem(cartItems, entry);
+            if (writeCart(cartItems)) {
+                showDesignerNotice('Saved design added to cart.');
+            }
+        };
+
+        const addAllSavedDesignsToCart = () => {
+            const entries = pruneHistory(readStoredHistory());
+            if (!entries.length) {
+                showDesignerNotice('No saved designs yet.');
+                return;
+            }
+            const cartItems = readCart();
+            entries.forEach((entry) => mergeDesignerCartItem(cartItems, entry));
+            if (writeCart(cartItems)) {
+                showDesignerNotice(`${entries.length} saved design${entries.length === 1 ? '' : 's'} added to cart.`);
+            }
         };
 
         const constrainGuideRect = (rect) => {
@@ -2204,6 +2394,15 @@ const mountDesigner = () => {
             ctx.drawImage(overlayLayer, 0, 0, BASE_SIZE.width, BASE_SIZE.height);
         };
 
+        const renderCurrentMockupDataUrl = async (mimeType = 'image/jpeg', quality = 0.9) => {
+            const output = document.createElement('canvas');
+            output.width = BASE_SIZE.width;
+            output.height = BASE_SIZE.height;
+            const ctx = output.getContext('2d');
+            await drawMockupComposite(ctx);
+            return output.toDataURL(mimeType, quality);
+        };
+
         const refreshPhotoBounds = async () => {
             photoBounds.value = null;
             if (!hasPhotoMockup.value || !currentMockupImage.value) {
@@ -2265,12 +2464,7 @@ const mountDesigner = () => {
             if (!canvas) {
                 return;
             }
-            const output = document.createElement('canvas');
-            output.width = BASE_SIZE.width;
-            output.height = BASE_SIZE.height;
-            const ctx = output.getContext('2d');
-            await drawMockupComposite(ctx);
-            const dataUrl = output.toDataURL('image/jpeg', 0.92);
+            const dataUrl = await renderCurrentMockupDataUrl('image/jpeg', 0.92);
             downloadData(dataUrl, `${currentProduct.value.name}-mockup.jpg`);
         };
 
@@ -2516,6 +2710,9 @@ const mountDesigner = () => {
             if (historyRefreshTimer) {
                 clearInterval(historyRefreshTimer);
             }
+            if (designerNoticeTimer) {
+                clearTimeout(designerNoticeTimer);
+            }
             const stageEl = stageRef.value;
             if (stageEl) {
                 stageEl.removeEventListener('dragover', handleStageDragOver);
@@ -2562,6 +2759,8 @@ const mountDesigner = () => {
             activeRail,
             projectHistory,
             uploads,
+            designerNotice,
+            mobilePanelOpen,
             toolItems,
             selectedToolId,
             textSize,
@@ -2588,6 +2787,7 @@ const mountDesigner = () => {
             selectLayer,
             toggleLock,
             removeLayer,
+            deleteSelection,
             applyOpacity,
             applyRotation,
             flipHorizontal,
@@ -2603,9 +2803,13 @@ const mountDesigner = () => {
             downloadAllViewsZip,
             toggleMenu,
             selectRail,
+            closeMobilePanel,
             selectTool,
             triggerMenuUpload,
             saveProjectSnapshot,
+            addCurrentDesignToCart,
+            addSavedDesignToCart,
+            addAllSavedDesignsToCart,
             loadHistoryEntry,
             deleteHistoryEntry,
             formatHistoryTime,

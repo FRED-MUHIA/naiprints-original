@@ -48,6 +48,7 @@
                 'colors' => $designerData['product_colors'] ?? [],
                 'products' => $designerData['products'] ?? [],
                 'print_areas' => $designerData['print_areas'] ?? [],
+                'checkout_url' => route('checkout'),
             ];
         @endphp
         <div id="designer-app" class="min-h-screen editor-shell">
@@ -109,10 +110,11 @@
                 </div>
                 <div class="canva-topbar-right">
                     <button class="canva-avatar">{{ $userInitials }}</button>
+                    <span v-if="designerNotice" class="designer-status">@{{ designerNotice }}</span>
                     <button type="button" class="canva-pill" @click="saveProjectSnapshot">Save</button>
                     <button class="canva-icon-btn">📊</button>
                     <button class="canva-icon-btn">💬</button>
-                    <a class="canva-action-primary" href="{{ $addToCartUrl }}">{{ $addToCartLabel }}</a>
+                    <button class="canva-action-primary" type="button" @click="addCurrentDesignToCart">{{ $addToCartLabel }}</button>
                     <a class="canva-action-secondary" href="{{ $backToShopUrl }}">{{ $backToShopLabel }}</a>
                     <button class="canva-share">{{ $shareLabel }}</button>
                 </div>
@@ -142,13 +144,25 @@
                     @endforeach
                 </aside>
 
-                <aside class="canva-library">
+                <aside class="canva-library" :class="{ 'is-mobile-open': mobilePanelOpen }">
+                    <div class="mobile-panel-header">
+                        <span>@{{ activeRail }}</span>
+                        <button type="button" class="mobile-panel-close" @click="closeMobilePanel" aria-label="Close panel">×</button>
+                    </div>
                     <div class="canva-library-scroll">
                         <div v-if="activeRail === 'Projects'" class="canva-section">
-                            <h3>Project History</h3>
+                            <div class="editor-history-header">
+                                <h3>Saved Designs</h3>
+                                <button v-if="projectHistory.length"
+                                        type="button"
+                                        class="editor-history-btn"
+                                        @click="addAllSavedDesignsToCart">
+                                    Add all
+                                </button>
+                            </div>
                             <div class="editor-history-list">
                                 <div v-if="!projectHistory.length" class="editor-history-empty">
-                                    No saved history yet.
+                                    No saved designs yet.
                                 </div>
                                 <div v-for="entry in projectHistory" :key="entry.id" class="editor-history-item">
                                     <div class="editor-history-meta">
@@ -161,6 +175,7 @@
                                     </div>
                                     <div class="editor-history-actions">
                                         <button type="button" class="editor-history-btn" @click="loadHistoryEntry(entry.id)">Load</button>
+                                        <button type="button" class="editor-history-btn" @click="addSavedDesignToCart(entry.id)">Add</button>
                                         <button type="button" class="editor-history-btn ghost" @click="deleteHistoryEntry(entry.id)">Delete</button>
                                     </div>
                                 </div>
@@ -360,6 +375,14 @@
 
                 <main class="canva-canvas">
                     <div class="canva-canvas-stage">
+                        <div class="mobile-editor-toolbar" aria-label="Quick editor tools">
+                            <button type="button" @click="undo" :disabled="!canUndo" aria-label="Undo">↶</button>
+                            <button type="button" @click="redo" :disabled="!canRedo" aria-label="Redo">↷</button>
+                            <button type="button" @click="selectRail('Uploads')" aria-label="Uploads">⌁</button>
+                            <button type="button" @click="selectRail('Tools'); selectTool('text')" aria-label="Text">T</button>
+                            <button type="button" @click="deleteSelection" aria-label="Delete selected">⌫</button>
+                            <button type="button" @click="downloadPrint" aria-label="Download print">↓</button>
+                        </div>
                         <div class="mockup-stage artboard" ref="stageRef">
                             <div class="artboard-media">
                                 <div v-if="hasPhotoMockup"

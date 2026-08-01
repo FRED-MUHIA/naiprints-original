@@ -1502,10 +1502,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const media = document.createElement('div');
         media.className = 'cart-item-media';
+        const itemImage = item.image || item.customImageData || item.customImage || '';
 
-        if (item.image) {
+        if (itemImage) {
             const image = document.createElement('img');
-            image.src = item.image;
+            image.src = itemImage;
             image.alt = item.name || 'Product';
             media.appendChild(image);
         } else {

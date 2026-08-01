@@ -1054,6 +1054,32 @@
                     back: 'Back',
                 };
 
+                const NAMED_COLOR_HEX = {
+                    white: '#ffffff',
+                    black: '#000000',
+                    red: '#ff0000',
+                    orange: '#ffa500',
+                    yellow: '#ffff00',
+                    green: '#008000',
+                    blue: '#0000ff',
+                    purple: '#800080',
+                    violet: '#800080',
+                    pink: '#ffc0cb',
+                    magenta: '#ff00ff',
+                    grey: '#808080',
+                    gray: '#808080',
+                    navy: '#000080',
+                    brown: '#a52a2a',
+                    cream: '#fffdd0',
+                    ivory: '#fffff0',
+                    maroon: '#800000',
+                    teal: '#008080',
+                    cyan: '#00ffff',
+                    lime: '#00ff00',
+                    gold: '#ffd700',
+                    silver: '#c0c0c0',
+                };
+
                 const normalizeHex = (value) => {
                     if (typeof value !== 'string') {
                         return '';
@@ -1062,13 +1088,27 @@
                     if (!trimmed) {
                         return '';
                     }
+                    const named = NAMED_COLOR_HEX[trimmed.toLowerCase()];
+                    if (named) {
+                        return named;
+                    }
                     if (trimmed.startsWith('#')) {
-                        return trimmed;
+                        const hex = trimmed.slice(1);
+                        if (/^[0-9a-fA-F]{3}$/.test(hex)) {
+                            return `#${hex
+                                .split('')
+                                .map((char) => `${char}${char}`)
+                                .join('')}`.toLowerCase();
+                        }
+                        if (/^[0-9a-fA-F]{6}$/.test(hex)) {
+                            return `#${hex.toLowerCase()}`;
+                        }
+                        return '';
                     }
                     if (/^[0-9a-fA-F]{3}$/.test(trimmed) || /^[0-9a-fA-F]{6}$/.test(trimmed)) {
-                        return `#${trimmed}`;
+                        return normalizeHex(`#${trimmed}`);
                     }
-                    return trimmed;
+                    return '';
                 };
 
                 const parseColorLine = (line) => {
