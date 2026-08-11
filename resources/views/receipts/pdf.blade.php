@@ -12,6 +12,7 @@
         }
     }
     $accent = $settings->theme_color ?: '#e11d2e';
+    $contactLines = $settings->documentContactLines(false);
 @endphp
 <!doctype html>
 <html lang="en">
@@ -48,7 +49,9 @@
             <div>
                 <div class="section-title">Receipt</div>
                 <div style="font-size: 16px; font-weight: bold;">{{ $settings->business_name }}</div>
-                <div style="color: #6b7280;">{{ $settings->phone }} {{ $settings->email }}</div>
+                @foreach ($contactLines as $line)
+                    <div style="color: #6b7280;">{{ $line }}</div>
+                @endforeach
             </div>
         </div>
         <div style="text-align: right;">

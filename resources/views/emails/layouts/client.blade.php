@@ -31,8 +31,9 @@
         @php
             $brandName = $brandName ?? config('mail.from.name', config('app.name', 'Nai Prints'));
             $logoUrl = trim((string) ($logoUrl ?? url('/images/logo.svg')));
-            $supportEmail = $supportEmail ?? config('mail.support.address', config('mail.from.address', ''));
-            $supportPhone = $supportPhone ?? '';
+            $supportEmail = trim((string) ($supportEmail ?? '')) ?: \App\Models\InvoiceSetting::DEFAULT_EMAIL;
+            $supportPhone = trim((string) ($supportPhone ?? '')) ?: \App\Models\InvoiceSetting::DEFAULT_PHONE;
+            $supportLocation = trim((string) ($supportLocation ?? '')) ?: \App\Models\InvoiceSetting::DEFAULT_LOCATION;
             $supportWebsite = 'https://naiprints.co.ke/';
             $preheader = trim($__env->yieldContent('preheader'));
             $heroEyebrow = trim($__env->yieldContent('hero_eyebrow'));
@@ -111,25 +112,14 @@
                         <tr>
                             <td class="email-pad" style="padding:20px 24px 24px;">
                                 <p style="margin:0 0 8px;font-size:20px;line-height:1.3;font-weight:700;color:#111827;">Need help with this update?</p>
-                                @if ($supportEmail !== '' || $supportPhone !== '' || $supportWebsite !== '')
-                                    <p style="margin:0;font-size:14px;line-height:1.6;color:#475569;">
-                                        @if ($supportEmail !== '')
-                                            Email: <a href="mailto:{{ $supportEmail }}" style="color:#e11d2e;text-decoration:none;">{{ $supportEmail }}</a>
-                                        @endif
-                                        @if ($supportPhone !== '')
-                                            @if ($supportEmail !== '')
-                                                <span style="color:#d1d5db;"> | </span>
-                                            @endif
-                                            Phone: {{ $supportPhone }}
-                                        @endif
-                                        @if ($supportWebsite !== '')
-                                            @if ($supportEmail !== '' || $supportPhone !== '')
-                                                <span style="color:#d1d5db;"> | </span>
-                                            @endif
-                                            <a href="{{ $supportWebsite }}" style="color:#e11d2e;text-decoration:none;">Visit our website</a>
-                                        @endif
-                                    </p>
-                                @endif
+                                <div style="font-size:14px;line-height:1.6;color:#475569;">
+                                    <div>Phone: {{ $supportPhone }}</div>
+                                    <div>Email: <a href="mailto:{{ $supportEmail }}" style="color:#e11d2e;text-decoration:none;">{{ $supportEmail }}</a></div>
+                                    <div>Location: {{ $supportLocation }}</div>
+                                    @if ($supportWebsite !== '')
+                                        <div><a href="{{ $supportWebsite }}" style="color:#e11d2e;text-decoration:none;">Visit our website</a></div>
+                                    @endif
+                                </div>
                                 @if ($footerNote !== '')
                                     <p style="margin:10px 0 0;font-size:12px;line-height:1.5;color:#94a3b8;">{{ $footerNote }}</p>
                                 @endif

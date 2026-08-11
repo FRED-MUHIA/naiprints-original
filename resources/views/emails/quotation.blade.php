@@ -4,8 +4,9 @@
     $logoUrl = $settings?->logo_path
         ? url(\Illuminate\Support\Facades\Storage::url($settings->logo_path))
         : url('/images/logo.svg');
-    $supportEmail = $settings?->email ?: config('mail.support.address', config('mail.from.address', ''));
-    $supportPhone = $settings?->phone ?: '';
+    $supportEmail = $settings?->email ?: \App\Models\InvoiceSetting::DEFAULT_EMAIL;
+    $supportPhone = $settings?->phone ?: \App\Models\InvoiceSetting::DEFAULT_PHONE;
+    $supportLocation = \App\Models\InvoiceSetting::DEFAULT_LOCATION;
     $supportWebsite = $settings?->website ?: config('app.url');
 @endphp
 

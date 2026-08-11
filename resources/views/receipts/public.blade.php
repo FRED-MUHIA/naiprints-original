@@ -1,6 +1,7 @@
 @php
     use Illuminate\Support\Facades\Storage;
     $logoUrl = $settings->logo_path ? Storage::url($settings->logo_path) : null;
+    $contactLines = $settings->documentContactLines(false);
 @endphp
 
 <!doctype html>
@@ -27,7 +28,9 @@
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Receipt</p>
                         <h1 class="text-2xl font-semibold">{{ $settings->business_name }}</h1>
-                        <p class="text-sm text-slate-500">{{ $settings->phone }} {{ $settings->email }}</p>
+                        @foreach ($contactLines as $line)
+                            <p class="text-sm text-slate-500">{{ $line }}</p>
+                        @endforeach
                     </div>
                 </div>
                 <div class="text-right">

@@ -6,6 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class InvoiceSetting extends Model
 {
+    public const DEFAULT_PHONE = '254745506619';
+    public const DEFAULT_EMAIL = 'info@naiprints.co.ke';
+    public const DEFAULT_LOCATION = 'Kijabe streets, Norfolk Towers.';
+
     protected $fillable = [
         'business_name',
         'phone',
@@ -29,13 +33,31 @@ class InvoiceSetting extends Model
     {
         return [
             'business_name' => 'Nai Prints',
-            'phone' => '',
-            'email' => '',
+            'phone' => self::DEFAULT_PHONE,
+            'email' => self::DEFAULT_EMAIL,
             'website' => '',
             'theme_color' => '#e11d2e',
             'footer_text' => 'Thank you for choosing Nai Prints.',
             'payment_methods' => ['M-Pesa', 'Bank Transfer', 'Cash'],
             'bank_details' => '',
         ];
+    }
+
+    public function documentContactLines(bool $includeWebsite = true): array
+    {
+        $lines = [
+            trim((string) $this->phone) ?: self::DEFAULT_PHONE,
+            trim((string) $this->email) ?: self::DEFAULT_EMAIL,
+            self::DEFAULT_LOCATION,
+        ];
+
+        if ($includeWebsite) {
+            $website = trim((string) $this->website);
+            if ($website !== '') {
+                $lines[] = $website;
+            }
+        }
+
+        return $lines;
     }
 }

@@ -1,6 +1,7 @@
 @php
     use Illuminate\Support\Facades\Storage;
     $accent = $settings->theme_color ?: '#e11d2e';
+    $contactLines = $settings->documentContactLines();
 
     $logoUrl = null;
     if ($settings->logo_path && Storage::disk('public')->exists($settings->logo_path)) {
@@ -77,8 +78,9 @@
                         @endif
                         <div>
                             <div class="brand-name">{{ $settings->business_name }}</div>
-                            <div class="muted">{{ $settings->phone }} {{ $settings->email }}</div>
-                            <div class="muted">{{ $settings->website }}</div>
+                            @foreach ($contactLines as $line)
+                                <div class="muted">{{ $line }}</div>
+                            @endforeach
                         </div>
                     </div>
                 </td>
