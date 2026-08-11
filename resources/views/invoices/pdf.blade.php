@@ -165,7 +165,7 @@
     @if ($settings->payment_methods)
         <div class="footer">
             <div class="section-title">Payment Methods</div>
-            {{ implode(', ', $settings->payment_methods) }}
+            <strong>{{ implode(', ', $settings->payment_methods) }}</strong>
         </div>
     @endif
     @if (!empty($settings->bank_details))

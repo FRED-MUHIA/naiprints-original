@@ -162,7 +162,7 @@
                                 @foreach ($settings->payment_methods as $method)
                                     @php $methodLower = strtolower((string) $method); @endphp
                                     <li class="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2">
-                                        <span class="text-slate-700">{{ $method }}</span>
+                                        <span class="font-semibold text-slate-900">{{ $method }}</span>
                                         @if (in_array($methodLower, ['m-pesa', 'mpesa']) && $showMpesaPay)
                                             <button type="button"
                                                     id="mpesa-inline-open"
