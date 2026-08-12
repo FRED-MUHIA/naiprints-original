@@ -409,8 +409,14 @@ class MpesaService
     private function tokenCacheKey(): string
     {
         $config = $this->config();
+        $environment = $config['environment'] ?? 'sandbox';
+        $fingerprint = substr(hash('sha256', implode('|', [
+            $environment,
+            (string) ($config['consumer_key'] ?? ''),
+            (string) ($config['consumer_secret'] ?? ''),
+        ])), 0, 12);
 
-        return 'mpesa_token_' . ($config['environment'] ?? 'sandbox');
+        return "mpesa_token_{$environment}_{$fingerprint}";
     }
 
     private function timeoutSeconds(): int
@@ -466,14 +472,19 @@ class MpesaService
 
         if ($response) {
             $body = $this->extractHttpBody($response);
+            $statusCode = $this->extractHttpStatusCode($response);
             $errorCode = $body['errorCode'] ?? null;
-            $errorMessage = $body['errorMessage'] ?? null;
+            $errorMessage = $body['errorMessage'] ?? $body['error_description'] ?? $body['ResponseDescription'] ?? null;
+            $oauthError = $body['error'] ?? null;
             $requestId = $body['requestId'] ?? null;
 
-            if ($errorCode || $errorMessage || $requestId) {
+            if ($errorCode || $oauthError || $errorMessage || $requestId) {
                 $parts = [];
                 if ($errorCode) {
                     $parts[] = "code {$errorCode}";
+                }
+                if ($oauthError) {
+                    $parts[] = "OAuth {$oauthError}";
                 }
                 if ($errorMessage) {
                     $parts[] = $errorMessage;
@@ -483,17 +494,107 @@ class MpesaService
                 }
                 $message = 'M-Pesa API error: ' . implode(' | ', $parts);
 
-                if ((string) $errorCode === '500.001.1001') {
-                    $config = $this->config();
-                    $environment = $config['environment'] ?? 'sandbox';
-                    $shortcode = $config['shortcode'] ?? 'N/A';
-                    $transactionType = $config['transaction_type'] ?? 'CustomerPayBillOnline';
-                    $message .= " | Confirm environment ({$environment}), transaction type ({$transactionType}), shortcode ({$shortcode}), and passkey belong to the same Daraja app. If a recent STK prompt is still pending on this phone, wait 2 minutes and retry.";
+                return $this->appendMpesaTroubleshootingHint($message, $exception);
+            }
+
+            if ($this->isOauthTokenRequest($exception)) {
+                $message = 'M-Pesa OAuth failed';
+                if ($statusCode) {
+                    $message .= " with HTTP {$statusCode}";
                 }
+                $message .= '. Confirm the consumer key/secret belong to the selected Daraja environment.';
+
+                $rawBody = $this->extractRawHttpBody($response);
+                if ($rawBody !== '') {
+                    $message .= ' Safaricom response: ' . $this->summarizeHttpBody($rawBody);
+                }
+
+                return $message;
+            }
+
+            $rawBody = $this->extractRawHttpBody($response);
+            if ($rawBody !== '') {
+                $message = 'M-Pesa API error';
+                if ($statusCode) {
+                    $message .= " HTTP {$statusCode}";
+                }
+                $message .= ': ' . $this->summarizeHttpBody($rawBody);
             }
         }
 
         return $message;
+    }
+
+    private function appendMpesaTroubleshootingHint(string $message, \Throwable $exception): string
+    {
+        $config = $this->config();
+        $environment = $config['environment'] ?? 'sandbox';
+
+        if ($this->isOauthTokenRequest($exception)) {
+            return "{$message} | Confirm consumer key/secret belong to the {$environment} Daraja app.";
+        }
+
+        $response = $this->extractHttpResponse($exception);
+        $body = $response ? $this->extractHttpBody($response) : [];
+
+        if ((string) ($body['errorCode'] ?? '') === '500.001.1001') {
+            $shortcode = $config['shortcode'] ?? 'N/A';
+            $transactionType = $config['transaction_type'] ?? 'CustomerPayBillOnline';
+
+            return "{$message} | Confirm environment ({$environment}), transaction type ({$transactionType}), shortcode ({$shortcode}), and passkey belong to the same Daraja app. If a recent STK prompt is still pending on this phone, wait 2 minutes and retry.";
+        }
+
+        return $message;
+    }
+
+    private function extractHttpStatusCode(mixed $response): ?int
+    {
+        if (is_object($response) && method_exists($response, 'getStatusCode')) {
+            try {
+                return (int) $response->getStatusCode();
+            } catch (\Throwable $exception) {
+                return null;
+            }
+        }
+
+        if (is_object($response) && method_exists($response, 'status')) {
+            try {
+                return (int) $response->status();
+            } catch (\Throwable $exception) {
+                return null;
+            }
+        }
+
+        return null;
+    }
+
+    private function isOauthTokenRequest(\Throwable $exception): bool
+    {
+        if (!method_exists($exception, 'getRequest')) {
+            return false;
+        }
+
+        try {
+            $request = $exception->getRequest();
+            if (!is_object($request) || !method_exists($request, 'getUri')) {
+                return false;
+            }
+
+            return str_contains((string) $request->getUri(), '/oauth/v1/generate');
+        } catch (\Throwable $exception) {
+            return false;
+        }
+    }
+
+    private function summarizeHttpBody(string $raw): string
+    {
+        $summary = preg_replace('/\s+/', ' ', trim($raw)) ?? '';
+
+        if (strlen($summary) > 300) {
+            return substr($summary, 0, 297) . '...';
+        }
+
+        return $summary;
     }
 
     private function extractHttpResponse(\Throwable $exception): mixed
@@ -561,5 +662,26 @@ class MpesaService
         $decoded = json_decode($raw, true);
 
         return is_array($decoded) ? $decoded : [];
+    }
+
+    private function extractRawHttpBody(mixed $response): string
+    {
+        if (is_object($response) && method_exists($response, 'getBody')) {
+            try {
+                return (string) $response->getBody();
+            } catch (\Throwable $exception) {
+                return '';
+            }
+        }
+
+        if (is_object($response) && method_exists($response, 'body')) {
+            try {
+                return (string) $response->body();
+            } catch (\Throwable $exception) {
+                return '';
+            }
+        }
+
+        return '';
     }
 }
