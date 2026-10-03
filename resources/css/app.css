@@ -5450,6 +5450,97 @@
 }
 
 @layer components {
+    .county-slider {
+        margin-bottom: 3rem;
+    }
+
+    .county-slider-heading {
+        margin-bottom: 1rem;
+    }
+
+    .county-slider-pause {
+        accent-color: #145467;
+        margin-right: .35rem;
+    }
+
+    .county-slider-pause-label {
+        font-size: .8rem;
+        color: #475569;
+        cursor: pointer;
+    }
+
+    .county-slider-viewport {
+        overflow-x: auto;
+        margin-top: 1rem;
+        border-radius: 1.25rem;
+        background: #082f40;
+        padding: 1.25rem 0;
+        scrollbar-width: thin;
+        scrollbar-color: #346071 #082f40;
+    }
+
+    .county-slider-track {
+        display: flex;
+        width: max-content;
+        animation: county-slider-scroll 180s linear infinite;
+    }
+
+    .county-slider-group {
+        display: flex;
+        flex-shrink: 0;
+        align-items: center;
+        gap: .75rem;
+        padding: 0 .75rem 0 0;
+        margin: 0;
+        list-style: none;
+    }
+
+    .county-slider-pill {
+        display: flex;
+        align-items: center;
+        gap: .65rem;
+        padding: .8rem 1.1rem;
+        border: 1px solid #346071;
+        border-radius: 999px;
+        background: #123f51;
+        color: #d5e5ee;
+        font-size: .95rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .county-slider-flag {
+        width: 1.6rem;
+        height: 1.1rem;
+        border-radius: 3px;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .county-slider-dot {
+        width: .45rem;
+        height: .45rem;
+        border-radius: 50%;
+        background: #83bd47;
+    }
+
+    .county-slider-viewport:hover .county-slider-track,
+    .county-slider-viewport:focus-within .county-slider-track,
+    .county-slider-pause:checked ~ .county-slider-viewport .county-slider-track {
+        animation-play-state: paused;
+    }
+
+    @keyframes county-slider-scroll {
+        to { transform: translateX(-50%); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .county-slider-track { animation: none; }
+        .county-slider-group[aria-hidden="true"],
+        .county-slider-pause,
+        .county-slider-pause-label { display: none; }
+    }
+
     .newsletter-card {
         border-radius: 20px;
         border: 1px solid rgba(225, 29, 46, 0.25);

@@ -1139,6 +1139,7 @@
                             </div>
                         </section>
                         <section class="mx-auto max-w-6xl px-4 pb-14">
+                            @include('partials.county-slider')
                             <div class="newsletter-card">
                                 <div class="newsletter-content">
                                     <div class="newsletter-copy">
