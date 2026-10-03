@@ -5459,13 +5459,20 @@
     }
 
     .county-slider-viewport {
-        --county-edge-fade: clamp(1.5rem, 5vw, 4rem);
         overflow-x: auto;
         margin-top: 1rem;
         padding: 1.25rem 0;
         scrollbar-width: none;
-        -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--county-edge-fade), #000 calc(100% - var(--county-edge-fade)), transparent);
-        mask-image: linear-gradient(to right, transparent, #000 var(--county-edge-fade), #000 calc(100% - var(--county-edge-fade)), transparent);
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+        outline: none;
+    }
+
+    .county-slider-viewport:focus-visible .county-slider-pill {
+        text-decoration: underline;
+        text-underline-offset: .2em;
     }
 
     .county-slider-viewport::-webkit-scrollbar {

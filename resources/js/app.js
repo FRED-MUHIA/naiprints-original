@@ -1,9 +1,11 @@
 import './bootstrap';
 import './designer';
+import { mountCountySliders } from './county-slider';
 import { mountJerseyDesigner } from './jersey-3d-designer';
 
 document.addEventListener('DOMContentLoaded', () => {
     mountJerseyDesigner();
+    mountCountySliders();
 
     const shouldPlayOpeningWipe = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (shouldPlayOpeningWipe) {
