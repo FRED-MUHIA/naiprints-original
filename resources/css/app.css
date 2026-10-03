@@ -5458,25 +5458,15 @@
         margin-bottom: 1rem;
     }
 
-    .county-slider-pause {
-        accent-color: #145467;
-        margin-right: .35rem;
-    }
-
-    .county-slider-pause-label {
-        font-size: .8rem;
-        color: #475569;
-        cursor: pointer;
-    }
-
     .county-slider-viewport {
         overflow-x: auto;
         margin-top: 1rem;
-        border-radius: 1.25rem;
-        background: #082f40;
         padding: 1.25rem 0;
-        scrollbar-width: thin;
-        scrollbar-color: #346071 #082f40;
+        scrollbar-width: none;
+    }
+
+    .county-slider-viewport::-webkit-scrollbar {
+        display: none;
     }
 
     .county-slider-track {
@@ -5509,14 +5499,6 @@
         white-space: nowrap;
     }
 
-    .county-slider-flag {
-        width: 1.6rem;
-        height: 1.1rem;
-        border-radius: 3px;
-        overflow: hidden;
-        flex-shrink: 0;
-    }
-
     .county-slider-dot {
         width: .45rem;
         height: .45rem;
@@ -5525,8 +5507,7 @@
     }
 
     .county-slider-viewport:hover .county-slider-track,
-    .county-slider-viewport:focus-within .county-slider-track,
-    .county-slider-pause:checked ~ .county-slider-viewport .county-slider-track {
+    .county-slider-viewport:focus-within .county-slider-track {
         animation-play-state: paused;
     }
 
@@ -5536,9 +5517,7 @@
 
     @media (prefers-reduced-motion: reduce) {
         .county-slider-track { animation: none; }
-        .county-slider-group[aria-hidden="true"],
-        .county-slider-pause,
-        .county-slider-pause-label { display: none; }
+        .county-slider-group[aria-hidden="true"] { display: none; }
     }
 
     .newsletter-card {
