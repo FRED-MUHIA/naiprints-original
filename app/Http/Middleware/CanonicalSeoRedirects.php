@@ -35,17 +35,29 @@ class CanonicalSeoRedirects
 
     private function canonicalUri(string $uri): ?string
     {
-        if (!preg_match('#^/public(?=/|\?|$)#i', $uri)) {
+        $path = parse_url($uri, PHP_URL_PATH) ?: '/';
+        $queryString = (string) (parse_url($uri, PHP_URL_QUERY) ?? '');
+        $query = [];
+        parse_str($queryString, $query);
+
+        $changed = false;
+        if (preg_match('#^/public(?=/|$)#i', $path)) {
+            $path = preg_replace('#^/public(?=/|$)#i', '', $path, 1) ?: '/';
+            $changed = true;
+        }
+
+        if (array_key_exists('add-to-wishlist', $query)) {
+            unset($query['add-to-wishlist']);
+            $changed = true;
+        }
+
+        if (!$changed) {
             return null;
         }
 
-        $cleanUri = preg_replace('#^/public(?=/|\?|$)#i', '', $uri, 1) ?: '/';
+        $cleanUri = $path . ($query ? '?' . http_build_query($query) : '');
 
-        if (str_starts_with($cleanUri, '?')) {
-            return '/' . $cleanUri;
-        }
-
-        return $cleanUri;
+        return $cleanUri !== '' ? $cleanUri : '/';
     }
 
     private function scheme(Request $request): string

@@ -498,6 +498,16 @@ $shopRoute = function (?string $category = null) {
             });
         }
     }
+
+    if ($category === null && request()->query->has('category') && $selectedCategory) {
+        $query = request()->query();
+        unset($query['category']);
+
+        return redirect()->route('shop.category', array_merge([
+            'category' => $selectedCategory->slug ?: $selectedCategory->id,
+        ], $query), 301);
+    }
+
     $minPrice = request('min_price');
     $maxPrice = request('max_price');
     $minPrice = is_numeric($minPrice) ? (float) $minPrice : null;
@@ -624,7 +634,6 @@ Route::get('/blog-media/{path}', [BlogController::class, 'media'])
     ->name('blogs.media');
 
 Route::get('/sitemap.xml', function () {
-    $generatedAt = now()->toAtomString();
     $pageDefinitions = collect([
         ['slug' => 'home', 'path' => '/', 'changefreq' => 'daily', 'priority' => '1.0'],
         ['slug' => 'shop', 'path' => '/shop', 'changefreq' => 'daily', 'priority' => '0.9'],
@@ -656,17 +665,12 @@ Route::get('/sitemap.xml', function () {
             ->keyBy('slug');
     }
 
-    $entries = $pageDefinitions->map(function (array $definition) use ($pageUpdateMap, $generatedAt) {
-        $lastModified = $generatedAt;
-
-        if (!empty($definition['slug'])) {
-            $page = $pageUpdateMap->get($definition['slug']);
-            $lastModified = $page?->updated_at?->toAtomString() ?? $generatedAt;
-        }
+    $entries = $pageDefinitions->map(function (array $definition) use ($pageUpdateMap) {
+        $page = !empty($definition['slug']) ? $pageUpdateMap->get($definition['slug']) : null;
 
         return [
             'loc' => url($definition['path']),
-            'lastmod' => $lastModified,
+            'lastmod' => $page?->updated_at?->toAtomString(),
             'changefreq' => $definition['changefreq'],
             'priority' => $definition['priority'],
         ];
@@ -690,6 +694,17 @@ Route::get('/sitemap.xml', function () {
     }
 
     if (Schema::hasTable('blogs')) {
+        $blogIndexLastModified = Blog::query()
+            ->published()
+            ->max('updated_at');
+        $entries = $entries->map(function (array $entry) use ($blogIndexLastModified) {
+            if ($entry['loc'] === url('/blogs') && $blogIndexLastModified) {
+                $entry['lastmod'] = Carbon::parse($blogIndexLastModified)->toAtomString();
+            }
+
+            return $entry;
+        });
+
         $blogEntries = Blog::query()
             ->published()
             ->orderByDesc('published_at')
@@ -838,17 +853,9 @@ Route::post('/corporate/quote', [CorporateQuoteController::class, 'store'])
 
 Route::get('/mockup', function () {
     $page = Page::ensure('mockup', 'Mockup', PageDefaults::mockup());
-    $header = GlobalSection::ensure('header', PageDefaults::header());
-    $footer = GlobalSection::ensure('footer', PageDefaults::footer());
-    $purchasePopups = GlobalSection::ensure('purchase_popups', PageDefaults::purchasePopups());
-    $purchasePopupProducts = resolvePurchasePopupProducts($purchasePopups->content ?? []);
 
     return view('mockup', [
         'pageContent' => $page->content,
-        'globalHeader' => $header->content,
-        'globalFooter' => $footer->content,
-        'globalPurchasePopups' => $purchasePopups->content,
-        'globalPurchasePopupProducts' => $purchasePopupProducts,
     ]);
 })->name('mockup');
 
@@ -861,10 +868,15 @@ Route::post('/mockup/checkout', [MockupCheckoutController::class, 'store'])
     ->middleware('throttle:8,1');
 
 Route::get('/products/{product}', function (string $productKey) {
-    $product = Product::query()
-        ->where('slug', $productKey)
-        ->when(ctype_digit($productKey), fn ($query) => $query->orWhere('id', (int) $productKey))
-        ->firstOrFail();
+    $product = Product::query()->where('slug', $productKey)->first();
+    if (!$product && ctype_digit($productKey)) {
+        $product = Product::query()->findOrFail((int) $productKey);
+    }
+    abort_unless($product, 404);
+
+    if (ctype_digit($productKey) && $product->slug && $product->slug !== $productKey) {
+        return redirect()->route('products.show', ['product' => $product->slug], 301);
+    }
 
     $header = GlobalSection::ensure('header', PageDefaults::header());
     $footer = GlobalSection::ensure('footer', PageDefaults::footer());

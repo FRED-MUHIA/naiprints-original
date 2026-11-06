@@ -12,29 +12,6 @@ export default defineConfig({
     ],
     build: {
         chunkSizeWarningLimit: 900,
-        rollupOptions: {
-            output: {
-                manualChunks(id) {
-                    if (!id.includes('node_modules')) {
-                        return;
-                    }
-
-                    if (id.includes('/three/')) {
-                        return 'vendor-three';
-                    }
-
-                    if (id.includes('/jspdf/')) {
-                        return 'vendor-jspdf';
-                    }
-
-                    if (id.includes('/vue/')) {
-                        return 'vendor-vue';
-                    }
-
-                    return 'vendor';
-                },
-            },
-        },
     },
     server: {
         watch: {

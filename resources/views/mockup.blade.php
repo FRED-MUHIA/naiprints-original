@@ -11,8 +11,7 @@
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-        <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="mockup-app">
@@ -838,7 +837,8 @@
         </div>
 
         <script>
-            (() => {
+            const initializeMockupEditor = () => {
+                (() => {
                 const canvasEl = document.getElementById('mockup-canvas');
                 if (!canvasEl || !window.fabric) {
                     return;
@@ -4572,8 +4572,27 @@
                     });
                 });
 
+                let zipLibraryPromise = null;
+                const loadZipLibrary = () => {
+                    if (window.JSZip) {
+                        return Promise.resolve(window.JSZip);
+                    }
+
+                    if (!zipLibraryPromise) {
+                        zipLibraryPromise = new Promise((resolve, reject) => {
+                            const script = document.createElement('script');
+                            script.src = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
+                            script.onload = () => resolve(window.JSZip || null);
+                            script.onerror = () => reject(new Error('Could not load the ZIP export library.'));
+                            document.head.appendChild(script);
+                        });
+                    }
+
+                    return zipLibraryPromise;
+                };
+
                 const exportViewsZip = async () => {
-                    const zipApi = window.JSZip;
+                    const zipApi = await loadZipLibrary();
                     if (!zipApi) {
                         exportCanvas('png');
                         return;
@@ -4740,7 +4759,7 @@
                     button.addEventListener('click', () => {
                         const type = button.dataset.export;
                         if (type === 'zip') {
-                            exportViewsZip();
+                            exportViewsZip().catch((error) => alert(error?.message || 'Unable to create the ZIP export.'));
                             return;
                         }
                         exportCanvas(type === 'jpg' ? 'jpeg' : 'png');
@@ -5732,7 +5751,14 @@
                 setActiveTool('select');
                 setActivePanel('mockups');
                 renderSavedDesigns();
-            })();
+                })();
+            };
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initializeMockupEditor, { once: true });
+            } else {
+                initializeMockupEditor();
+            }
         </script>
     </body>
 </html>

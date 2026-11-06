@@ -1,10 +1,17 @@
 import './bootstrap';
-import './designer';
 import { mountCountySliders } from './county-slider';
-import { mountJerseyDesigner } from './jersey-3d-designer';
 
 document.addEventListener('DOMContentLoaded', () => {
-    mountJerseyDesigner();
+    if (document.getElementById('jersey-designer-app')) {
+        import('./jersey-3d-designer')
+            .then(({ mountJerseyDesigner }) => mountJerseyDesigner())
+            .catch((error) => console.error('Could not load the 3D jersey designer.', error));
+    }
+
+    if (document.getElementById('designer-app') && window.Vue && window.fabric) {
+        import('./designer').catch((error) => console.error('Could not load the design studio.', error));
+    }
+
     mountCountySliders();
 
     const shouldPlayOpeningWipe = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
