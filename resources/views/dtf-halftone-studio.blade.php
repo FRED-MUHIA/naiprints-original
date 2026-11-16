@@ -20,7 +20,7 @@
             <div class="dtf-actions">
                 <button data-action="new">New</button><button data-action="upload">Upload image</button>
                 <button data-action="undo" title="Undo (Ctrl+Z)">↶</button><button data-action="redo" title="Redo (Ctrl+Y)">↷</button>
-                <button data-action="reset">Reset</button><span class="dtf-divider"></span>
+                <button data-action="reset">Reset</button><button data-action="remove-bg">Remove background</button><span class="dtf-divider"></span>
                 <button data-action="zoom-out">−</button><button data-action="fit">Fit</button><button data-action="zoom-in">+</button>
                 <button data-action="compare" aria-pressed="false">Before / after</button><button class="dtf-primary" data-action="export">Export</button>
             </div>
