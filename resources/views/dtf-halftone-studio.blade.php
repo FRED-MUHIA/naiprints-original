@@ -10,11 +10,11 @@
         'robots' => 'noindex, follow',
     ])
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <link rel="stylesheet" href="{{ asset('dtf-studio-assets/studio.css') }}">
+    <link rel="stylesheet" href="{{ asset('dtf-studio-assets/studio.css') }}?v={{ filemtime(public_path('dtf-studio-assets/studio.css')) }}">
 </head>
 <body class="dtf-site-body">
     @include('partials.site-header', ['globalHeader' => $globalHeader ?? [], 'showMenuStrip' => false])
-    <main id="dtf-studio" class="dtf-app" data-worker="{{ asset('dtf-studio-assets/worker.js') }}">
+    <main id="dtf-studio" class="dtf-app" data-worker="{{ asset('dtf-studio-assets/worker.js') }}?v={{ filemtime(public_path('dtf-studio-assets/worker.js')) }}">
         <header class="dtf-toolbar">
             <a class="dtf-brand" href="/" aria-label="Nai Prints home"><span class="dtf-mark">NP</span><span>Nai Prints <small>DTF STUDIO</small></span></a>
             <div class="dtf-actions">
@@ -47,6 +47,6 @@
         <input id="custom-color" type="color" value="#ffffff" hidden>
         <div id="toast" class="dtf-toast" role="status" aria-live="polite"></div>
     </main>
-    <script src="{{ asset('dtf-studio-assets/studio.js') }}" defer></script>
+    <script src="{{ asset('dtf-studio-assets/studio.js') }}?v={{ filemtime(public_path('dtf-studio-assets/studio.js')) }}" defer></script>
 </body>
 </html>
