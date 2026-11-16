@@ -124,6 +124,15 @@ Route::get('/favicon.ico', function () {
         ->header('Cache-Control', 'public, max-age=604800');
 });
 
+Route::get('/dtf-halftone-studio', function () {
+    $header = GlobalSection::ensure('header', PageDefaults::header());
+
+    return view('dtf-halftone-studio', [
+        'globalHeader' => $header->content,
+        'showMenuStrip' => false,
+    ]);
+})->name('dtf-halftone-studio');
+
 Route::get('/', function () {
     $page = Page::ensure('home', 'Home', PageDefaults::home());
     $header = GlobalSection::ensure('header', PageDefaults::header());

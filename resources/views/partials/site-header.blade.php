@@ -29,6 +29,19 @@
             array_splice($menu, (int) $insertAfter + 1, 0, [$maasaiItem]);
         }
     }
+    $hasHalftoneStudioMenuItem = collect($menu)->contains(function ($item) {
+        return strtolower($item['label'] ?? '') === 'dtf studio'
+            || trim((string) ($item['url'] ?? '')) === '/dtf-halftone-studio';
+    });
+    if (!$hasHalftoneStudioMenuItem) {
+        $insertAfter = collect($menu)->search(fn ($item) => strtolower($item['label'] ?? '') === '3d designer');
+        $studioItem = ['label' => 'DTF Studio', 'url' => route('dtf-halftone-studio')];
+        if ($insertAfter === false) {
+            $menu[] = $studioItem;
+        } else {
+            array_splice($menu, (int) $insertAfter + 1, 0, [$studioItem]);
+        }
+    }
     $menuStrip = collect($header['menu_strip'] ?? [])
         ->filter(fn ($item) => is_array($item))
         ->map(function ($item) {
