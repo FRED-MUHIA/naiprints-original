@@ -10269,8 +10269,20 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
+@media (max-width: 900px) {
+    .clothing-rail { --rail-item-width: clamp(112px, 18vw, 160px); }
+    .clothing-rail-shell { padding-inline: clamp(1rem, 4vw, 2.25rem); }
+    .clothing-rail-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 0.55rem;
+    }
+    .clothing-rail-note { max-width: none; }
+    .clothing-rail-stage { height: clamp(300px, 42vw, 350px); }
+}
+
 @media (max-width: 700px) {
-    .clothing-rail { --rail-item-width: clamp(112px, 38vw, 148px); }
+    .clothing-rail { --rail-item-width: clamp(104px, 33vw, 132px); }
 
     .clothing-rail-shell { padding: 1.4rem 1rem 0.8rem; }
 
@@ -10281,10 +10293,10 @@
         margin-bottom: 0.35rem;
     }
 
-    .clothing-rail-heading h2 { font-size: clamp(1.8rem, 8vw, 2.5rem); }
+    .clothing-rail-heading h2 { font-size: clamp(1.8rem, 8vw, 2.35rem); }
     .clothing-rail-note { max-width: none; font-size: 0.72rem; }
 
-    .clothing-rail-stage { height: 300px; }
+    .clothing-rail-stage { height: clamp(260px, 76vw, 300px); }
     .clothing-rail-metal { top: 5px; height: 68px; }
     .clothing-rail-track { top: 11px; height: calc(100% - 11px); gap: 0.2rem; }
     .clothing-rail-hanger { height: 42px; flex-basis: 42px; }
@@ -10294,6 +10306,36 @@
     .clothing-rail-details { min-height: 72px; }
     .clothing-rail-view { min-height: 38px; padding-inline: 0.8rem; font-size: 0.58rem; }
     .clothing-rail-counter { gap: 0.35rem; }
+}
+
+@media (max-width: 520px) {
+    .clothing-rail-heading h2 { font-size: clamp(1.65rem, 8vw, 2.15rem); }
+    .clothing-rail-eyebrow { font-size: 0.58rem; letter-spacing: 0.17em; }
+    .clothing-rail-details {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 0.65rem;
+        padding-bottom: 0.6rem;
+    }
+    .clothing-rail-product-copy { width: 100%; }
+    .clothing-rail-product-copy h2 {
+        display: -webkit-box;
+        overflow: hidden;
+        white-space: normal;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+    .clothing-rail-view { min-height: 40px; }
+    .clothing-rail-arrows button { width: 42px; height: 42px; }
+    .clothing-rail-controls { padding-top: 0.55rem; }
+}
+
+@media (max-width: 360px) {
+    .clothing-rail { --rail-item-width: 104px; }
+    .clothing-rail-shell { padding-inline: 0.75rem; }
+    .clothing-rail-heading h2 { font-size: 1.6rem; }
+    .clothing-rail-stage { height: 260px; }
+    .clothing-rail-note { font-size: 0.68rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
