@@ -24,6 +24,7 @@
             ->all();
         $alternateImages = $product->alternateImages->values();
         $galleryImages = $product->galleryImages->values();
+        $railImages = $product->railImages->keyBy('view');
     @endphp
 
     <form method="POST" action="{{ route('admin.products.update', $product) }}" class="space-y-8" enctype="multipart/form-data">
@@ -86,13 +87,47 @@
                             <p class="mt-2 text-xs text-slate-500">Enter comma-separated color names or hex codes for swatches.</p>
                         </div>
                         <div>
-                            <label class="text-sm font-semibold text-slate-700">Product image</label>
+                            <label class="text-sm font-semibold text-slate-700">Front view / product image</label>
                             <input type="file" name="image" accept="image/*" class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-brand focus:outline-none">
+                            <p class="mt-2 text-xs text-slate-500">This is the main product photo and the front view shown when a garment is selected (max 2MB).</p>
                             @if ($product->image_url)
                                 <div class="product-image-gallery mt-3 overflow-hidden rounded-2xl border border-slate-200">
                                     <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="h-full w-full object-cover">
                                 </div>
                             @endif
+                        </div>
+                        <div>
+                            <label class="text-sm font-semibold text-slate-700">Side view for clothing rail</label>
+                            <input type="file" name="rail_side_image" accept="image/*" class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-brand focus:outline-none">
+                            <p class="mt-2 text-xs text-slate-500">Shown while the garment hangs in the rail. Optional; the front view is used if omitted.</p>
+                            @if ($railImages->has('side'))
+                                <div class="product-image-gallery mt-3 overflow-hidden rounded-2xl border border-slate-200">
+                                    <img src="{{ \Illuminate\Support\Facades\Storage::url($railImages['side']->image_path) }}" alt="{{ $product->name }} side view" class="h-full w-full object-contain">
+                                </div>
+                            @endif
+                        </div>
+                        <div>
+                            <label class="text-sm font-semibold text-slate-700">Back view for clothing rail</label>
+                            <input type="file" name="rail_back_image" accept="image/*" class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-brand focus:outline-none">
+                            <p class="mt-2 text-xs text-slate-500">The selected garment turns to this image after the front view. Optional.</p>
+                            @if ($railImages->has('back'))
+                                <div class="product-image-gallery mt-3 overflow-hidden rounded-2xl border border-slate-200">
+                                    <img src="{{ \Illuminate\Support\Facades\Storage::url($railImages['back']->image_path) }}" alt="{{ $product->name }} back view" class="h-full w-full object-contain">
+                                </div>
+                            @endif
+                        </div>
+                        <div>
+                            <label class="text-sm font-semibold text-slate-700">Side-view hanger style</label>
+                            <select name="rail_hanger_style" class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-brand focus:outline-none">
+                                <option value="hook_only" @selected(old('rail_hanger_style', $product->rail_hanger_style ?? 'hook_only') === 'hook_only')>Center hook only</option>
+                                <option value="full" @selected(old('rail_hanger_style', $product->rail_hanger_style) === 'full')>Full hanger</option>
+                            </select>
+                            <p class="mt-2 text-xs text-slate-500">Choose whether the resting side-view image shows only the center hook or the full hanger outline.</p>
+                        </div>
+                        <div>
+                            <label class="text-sm font-semibold text-slate-700">Image overlap with hanger (px)</label>
+                            <input type="number" name="rail_image_overlap" min="0" max="24" step="1" value="{{ old('rail_image_overlap', $product->rail_image_overlap ?? 12) }}" class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-brand focus:outline-none">
+                            <p class="mt-2 text-xs text-slate-500">Adjust how far the garment image rises behind the hanger. Use 0 for no overlap.</p>
                         </div>
                         <div>
                             <label class="text-sm font-semibold text-slate-700">Alternative images (hover)</label>

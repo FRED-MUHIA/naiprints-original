@@ -1,6 +1,6 @@
 {
-  "_jersey-3d-designer-DkPkegMt.js": {
-    "file": "assets/jersey-3d-designer-DkPkegMt.js",
+  "_jersey-3d-designer-tXiN1dUd.js": {
+    "file": "assets/jersey-3d-designer-tXiN1dUd.js",
     "name": "jersey-3d-designer",
     "isDynamicEntry": true,
     "imports": [
@@ -13,12 +13,12 @@
     ]
   },
   "node_modules/canvg/lib/index.es.js": {
-    "file": "assets/index.es-BsN0cUHC.js",
+    "file": "assets/index.es-Cxb-OO4H.js",
     "name": "index.es",
     "src": "node_modules/canvg/lib/index.es.js",
     "isDynamicEntry": true,
     "imports": [
-      "_jersey-3d-designer-DkPkegMt.js",
+      "_jersey-3d-designer-tXiN1dUd.js",
       "resources/js/app.js"
     ]
   },
@@ -35,7 +35,7 @@
     "isDynamicEntry": true
   },
   "resources/css/app.css": {
-    "file": "assets/app-DA5WKUpn.css",
+    "file": "assets/app-BgaUSKsS.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -44,12 +44,12 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-CRRj1VNn.js",
+    "file": "assets/app-xXaaBxbL.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "dynamicImports": [
-      "_jersey-3d-designer-DkPkegMt.js",
+      "_jersey-3d-designer-tXiN1dUd.js",
       "resources/js/designer.js"
     ]
   },

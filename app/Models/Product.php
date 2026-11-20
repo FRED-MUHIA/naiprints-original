@@ -6,9 +6,16 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Support\ClothingRailCache;
 
 class Product extends Model
 {
+    protected static function booted(): void
+    {
+        static::saved([ClothingRailCache::class, 'bust']);
+        static::deleted([ClothingRailCache::class, 'bust']);
+    }
+
     protected $fillable = [
         'category_id',
         'brand_id',
@@ -17,6 +24,8 @@ class Product extends Model
         'sku',
         'color_options',
         'image_path',
+        'rail_hanger_style',
+        'rail_image_overlap',
         'description',
         'meta_title',
         'meta_description',
@@ -31,6 +40,7 @@ class Product extends Model
         'price' => 'decimal:2',
         'discount_value' => 'decimal:2',
         'stock' => 'integer',
+        'rail_image_overlap' => 'integer',
         'color_options' => 'array',
     ];
 
@@ -79,6 +89,13 @@ class Product extends Model
     {
         return $this->hasMany(ProductImage::class)
             ->where('type', 'alternate')
+            ->orderBy('position');
+    }
+
+    public function railImages(): HasMany
+    {
+        return $this->hasMany(ProductImage::class)
+            ->whereIn('view', ['side', 'back'])
             ->orderBy('position');
     }
 

@@ -11,6 +11,7 @@ use App\Models\ProductImage;
 use App\Models\ProductSelectionImage;
 use App\Models\Size;
 use App\Models\Tag;
+use App\Support\ClothingRailCache;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -67,10 +68,12 @@ class ProductController extends Controller
 
         $this->syncAlternateImages($product, $request);
         $this->syncGallery($product, $request);
+        $this->syncRailImages($product, $request);
         if ($this->hasMaasaiCategory($categoryIds)) {
             $this->syncSelectionImages($product, $request);
         }
         $this->syncRelations($product, $request);
+        ClothingRailCache::bust();
 
         return redirect()->route('admin.products.index')
             ->with('success', 'Product created.');
@@ -81,7 +84,7 @@ class ProductController extends Controller
      */
     public function edit(Product $product)
     {
-        $product->load(['tags', 'attributes', 'sizes', 'alternateImages', 'galleryImages', 'categories']);
+        $product->load(['tags', 'attributes', 'sizes', 'alternateImages', 'galleryImages', 'railImages', 'categories']);
         if (Schema::hasTable('product_selection_images')) {
             $product->load('selectionImages');
         }
@@ -121,6 +124,7 @@ class ProductController extends Controller
 
         $this->syncAlternateImages($product, $request);
         $this->syncGallery($product, $request);
+        $this->syncRailImages($product, $request);
         if ($this->hasMaasaiCategory($categoryIds)) {
             $this->syncSelectionImages($product, $request);
         }
@@ -128,6 +132,7 @@ class ProductController extends Controller
         if ($request->boolean('sync_relations', true)) {
             $this->syncRelations($product, $request);
         }
+        ClothingRailCache::bust();
 
         return redirect()->route('admin.products.index')
             ->with('success', 'Product updated.');
@@ -150,6 +155,7 @@ class ProductController extends Controller
             }
         }
         $product->delete();
+        ClothingRailCache::bust();
 
         return redirect()->route('admin.products.index')
             ->with('success', 'Product deleted.');
@@ -166,6 +172,10 @@ class ProductController extends Controller
             'sku' => ['nullable', 'string', 'max:255'],
             'color_options' => ['nullable', 'string', 'max:1000'],
             'image' => ['nullable', 'image', 'max:2048'],
+            'rail_hanger_style' => ['nullable', 'in:hook_only,full'],
+            'rail_image_overlap' => ['nullable', 'integer', 'min:0', 'max:24'],
+            'rail_side_image' => ['nullable', 'image', 'max:8192'],
+            'rail_back_image' => ['nullable', 'image', 'max:8192'],
             'alternate_images' => ['array'],
             'alternate_images.*' => ['image', 'max:2048'],
             'remove_alternates' => ['array'],
@@ -362,6 +372,34 @@ class ProductController extends Controller
                     'type' => 'gallery',
                 ]);
             }
+        }
+    }
+
+    private function syncRailImages(Product $product, Request $request): void
+    {
+        foreach (['side', 'back'] as $view) {
+            $field = 'rail_' . $view . '_image';
+            if (!$request->hasFile($field)) {
+                continue;
+            }
+
+            $existing = ProductImage::query()
+                ->where('product_id', $product->id)
+                ->where('view', $view)
+                ->first();
+
+            if ($existing) {
+                Storage::disk('public')->delete($existing->image_path);
+                $existing->delete();
+            }
+
+            $path = $request->file($field)->store('products/rail', 'public');
+            $product->images()->create([
+                'image_path' => $path,
+                'position' => $view === 'side' ? 0 : 1,
+                'type' => 'gallery',
+                'view' => $view,
+            ]);
         }
     }
 

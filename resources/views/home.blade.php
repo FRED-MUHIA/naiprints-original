@@ -34,67 +34,7 @@
                 @php
                     $sections = $pageContent['sections'] ?? [];
                     $ctaRendered = false;
-                    $hasGiftFinderSection = collect($sections)->contains(function ($section) {
-                        return ($section['type'] ?? '') === 'gift_finder';
-                    });
-                    $normalizeGiftFinderKey = static function ($value) {
-                        return \Illuminate\Support\Str::of((string) $value)
-                            ->lower()
-                            ->replaceMatches('/[^a-z0-9]+/', '')
-                            ->toString();
-                    };
-                    $giftFinderCategoryEntries = collect($giftFinderCategories ?? [])
-                        ->map(function ($category) use ($normalizeGiftFinderKey) {
-                            $id = (int) data_get($category, 'id', 0);
-                            $name = (string) data_get($category, 'name', '');
-                            $slug = (string) data_get($category, 'slug', '');
-
-                            $aliases = array_values(array_unique(array_filter([
-                                $normalizeGiftFinderKey($name),
-                                $normalizeGiftFinderKey($slug),
-                                $normalizeGiftFinderKey(str_replace('-', ' ', $slug)),
-                            ])));
-
-                            return [
-                                'id' => $id,
-                                'aliases' => $aliases,
-                            ];
-                        })
-                        ->filter(fn ($category) => ($category['id'] ?? 0) > 0)
-                        ->values();
-                    $resolveGiftFinderOptionUrl = static function ($optionLabel, $fallbackUrl = '/shop', $preferredCategoryId = null) use ($giftFinderCategoryEntries, $normalizeGiftFinderKey) {
-                        $fallback = is_string($fallbackUrl) && trim($fallbackUrl) !== ''
-                            ? trim($fallbackUrl)
-                            : '/shop';
-
-                        if (is_numeric($preferredCategoryId)) {
-                            return route('shop', ['category' => (int) $preferredCategoryId]);
-                        }
-
-                        $needle = $normalizeGiftFinderKey($optionLabel);
-                        if ($needle === '') {
-                            return $fallback;
-                        }
-
-                        $match = $giftFinderCategoryEntries->first(function ($category) use ($needle) {
-                            $aliases = $category['aliases'] ?? [];
-                            if (in_array($needle, $aliases, true)) {
-                                return true;
-                            }
-
-                            foreach ($aliases as $alias) {
-                                if ($alias !== '' && (str_contains($needle, $alias) || str_contains($alias, $needle))) {
-                                    return true;
-                                }
-                            }
-
-                            return false;
-                        });
-
-                        return $match
-                            ? route('shop', ['category' => (int) $match['id']])
-                            : $fallback;
-                    };
+                    $railRendered = false;
                     $resolveContactCtaUrl = static function ($label, $url = '#') {
                         $normalizedLabel = strtolower(trim((string) $label));
                         $resolvedUrl = trim((string) $url);
@@ -107,47 +47,7 @@
 
                         return $resolvedUrl !== '' ? $resolvedUrl : '#';
                     };
-                    $giftProducts = [];
-                    $giftFinderSource = !empty($giftFinderProducts) && $giftFinderProducts->count()
-                        ? $giftFinderProducts
-                        : $featuredProducts;
-                    if (!empty($giftFinderSource) && $giftFinderSource->count()) {
-                        $giftProducts = $giftFinderSource->map(function ($product) {
-                            $imageUrl = $product->image_url;
-                            if (!$imageUrl) {
-                                $fallback = $product->galleryImages->first()
-                                    ?? $product->alternateImages->first()
-                                    ?? $product->images->first();
-                                if ($fallback && $fallback->image_path) {
-                                    $imageUrl = \Illuminate\Support\Facades\Storage::url($fallback->image_path);
-                                }
-                            }
-                            $brand = $product->brand?->name;
-                            $author = $brand ? "by {$brand}" : 'by Nai Prints';
-                            $price = is_numeric($product->price ?? null)
-                                ? 'KSh ' . number_format((float) $product->price, 0)
-                                : 'KSh 0';
-
-                            return [
-                                'title' => $product->name ?? '',
-                                'author' => $author,
-                                'price' => $price,
-                                'image' => $imageUrl ?: '',
-                                'url' => route('products.show', ['product' => ($product->slug ?: $product->id)]),
-                            ];
-                        })->filter(fn ($item) => !empty($item['title']))->values()->all();
-                    } elseif (!empty($products)) {
-                        $giftProducts = collect($products)->map(function ($product) {
-                            return [
-                                'title' => $product['title'] ?? '',
-                                'author' => 'by Nai Prints',
-                                'price' => $product['price'] ?? 'KSh 0',
-                                'image' => '',
-                                'url' => '/shop',
-                            ];
-                        })->filter(fn ($item) => !empty($item['title']))->values()->all();
-                    }
-                @endphp
+                    @endphp
 
                 @for ($i = 0; $i < count($sections); $i++)
                     @php
@@ -860,80 +760,8 @@
                             </div>
                         </section>
                     @elseif ($type === 'gift_finder')
-                        @php
-                            $data = $section['data'] ?? [];
-                            $giftFinderTitle = $data['title'] ?? 'Need to Find a Gift?';
-                            $giftFinderLeadBefore = $data['lead_before'] ?? 'Find the perfect';
-                            $giftFinderLeadAfter = $data['lead_after'] ?? 'for your favorite:';
-                            $giftFinderOptions = $data['select_options'] ?? ['T-Shirt', 'Hoodie', 'Polo', 'Cap'];
-                            if (!is_array($giftFinderOptions)) {
-                                $giftFinderOptions = array_filter(array_map('trim', explode(',', (string) $giftFinderOptions)));
-                            }
-                            if (empty($giftFinderOptions)) {
-                                $giftFinderOptions = ['T-Shirt', 'Hoodie', 'Polo', 'Cap'];
-                            }
-                            $giftFinderCtaLabel = $data['cta_label'] ?? 'View more designs';
-                            $giftFinderCtaUrl = $data['cta_url'] ?? '/shop';
-                            $giftFinderInterval = $data['carousel_interval'] ?? 5;
-                            $giftFinderInterval = is_numeric($giftFinderInterval) ? max(1, (int) $giftFinderInterval) : 5;
-                            $giftFinderCategoryId = $data['product_category_id'] ?? null;
-                            $giftFinderCategoryId = is_numeric($giftFinderCategoryId) ? (int) $giftFinderCategoryId : null;
-                            if ($giftFinderCategoryId && ($giftFinderCtaUrl === '/shop' || trim((string) $giftFinderCtaUrl) === '')) {
-                                $giftFinderCtaUrl = route('shop', ['category' => $giftFinderCategoryId]);
-                            }
-                        @endphp
-                        <section class="gift-finder">
-                            <div class="gift-finder-inner">
-                                <h2 class="gift-finder-title">{{ $giftFinderTitle }}</h2>
-                                <div class="gift-finder-select">
-                                    <span>{{ $giftFinderLeadBefore }}</span>
-                                    <div class="gift-finder-select-wrap">
-                                        <select aria-label="Select product"
-                                                data-gift-category-select
-                                                data-gift-fallback-url="{{ $giftFinderCtaUrl }}">
-                                            <option value="" selected disabled>Choose category</option>
-                                            @foreach ($giftFinderOptions as $optionIndex => $option)
-                                                @php
-                                                    $optionUrl = $resolveGiftFinderOptionUrl($option, $giftFinderCtaUrl, $giftFinderCategoryId);
-                                                @endphp
-                                                <option value="{{ $optionUrl }}">{{ $option }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <span>{{ $giftFinderLeadAfter }}</span>
-                                </div>
-                                <div class="gift-finder-carousel" data-gift-carousel data-carousel-interval="{{ $giftFinderInterval }}">
-                                    <div class="gift-finder-track" data-gift-track>
-                                        @foreach ($giftProducts as $product)
-                                            <article class="gift-product-card">
-                                                <a class="gift-product-image" href="{{ $product['url'] }}">
-                                                    @if (!empty($product['image']))
-                                                        <img src="{{ $product['image'] }}" alt="{{ $product['title'] }}" loading="lazy">
-                                                    @else
-                                                        <svg class="gift-tee" viewBox="0 0 600 700" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                                            <path class="gift-tee-body" d="M120 140l70-50h220l70 50 70 40-40 70-60-30v380a40 40 0 0 1-40 40H160a40 40 0 0 1-40-40V220l-60 30-40-70 70-40z"/>
-                                                            <path class="gift-tee-shadow" d="M185 150h230l55 35-25 45-48-22v350H203V208l-48 22-25-45 55-35z"/>
-                                                            <circle class="gift-tee-neck" cx="300" cy="135" r="35"/>
-                                                            <rect class="gift-tee-graphic" x="215" y="260" width="170" height="160" rx="28"/>
-                                                            <circle class="gift-tee-accent" cx="300" cy="340" r="46"/>
-                                                            <path class="gift-tee-stroke" d="M260 330h80M260 360h80" />
-                                                        </svg>
-                                                    @endif
-                                                </a>
-                                                <div class="gift-product-body">
-                                                    <h3 class="gift-product-title">{{ $product['title'] }}</h3>
-                                                    <p class="gift-product-meta">{{ $product['author'] }}</p>
-                                                    <p class="gift-product-price">{{ $product['price'] }}</p>
-                                                </div>
-                                            </article>
-                                        @endforeach
-                                    </div>
-                                </div>
-                                <div class="gift-finder-cta">
-                                    <a class="gift-finder-btn" href="{{ $giftFinderCtaUrl }}">{{ $giftFinderCtaLabel }}</a>
-                                </div>
-                            </div>
-                        </section>
+                        @php $railRendered = true; @endphp
+                        @include('partials.home-clothing-rail')
                     @elseif ($type === 'how_it_works')
                         @php
                             $data = $section['data'] ?? [];
@@ -949,81 +777,9 @@
                             $ctaRendered = $ctaRendered || $hasCta;
                             $gridClass = $hasCta ? 'lg:grid-cols-[1.2fr_1fr]' : 'lg:grid-cols-1';
                         @endphp
-                        @if (!$hasGiftFinderSection)
-                            @php
-                                $giftFinder = $data['gift_finder'] ?? [];
-                                $giftFinderTitle = $giftFinder['title'] ?? 'Need to Find a Gift?';
-                                $giftFinderLeadBefore = $giftFinder['lead_before'] ?? 'Find the perfect';
-                                $giftFinderLeadAfter = $giftFinder['lead_after'] ?? 'for your favorite:';
-                                $giftFinderOptions = $giftFinder['select_options'] ?? ['T-Shirt', 'Hoodie', 'Polo', 'Cap'];
-                                if (!is_array($giftFinderOptions)) {
-                                    $giftFinderOptions = array_filter(array_map('trim', explode(',', (string) $giftFinderOptions)));
-                                }
-                                if (empty($giftFinderOptions)) {
-                                    $giftFinderOptions = ['T-Shirt', 'Hoodie', 'Polo', 'Cap'];
-                                }
-                                $giftFinderCtaLabel = $giftFinder['cta_label'] ?? 'View more designs';
-                                $giftFinderCtaUrl = $giftFinder['cta_url'] ?? '/shop';
-                                $giftFinderInterval = $giftFinder['carousel_interval'] ?? 5;
-                                $giftFinderInterval = is_numeric($giftFinderInterval) ? max(1, (int) $giftFinderInterval) : 5;
-                                $giftFinderCategoryId = $giftFinder['product_category_id'] ?? null;
-                                $giftFinderCategoryId = is_numeric($giftFinderCategoryId) ? (int) $giftFinderCategoryId : null;
-                                if ($giftFinderCategoryId && ($giftFinderCtaUrl === '/shop' || trim((string) $giftFinderCtaUrl) === '')) {
-                                    $giftFinderCtaUrl = route('shop', ['category' => $giftFinderCategoryId]);
-                                }
-                            @endphp
-                            <section class="gift-finder">
-                                <div class="gift-finder-inner">
-                                    <h2 class="gift-finder-title">{{ $giftFinderTitle }}</h2>
-                                    <div class="gift-finder-select">
-                                        <span>{{ $giftFinderLeadBefore }}</span>
-                                        <div class="gift-finder-select-wrap">
-                                            <select aria-label="Select product"
-                                                    data-gift-category-select
-                                                    data-gift-fallback-url="{{ $giftFinderCtaUrl }}">
-                                                <option value="" selected disabled>Choose category</option>
-                                                @foreach ($giftFinderOptions as $optionIndex => $option)
-                                                    @php
-                                                        $optionUrl = $resolveGiftFinderOptionUrl($option, $giftFinderCtaUrl, $giftFinderCategoryId);
-                                                    @endphp
-                                                    <option value="{{ $optionUrl }}">{{ $option }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                        <span>{{ $giftFinderLeadAfter }}</span>
-                                    </div>
-                                    <div class="gift-finder-carousel" data-gift-carousel data-carousel-interval="{{ $giftFinderInterval }}">
-                                        <div class="gift-finder-track" data-gift-track>
-                                            @foreach ($giftProducts as $product)
-                                                <article class="gift-product-card">
-                                                    <a class="gift-product-image" href="{{ $product['url'] }}">
-                                                        @if (!empty($product['image']))
-                                                            <img src="{{ $product['image'] }}" alt="{{ $product['title'] }}" loading="lazy">
-                                                        @else
-                                                            <svg class="gift-tee" viewBox="0 0 600 700" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                                                <path class="gift-tee-body" d="M120 140l70-50h220l70 50 70 40-40 70-60-30v380a40 40 0 0 1-40 40H160a40 40 0 0 1-40-40V220l-60 30-40-70 70-40z"/>
-                                                                <path class="gift-tee-shadow" d="M185 150h230l55 35-25 45-48-22v350H203V208l-48 22-25-45 55-35z"/>
-                                                                <circle class="gift-tee-neck" cx="300" cy="135" r="35"/>
-                                                                <rect class="gift-tee-graphic" x="215" y="260" width="170" height="160" rx="28"/>
-                                                                <circle class="gift-tee-accent" cx="300" cy="340" r="46"/>
-                                                                <path class="gift-tee-stroke" d="M260 330h80M260 360h80" />
-                                                            </svg>
-                                                        @endif
-                                                    </a>
-                                                    <div class="gift-product-body">
-                                                        <h3 class="gift-product-title">{{ $product['title'] }}</h3>
-                                                        <p class="gift-product-meta">{{ $product['author'] }}</p>
-                                                        <p class="gift-product-price">{{ $product['price'] }}</p>
-                                                    </div>
-                                                </article>
-                                            @endforeach
-                                        </div>
-                                    </div>
-                                    <div class="gift-finder-cta">
-                                        <a class="gift-finder-btn" href="{{ $giftFinderCtaUrl }}">{{ $giftFinderCtaLabel }}</a>
-                                    </div>
-                                </div>
-                            </section>
+                        @if (isset($data['gift_finder']) && !$railRendered)
+                            @php $railRendered = true; @endphp
+                            @include('partials.home-clothing-rail')
                         @endif
                         <section class="mx-auto max-w-6xl px-4 pb-12">
                             <div class="grid gap-6 {{ $gridClass }}">
@@ -1204,6 +960,9 @@
                         </section>
                     @endif
                 @endfor
+                @if (!$railRendered)
+                    @include('partials.home-clothing-rail')
+                @endif
             </main>
 
             @include('partials.site-footer', ['globalFooter' => $globalFooter ?? []])

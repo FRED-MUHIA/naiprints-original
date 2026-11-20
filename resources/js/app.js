@@ -1,5 +1,6 @@
 import './bootstrap';
 import { mountCountySliders } from './county-slider';
+import { mountClothingRails } from './clothing-rail';
 
 document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('jersey-designer-app')) {
@@ -13,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     mountCountySliders();
+    mountClothingRails();
 
     const shouldPlayOpeningWipe = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (shouldPlayOpeningWipe) {

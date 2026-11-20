@@ -9858,3 +9858,451 @@
         transform: translateY(-0.55rem);
     }
 }
+
+.clothing-rail {
+    --rail-item-width: clamp(112px, 13.5vw, 176px);
+    --rail-bg: #07090d;
+    position: relative;
+    overflow: hidden;
+    background: var(--rail-bg);
+    color: #fff;
+}
+
+.clothing-rail[data-appearance="navy"] { --rail-bg: #0b1026; }
+
+.clothing-rail-shell {
+    width: min(100%, 1440px);
+    margin-inline: auto;
+    padding: clamp(1.4rem, 3.5vw, 3rem) clamp(1rem, 5vw, 4.5rem) 1rem;
+}
+
+.clothing-rail-heading {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 2rem;
+    max-width: 1120px;
+    margin: 0 auto 0.75rem;
+}
+
+.clothing-rail-eyebrow {
+    margin: 0 0 0.55rem;
+    color: rgba(255, 255, 255, 0.58);
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+}
+
+.clothing-rail-eyebrow span {
+    padding-inline: 0.35rem;
+    color: var(--brand-red);
+}
+
+.clothing-rail-heading h2 {
+    margin: 0;
+    color: #fff;
+    font-size: clamp(1.8rem, 4vw, 3.15rem);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1;
+}
+
+.clothing-rail-note {
+    max-width: 17rem;
+    margin: 0 0 0.15rem;
+    color: rgba(255, 255, 255, 0.62);
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+
+.clothing-rail-stage {
+    position: relative;
+    width: min(100%, 1120px);
+    height: clamp(280px, 33vw, 385px);
+    margin: 0 auto;
+    overflow: hidden;
+    background:
+        radial-gradient(ellipse at 50% 40%, rgba(225, 29, 46, 0.1), transparent 48%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 65%);
+}
+
+.clothing-rail-metal {
+    position: absolute;
+    z-index: 3;
+    top: 8px;
+    left: 1.5%;
+    width: 97%;
+    height: 80px;
+    overflow: visible;
+    pointer-events: none;
+}
+
+.clothing-rail-wire-shadow,
+.clothing-rail-wire,
+.clothing-rail-wire-highlight {
+    fill: none;
+    stroke-linecap: round;
+}
+
+.clothing-rail-wire-shadow { stroke: rgba(0, 0, 0, 0.8); stroke-width: 8px; }
+.clothing-rail-wire { stroke: url(#clothing-rail-silver); stroke-width: 5px; }
+.clothing-rail-wire-highlight { stroke: rgba(255, 255, 255, 0.72); stroke-width: 1px; }
+
+.clothing-rail-viewport {
+    position: absolute;
+    z-index: 2;
+    inset: 0;
+    overflow: hidden;
+    outline: none;
+    perspective: 1000px;
+    touch-action: pan-y;
+}
+
+.clothing-rail-viewport:focus-visible {
+    outline: 2px solid var(--brand-red);
+    outline-offset: -3px;
+}
+
+.clothing-rail-track {
+    position: absolute;
+    top: 16px;
+    left: 0;
+    display: flex;
+    height: calc(100% - 16px);
+    align-items: stretch;
+    gap: clamp(0.25rem, 1.4vw, 1.25rem);
+    padding-inline: calc(50% - var(--rail-item-width) / 2);
+    will-change: transform;
+    transition: transform 720ms cubic-bezier(0.2, 0.75, 0.25, 1);
+}
+
+.clothing-rail-item {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    width: var(--rail-item-width);
+    min-width: var(--rail-item-width);
+    height: 100%;
+    flex: 0 0 var(--rail-item-width);
+    flex-direction: column;
+    align-items: center;
+    padding-top: 0;
+    opacity: 0.46;
+    filter: saturate(0.72) brightness(0.74);
+    transform: translateY(var(--rail-drop, 0px));
+    transition: opacity 560ms ease, filter 560ms ease, transform 100ms linear;
+}
+
+.clothing-rail-item.is-active {
+    z-index: 4;
+    opacity: 1;
+    filter: none;
+}
+
+.clothing-rail-hanger {
+    position: relative;
+    z-index: 2;
+    display: block;
+    width: 48%;
+    height: 48px;
+    flex: 0 0 48px;
+    color: #353a40;
+    filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.55));
+}
+
+.clothing-rail-hanger svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.clothing-rail-item.is-hook-only:not(.is-active) .clothing-rail-hanger-arms { display: none; }
+
+.clothing-rail-garment {
+    position: relative;
+    display: flex;
+    width: 100%;
+    height: calc(100% - 50px + var(--rail-overlap, 12px));
+    min-height: 0;
+    align-items: flex-start;
+    justify-content: center;
+    margin-top: calc(-1 * var(--rail-overlap, 12px));
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.clothing-rail-garment:focus-visible {
+    outline: 2px solid var(--brand-red);
+    outline-offset: 4px;
+}
+
+.clothing-rail-garment img {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center top;
+    filter: drop-shadow(0 18px 18px rgba(0, 0, 0, 0.48));
+    transform: translateY(1px) scale(0.9);
+    transform-origin: 50% 0;
+    transition: transform 720ms cubic-bezier(0.2, 0.75, 0.25, 1), filter 560ms ease, opacity 220ms ease;
+    user-select: none;
+    -webkit-user-drag: none;
+    backface-visibility: hidden;
+}
+
+.clothing-rail-image-stage {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    perspective: 900px;
+    transform-style: preserve-3d;
+    transform-origin: 50% 0;
+}
+
+.clothing-rail-image-stage .rail-view-front,
+.clothing-rail-image-stage .rail-view-back { opacity: 0; }
+
+.clothing-rail-item.is-active .clothing-rail-image-stage .rail-view-side { opacity: 0; }
+.clothing-rail-item.is-active .clothing-rail-image-stage .rail-view-front { opacity: 1; }
+.clothing-rail-item.is-active.is-showing-back .clothing-rail-image-stage .rail-view-front { opacity: 0; }
+.clothing-rail-item.is-active.is-showing-back .clothing-rail-image-stage .rail-view-back { opacity: 1; }
+
+.clothing-rail-item.is-active .clothing-rail-garment img {
+    transform: translateY(4px) scale(1.2);
+    filter: drop-shadow(0 24px 24px rgba(0, 0, 0, 0.62));
+}
+
+.clothing-rail-item.is-active.is-showing-back .rail-view-front { animation: clothing-rail-front-turn 650ms ease-in both; }
+.clothing-rail-item.is-active.is-showing-back .rail-view-back { animation: clothing-rail-back-turn 650ms ease-out both; }
+
+.clothing-rail.is-moving .clothing-rail-item .clothing-rail-image-stage {
+    animation: clothing-rail-breeze 900ms ease-in-out both;
+}
+
+.clothing-rail.is-moving .clothing-rail-item.is-active .clothing-rail-image-stage {
+    animation: clothing-rail-gust 1100ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+.clothing-rail-shade {
+    position: absolute;
+    z-index: 5;
+    inset: auto 0 0;
+    height: 5.5rem;
+    pointer-events: none;
+    background: linear-gradient(180deg, transparent, var(--rail-bg) 94%);
+}
+
+.clothing-rail-details {
+    position: relative;
+    z-index: 6;
+    display: flex;
+    width: min(100%, 1120px);
+    min-height: 80px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: -0.3rem auto 0;
+    padding: 0.35rem 0 0.8rem;
+}
+
+.clothing-rail-product-copy {
+    min-width: 0;
+    animation: rail-copy-in 380ms ease both;
+}
+
+.clothing-rail-product-copy [data-rail-category] {
+    margin: 0 0 0.3rem;
+    color: rgba(255, 255, 255, 0.54);
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.clothing-rail-product-copy h2 {
+    margin: 0;
+    overflow: hidden;
+    color: #fff;
+    font-size: clamp(1rem, 2vw, 1.3rem);
+    font-weight: 700;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.clothing-rail-price {
+    margin: 0.35rem 0 0;
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.clothing-rail-view {
+    display: inline-flex;
+    min-height: 42px;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 0.65rem 1.05rem;
+    border: 1px solid rgba(255, 255, 255, 0.58);
+    border-radius: 999px;
+    color: #fff;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: background 160ms ease, border-color 160ms ease;
+}
+
+.clothing-rail-view:hover {
+    border-color: var(--brand-red);
+    background: var(--brand-red);
+}
+
+.clothing-rail-controls {
+    display: flex;
+    width: min(100%, 1120px);
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 auto;
+    padding-top: 0.7rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.clothing-rail-arrows {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.clothing-rail-arrows button {
+    display: grid;
+    width: 36px;
+    height: 36px;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    border-radius: 50%;
+    background: transparent;
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 160ms ease, border-color 160ms ease;
+}
+
+.clothing-rail-arrows button:hover {
+    border-color: var(--brand-red);
+    background: var(--brand-red);
+}
+
+.clothing-rail-arrows button:focus-visible,
+.clothing-rail-play:focus-visible,
+.clothing-rail-view:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 3px;
+}
+
+.clothing-rail-counter {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: rgba(255, 255, 255, 0.48);
+    font-size: 0.67rem;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.1em;
+}
+
+.clothing-rail-counter [data-rail-current] {
+    color: #fff;
+}
+
+.clothing-rail-counter i {
+    color: var(--brand-red);
+    font-style: normal;
+}
+
+.clothing-rail-play {
+    min-width: 64px;
+    border: 0;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.64);
+    font: inherit;
+    font-size: 0.62rem;
+    cursor: pointer;
+}
+
+.clothing-rail-play:hover { color: #fff; }
+
+@keyframes clothing-rail-breeze {
+    0%, 100% { transform: rotate(0); }
+    35% { transform: rotate(-1.15deg); }
+    72% { transform: rotate(0.9deg); }
+}
+
+@keyframes clothing-rail-gust {
+    0% { transform: rotate(0) scale(1); }
+    34% { transform: rotate(-1.6deg) scale(1.035); }
+    68% { transform: rotate(1.1deg) scale(1.02); }
+    100% { transform: rotate(0) scale(1); }
+}
+
+@keyframes clothing-rail-front-turn {
+    from { transform: rotateY(0) translateY(4px) scale(1.2); }
+    to { transform: rotateY(90deg) translateY(4px) scale(1.2); }
+}
+
+@keyframes clothing-rail-back-turn {
+    from { transform: rotateY(-90deg) translateY(4px) scale(1.2); }
+    to { transform: rotateY(0) translateY(4px) scale(1.2); }
+}
+
+@keyframes rail-copy-in {
+    from { opacity: 0; transform: translateY(7px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 700px) {
+    .clothing-rail { --rail-item-width: clamp(112px, 38vw, 148px); }
+
+    .clothing-rail-shell { padding: 1.4rem 1rem 0.8rem; }
+
+    .clothing-rail-heading {
+        align-items: start;
+        flex-direction: column;
+        gap: 0.55rem;
+        margin-bottom: 0.35rem;
+    }
+
+    .clothing-rail-heading h2 { font-size: clamp(1.8rem, 8vw, 2.5rem); }
+    .clothing-rail-note { max-width: none; font-size: 0.72rem; }
+
+    .clothing-rail-stage { height: 300px; }
+    .clothing-rail-metal { top: 5px; height: 68px; }
+    .clothing-rail-track { top: 11px; height: calc(100% - 11px); gap: 0.2rem; }
+    .clothing-rail-hanger { height: 42px; flex-basis: 42px; }
+    .clothing-rail-garment { height: calc(100% - 44px + var(--rail-overlap, 12px)); }
+    .clothing-rail-garment img { transform: translateY(1px) scale(0.88); }
+    .clothing-rail-item.is-active .clothing-rail-garment img { transform: translateY(3px) scale(1.1); }
+    .clothing-rail-details { min-height: 72px; }
+    .clothing-rail-view { min-height: 38px; padding-inline: 0.8rem; font-size: 0.58rem; }
+    .clothing-rail-counter { gap: 0.35rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .clothing-rail-track,
+    .clothing-rail-item,
+    .clothing-rail-image-stage,
+    .clothing-rail-garment img,
+    .clothing-rail-product-copy {
+        animation: none !important;
+        transition-duration: 0.01ms !important;
+    }
+}

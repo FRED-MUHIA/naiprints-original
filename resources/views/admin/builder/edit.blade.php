@@ -273,6 +273,61 @@
                                         @endforeach
                                     </select>
                                 </div>
+                                @php
+                                    $railSettings = $data['clothing_rail'] ?? [];
+                                    $selectedRailCategoryId = $railSettings['category_id']
+                                        ?? collect($railSettings['category_ids'] ?? [])->first();
+                                    $selectedRailCategoryId = is_numeric($selectedRailCategoryId) ? (string) ((int) $selectedRailCategoryId) : '';
+                                    $railAppearance = $railSettings['appearance'] ?? 'showroom';
+                                    $railBackgroundColor = $railSettings['background_color'] ?? '#07090d';
+                                @endphp
+                                <fieldset class="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                    <legend class="px-2 text-xs font-bold uppercase tracking-[0.16em] text-slate-700">Homepage clothing rail</legend>
+                                    <label class="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                                        <input type="hidden" name="sections[{{ $index }}][data][clothing_rail][enabled]" value="0">
+                                        <input type="checkbox" name="sections[{{ $index }}][data][clothing_rail][enabled]" value="1" @checked(filter_var($railSettings['enabled'] ?? true, FILTER_VALIDATE_BOOLEAN))>
+                                        Show the interactive product rail after the site header
+                                    </label>
+                                    <div class="grid gap-3 sm:grid-cols-2">
+                                        <label class="grid gap-1 text-xs font-semibold text-slate-600">
+                                            Products to show (4–16)
+                                            <input type="number" name="sections[{{ $index }}][data][clothing_rail][product_limit]" value="{{ $railSettings['product_limit'] ?? 10 }}" min="4" max="16" class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-normal">
+                                        </label>
+                                        <label class="grid gap-1 text-xs font-semibold text-slate-600">
+                                            Auto advance interval (ms)
+                                            <input type="number" name="sections[{{ $index }}][data][clothing_rail][autoplay_interval]" value="{{ $railSettings['autoplay_interval'] ?? 6500 }}" min="4000" max="12000" step="500" class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-normal">
+                                        </label>
+                                    </div>
+                                    <label class="grid gap-1 text-xs font-semibold text-slate-600">
+                                        Section background
+                                        <select name="sections[{{ $index }}][data][clothing_rail][appearance]" class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-normal">
+                                            <option value="showroom" @selected($railAppearance === 'showroom')>Black showroom</option>
+                                            <option value="navy" @selected($railAppearance === 'navy')>Nai Prints navy</option>
+                                            <option value="custom" @selected($railAppearance === 'custom')>Custom color</option>
+                                        </select>
+                                    </label>
+                                    <label class="grid gap-1 text-xs font-semibold text-slate-600">
+                                        Custom background color (select “Custom color” above to use it)
+                                        <input type="color" name="sections[{{ $index }}][data][clothing_rail][background_color]" value="{{ $railBackgroundColor }}" class="h-11 w-20 cursor-pointer rounded-lg border border-slate-200 bg-white p-1">
+                                    </label>
+                                    <label class="grid gap-1 text-xs font-semibold text-slate-600">
+                                        Products to show from
+                                        <select name="sections[{{ $index }}][data][clothing_rail][category_id]" class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-normal">
+                                            <option value="" @selected($selectedRailCategoryId === '')>Automatic apparel selection</option>
+                                            @foreach ($categories as $category)
+                                                <option value="{{ $category->id }}" @selected($selectedRailCategoryId === (string) $category->id)>{{ $category->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        <span class="font-normal">Choose one category to limit the rail to its available products.</span>
+                                    </label>
+                                    <div class="flex flex-wrap gap-x-6 gap-y-2">
+                                        <label class="flex items-center gap-2 text-sm text-slate-700">
+                                            <input type="hidden" name="sections[{{ $index }}][data][clothing_rail][autoplay]" value="0">
+                                            <input type="checkbox" name="sections[{{ $index }}][data][clothing_rail][autoplay]" value="1" @checked(filter_var($railSettings['autoplay'] ?? true, FILTER_VALIDATE_BOOLEAN))>
+                                            Auto advance (pauses on interaction)
+                                        </label>
+                                    </div>
+                                </fieldset>
                             @elseif ($type === 'sale_feature')
                                 @php
                                     $saleCategoryId = $data['product_category_id'] ?? '';

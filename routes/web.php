@@ -41,6 +41,7 @@ use App\Models\Task;
 use App\Models\Page;
 use App\Models\User;
 use App\Support\PageDefaults;
+use App\Services\HomeClothingRailService;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
@@ -251,19 +252,6 @@ Route::get('/', function () {
         ->value('id');
     $promoCategoryId = is_numeric($promoCategoryId) ? (int) $promoCategoryId : null;
 
-    $giftFinderSection = collect($homeSections)->first(function ($section) {
-        return ($section['type'] ?? '') === 'gift_finder';
-    });
-    $giftFinderCategoryId = data_get($giftFinderSection, 'data.product_category_id');
-    if (!is_numeric($giftFinderCategoryId)) {
-        $howItWorksSection = collect($homeSections)->first(function ($section) {
-            return ($section['type'] ?? '') === 'how_it_works';
-        });
-        $giftFinderCategoryId = data_get($howItWorksSection, 'data.gift_finder.product_category_id');
-    }
-    $giftFinderCategoryId = is_numeric($giftFinderCategoryId) ? (int) $giftFinderCategoryId : null;
-    $giftFinderCategories = Category::orderBy('name')->get(['id', 'name', 'slug']);
-
     $homeProductRelations = ['category', 'categories', 'brand', 'sizes', 'tags', 'alternateImages', 'galleryImages'];
     $applyHomeCategoryFilter = static function ($query, ?int $categoryId): void {
         if ($categoryId) {
@@ -294,6 +282,33 @@ Route::get('/', function () {
     $applyHomeCategoryFilter($featuredProductsQuery, $featuredCategoryId);
     $featuredProducts = $featuredProductsQuery->take(8)->get();
 
+    $clothingRailSettings = data_get($bestSellersSection, 'data.clothing_rail', []);
+    $clothingRailEnabled = filter_var($clothingRailSettings['enabled'] ?? true, FILTER_VALIDATE_BOOLEAN);
+    $clothingRailLimit = is_numeric($clothingRailSettings['product_limit'] ?? null)
+        ? max(4, min(16, (int) $clothingRailSettings['product_limit']))
+        : 10;
+    $clothingRailCategoryIds = is_numeric($clothingRailSettings['category_id'] ?? null)
+        ? [(int) $clothingRailSettings['category_id']]
+        : (is_array($clothingRailSettings['category_ids'] ?? null)
+        ? $clothingRailSettings['category_ids']
+        : []);
+    $clothingRailAutoplay = filter_var($clothingRailSettings['autoplay'] ?? true, FILTER_VALIDATE_BOOLEAN);
+    $requestedRailAppearance = $clothingRailSettings['appearance'] ?? 'showroom';
+    $clothingRailAppearance = in_array($requestedRailAppearance, ['showroom', 'navy', 'custom'], true)
+        ? $requestedRailAppearance
+        : 'showroom';
+    $requestedRailBackgroundColor = $clothingRailSettings['background_color'] ?? '#07090d';
+    $clothingRailBackgroundColor = is_string($requestedRailBackgroundColor)
+        && preg_match('/^#[0-9A-Fa-f]{6}$/', $requestedRailBackgroundColor)
+        ? $requestedRailBackgroundColor
+        : '#07090d';
+    $clothingRailInterval = is_numeric($clothingRailSettings['autoplay_interval'] ?? null)
+        ? max(4000, min(12000, (int) $clothingRailSettings['autoplay_interval']))
+        : 6500;
+    $clothingRailProducts = $clothingRailEnabled
+        ? app(HomeClothingRailService::class)->products($clothingRailCategoryIds, $clothingRailLimit)
+        : collect();
+
     $saleFeatureProductsQuery = Product::with($homeProductRelations)->orderByDesc('created_at');
     $applyHomeCategoryFilter($saleFeatureProductsQuery, $saleFeatureCategoryId ?: $promoCategoryId);
     $saleFeatureProducts = $saleFeatureProductsQuery->take(2)->get();
@@ -304,23 +319,17 @@ Route::get('/', function () {
             ->get();
     }
 
-    $giftFinderProductsQuery = Product::with($homeProductRelations)->orderByDesc('created_at');
-    $applyHomeCategoryFilter($giftFinderProductsQuery, $giftFinderCategoryId);
-    $giftFinderProducts = $giftFinderProductsQuery->take(8)->get();
-    if ($giftFinderProducts->isEmpty() && $giftFinderCategoryId) {
-        $giftFinderProducts = Product::with($homeProductRelations)
-            ->orderByDesc('created_at')
-            ->take(8)
-            ->get();
-    }
-
     return view('home', [
         'categories' => $categories,
-        'giftFinderCategories' => $giftFinderCategories,
         'products' => $products,
         'featuredProducts' => $featuredProducts,
+        'clothingRailProducts' => $clothingRailProducts,
+        'clothingRailEnabled' => $clothingRailEnabled,
+        'clothingRailAutoplay' => $clothingRailAutoplay,
+        'clothingRailAppearance' => $clothingRailAppearance,
+        'clothingRailBackgroundColor' => $clothingRailBackgroundColor,
+        'clothingRailInterval' => $clothingRailInterval,
         'saleFeatureProducts' => $saleFeatureProducts,
-        'giftFinderProducts' => $giftFinderProducts,
         'pageContent' => $page->content,
         'globalHeader' => $header->content,
         'globalFooter' => $footer->content,

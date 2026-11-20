@@ -81,6 +81,15 @@ class PageBuilderController extends Controller
             'sections.*.data.product_category_ids' => ['nullable', 'array'],
             'sections.*.data.product_category_ids.*' => ['integer', 'exists:categories,id'],
             'sections.*.data.product_limit' => ['nullable', 'integer', 'min:1', 'max:48'],
+            'sections.*.data.clothing_rail.enabled' => ['nullable', 'boolean'],
+            'sections.*.data.clothing_rail.category_id' => ['nullable', 'integer', 'exists:categories,id'],
+            'sections.*.data.clothing_rail.category_ids' => ['nullable', 'array'],
+            'sections.*.data.clothing_rail.category_ids.*' => ['integer', 'exists:categories,id'],
+            'sections.*.data.clothing_rail.product_limit' => ['nullable', 'integer', 'min:4', 'max:16'],
+            'sections.*.data.clothing_rail.autoplay' => ['nullable', 'boolean'],
+            'sections.*.data.clothing_rail.appearance' => ['nullable', 'in:showroom,navy,custom'],
+            'sections.*.data.clothing_rail.background_color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'sections.*.data.clothing_rail.autoplay_interval' => ['nullable', 'integer', 'min:4000', 'max:12000'],
             'sections.*.data.testimonials.items.*.rating' => ['nullable', 'integer', 'min:1', 'max:5'],
             'sections.*.data.gift_finder.product_category_id' => ['nullable', 'integer', 'exists:categories,id'],
             'sections.*.data.pattern_strip_image' => ['nullable', 'string', 'max:2048'],
@@ -105,6 +114,25 @@ class PageBuilderController extends Controller
         }
         if (!empty($data['add_section_type'])) {
             $sections[] = PageDefaults::section($data['add_section_type']);
+        }
+
+        foreach ($sections as $sectionIndex => $section) {
+            $railInput = $inputSections[$sectionIndex]['data']['clothing_rail'] ?? null;
+            if (($section['type'] ?? '') !== 'best_sellers' || !is_array($railInput)) {
+                continue;
+            }
+
+            $selectedCategoryIds = array_key_exists('category_id', $railInput)
+                ? [$railInput['category_id']]
+                : ($railInput['category_ids'] ?? []);
+            $normalizedCategoryIds = collect($selectedCategoryIds)
+                ->filter(fn ($categoryId) => is_numeric($categoryId) && (int) $categoryId > 0)
+                ->map(fn ($categoryId) => (int) $categoryId)
+                ->unique()
+                ->values()
+                ->all();
+            $sections[$sectionIndex]['data']['clothing_rail']['category_id'] = $normalizedCategoryIds[0] ?? null;
+            $sections[$sectionIndex]['data']['clothing_rail']['category_ids'] = $normalizedCategoryIds;
         }
 
         $sections = $this->normalizeMaasaiPageSections($sections, $inputSections);

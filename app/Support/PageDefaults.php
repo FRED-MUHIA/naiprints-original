@@ -87,6 +87,16 @@ class PageDefaults
                         'meta_left' => 'Weekly drops',
                         'meta_right' => 'Limited runs',
                         'product_category_id' => null,
+                        'clothing_rail' => [
+                            'enabled' => true,
+                            'category_id' => null,
+                            'category_ids' => [],
+                            'product_limit' => 10,
+                            'autoplay' => true,
+                            'appearance' => 'showroom',
+                            'background_color' => '#07090d',
+                            'autoplay_interval' => 6500,
+                        ],
                     ],
                 ],
                 [
