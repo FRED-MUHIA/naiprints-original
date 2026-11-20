@@ -280,6 +280,7 @@
                                     $selectedRailCategoryId = is_numeric($selectedRailCategoryId) ? (string) ((int) $selectedRailCategoryId) : '';
                                     $railAppearance = $railSettings['appearance'] ?? 'showroom';
                                     $railBackgroundColor = $railSettings['background_color'] ?? '#07090d';
+                                    $railBackgroundImage = $railSettings['background_image'] ?? '';
                                 @endphp
                                 <fieldset class="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                                     <legend class="px-2 text-xs font-bold uppercase tracking-[0.16em] text-slate-700">Homepage clothing rail</legend>
@@ -287,6 +288,10 @@
                                         <input type="hidden" name="sections[{{ $index }}][data][clothing_rail][enabled]" value="0">
                                         <input type="checkbox" name="sections[{{ $index }}][data][clothing_rail][enabled]" value="1" @checked(filter_var($railSettings['enabled'] ?? true, FILTER_VALIDATE_BOOLEAN))>
                                         Show the interactive product rail after the site header
+                                    </label>
+                                    <label class="grid gap-1 text-xs font-semibold text-slate-600">
+                                        Collection title
+                                        <input type="text" name="sections[{{ $index }}][data][clothing_rail][title]" value="{{ $railSettings['title'] ?? 'Find your next favourite.' }}" maxlength="255" class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-normal">
                                     </label>
                                     <div class="grid gap-3 sm:grid-cols-2">
                                         <label class="grid gap-1 text-xs font-semibold text-slate-600">
@@ -309,6 +314,14 @@
                                     <label class="grid gap-1 text-xs font-semibold text-slate-600">
                                         Custom background color (select “Custom color” above to use it)
                                         <input type="color" name="sections[{{ $index }}][data][clothing_rail][background_color]" value="{{ $railBackgroundColor }}" class="h-11 w-20 cursor-pointer rounded-lg border border-slate-200 bg-white p-1">
+                                    </label>
+                                    <label class="grid gap-2 text-xs font-semibold text-slate-600">
+                                        Section background image
+                                        @if ($railBackgroundImage)
+                                            <img src="{{ $railBackgroundImage }}" alt="Current collection background" class="h-24 w-full rounded-xl object-cover">
+                                        @endif
+                                        <input type="file" name="sections[{{ $index }}][data][clothing_rail][background_image_file]" accept="image/*" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-normal">
+                                        <span class="font-normal">Upload JPG, PNG, WebP, or GIF up to 4 MB. Uploading a new image replaces the current one.</span>
                                     </label>
                                     <label class="grid gap-1 text-xs font-semibold text-slate-600">
                                         Products to show from

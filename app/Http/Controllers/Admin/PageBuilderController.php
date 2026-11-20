@@ -89,6 +89,8 @@ class PageBuilderController extends Controller
             'sections.*.data.clothing_rail.autoplay' => ['nullable', 'boolean'],
             'sections.*.data.clothing_rail.appearance' => ['nullable', 'in:showroom,navy,custom'],
             'sections.*.data.clothing_rail.background_color' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'sections.*.data.clothing_rail.title' => ['nullable', 'string', 'max:255'],
+            'sections.*.data.clothing_rail.background_image_file' => ['nullable', 'image', 'max:4096'],
             'sections.*.data.clothing_rail.autoplay_interval' => ['nullable', 'integer', 'min:4000', 'max:12000'],
             'sections.*.data.testimonials.items.*.rating' => ['nullable', 'integer', 'min:1', 'max:5'],
             'sections.*.data.gift_finder.product_category_id' => ['nullable', 'integer', 'exists:categories,id'],
@@ -137,6 +139,7 @@ class PageBuilderController extends Controller
 
         $sections = $this->normalizeMaasaiPageSections($sections, $inputSections);
         [$sections, $maasaiUploadWarning] = $this->mergeMaasaiPageUploads($sections, $request->file('sections', []));
+        $sections = $this->mergeClothingRailUploads($sections, $request->file('sections', []));
         $sections = $this->mergeTileUploads($sections, $request->file('sections', []));
         $sections = $this->mergeProductStepUploads($sections, $request->file('sections', []));
         $sections = $this->mergeSaleFeatureUploads($sections, $request->file('sections', []));
@@ -153,6 +156,7 @@ class PageBuilderController extends Controller
         $sections = $this->stripMockupPageUploadFields($sections);
         $sections = $this->stripMockupUploadFields($sections);
         $sections = $this->stripMaasaiUploadFields($sections);
+        $sections = $this->stripClothingRailUploadFields($sections);
 
         $page->update([
             'title' => $data['title'] ?: $page->title,
@@ -657,6 +661,36 @@ class PageBuilderController extends Controller
 
             $path = $file->store('page-builder/design-studio', 'public');
             $sections[$sectionIndex]['data']['background_image'] = Storage::url($path);
+        }
+
+        return $sections;
+    }
+
+    private function mergeClothingRailUploads(array $sections, array $sectionFiles): array
+    {
+        foreach ($sectionFiles as $sectionIndex => $sectionPayload) {
+            if (!isset($sections[$sectionIndex]) || ($sections[$sectionIndex]['type'] ?? '') !== 'best_sellers') {
+                continue;
+            }
+
+            $file = $sectionPayload['data']['clothing_rail']['background_image_file'] ?? null;
+            if (!$file) {
+                continue;
+            }
+
+            $path = $file->store('page-builder/clothing-rail', 'public');
+            $sections[$sectionIndex]['data']['clothing_rail']['background_image'] = Storage::url($path);
+        }
+
+        return $sections;
+    }
+
+    private function stripClothingRailUploadFields(array $sections): array
+    {
+        foreach ($sections as $sectionIndex => $section) {
+            if (($section['type'] ?? '') === 'best_sellers') {
+                unset($sections[$sectionIndex]['data']['clothing_rail']['background_image_file']);
+            }
         }
 
         return $sections;

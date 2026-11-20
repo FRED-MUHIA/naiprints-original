@@ -7,13 +7,13 @@
                          data-autoplay="{{ !empty($clothingRailAutoplay) ? 'true' : 'false' }}"
                          data-appearance="{{ $clothingRailAppearance ?? 'showroom' }}"
                          data-interval="{{ (int) ($clothingRailInterval ?? 6500) }}"
-                         @if (($clothingRailAppearance ?? 'showroom') === 'custom') style="--rail-bg: {{ $clothingRailBackgroundColor ?? '#07090d' }}" @endif
+                         @if (($clothingRailAppearance ?? 'showroom') === 'custom' || !empty($clothingRailBackgroundImage)) style="@if (($clothingRailAppearance ?? 'showroom') === 'custom') --rail-bg: {{ $clothingRailBackgroundColor ?? '#07090d' }}; @endif @if (!empty($clothingRailBackgroundImage)) --rail-bg-image: url('{{ $clothingRailBackgroundImage }}'); @endif" @endif
                          aria-label="Featured Nai Prints products">
                     <div class="clothing-rail-shell">
                         <div class="clothing-rail-heading">
                             <div>
                                 <p class="clothing-rail-eyebrow">NAI PRINTS <span aria-hidden="true">/</span> THE COLLECTION</p>
-                                <h2>Find your next favourite.</h2>
+                                <h2>{{ $clothingRailTitle ?? 'Find your next favourite.' }}</h2>
                             </div>
                             <p class="clothing-rail-note">A closer look at pieces made for your everyday.</p>
                         </div>

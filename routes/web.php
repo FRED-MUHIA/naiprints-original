@@ -293,6 +293,8 @@ Route::get('/', function () {
         ? $clothingRailSettings['category_ids']
         : []);
     $clothingRailAutoplay = filter_var($clothingRailSettings['autoplay'] ?? true, FILTER_VALIDATE_BOOLEAN);
+    $clothingRailTitle = trim((string) ($clothingRailSettings['title'] ?? '')) ?: 'Find your next favourite.';
+    $clothingRailBackgroundImage = trim((string) ($clothingRailSettings['background_image'] ?? ''));
     $requestedRailAppearance = $clothingRailSettings['appearance'] ?? 'showroom';
     $clothingRailAppearance = in_array($requestedRailAppearance, ['showroom', 'navy', 'custom'], true)
         ? $requestedRailAppearance
@@ -326,6 +328,8 @@ Route::get('/', function () {
         'clothingRailProducts' => $clothingRailProducts,
         'clothingRailEnabled' => $clothingRailEnabled,
         'clothingRailAutoplay' => $clothingRailAutoplay,
+        'clothingRailTitle' => $clothingRailTitle,
+        'clothingRailBackgroundImage' => $clothingRailBackgroundImage,
         'clothingRailAppearance' => $clothingRailAppearance,
         'clothingRailBackgroundColor' => $clothingRailBackgroundColor,
         'clothingRailInterval' => $clothingRailInterval,
