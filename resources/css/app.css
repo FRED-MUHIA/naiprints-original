@@ -7,8 +7,8 @@
 @source '../**/*.js';
 
 @theme {
-    --font-sans: 'Urbanist', ui-sans-serif, system-ui, sans-serif;
-    --font-display: 'Urbanist', ui-sans-serif, system-ui, sans-serif;
+    --font-sans: 'Euclid Circular B', 'Urbanist', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Euclid Circular B', 'Urbanist', ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer base {
@@ -2061,8 +2061,20 @@
 
     @media (max-width: 640px) {
         .sale-product-row {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.65rem;
             padding-inline: 0;
+        }
+
+        .sale-mini-copy h3 {
+            font-size: 0.76rem;
+            overflow-wrap: anywhere;
+        }
+
+        .sale-mini-copy p {
+            flex-wrap: wrap;
+            gap: 0.25rem;
+            font-size: 0.7rem;
         }
 
         .sale-nav {
