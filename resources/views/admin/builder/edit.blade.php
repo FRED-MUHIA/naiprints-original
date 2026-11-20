@@ -319,6 +319,10 @@
                                         Section background image
                                         @if ($railBackgroundImage)
                                             <img src="{{ $railBackgroundImage }}" alt="Current collection background" class="h-24 w-full rounded-xl object-cover">
+                                            <label class="flex items-center gap-2 font-normal">
+                                                <input type="checkbox" name="sections[{{ $index }}][data][clothing_rail][remove_background_image]" value="1">
+                                                Remove current background image
+                                            </label>
                                         @endif
                                         <input type="file" name="sections[{{ $index }}][data][clothing_rail][background_image_file]" accept="image/*" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-normal">
                                         <span class="font-normal">Upload JPG, PNG, WebP, or GIF up to 4 MB. Uploading a new image replaces the current one.</span>

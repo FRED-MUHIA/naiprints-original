@@ -9860,7 +9860,7 @@
 }
 
 .clothing-rail {
-    --rail-item-width: clamp(112px, 13.5vw, 176px);
+    --rail-item-width: clamp(120px, 14.5vw, 192px);
     --rail-bg: #07090d;
     position: relative;
     overflow: hidden;
@@ -9888,7 +9888,7 @@
     align-items: end;
     justify-content: space-between;
     gap: 2rem;
-    max-width: 1120px;
+    max-width: 1280px;
     margin: 0 auto 0.75rem;
 }
 
@@ -9925,7 +9925,7 @@
 
 .clothing-rail-stage {
     position: relative;
-    width: min(100%, 1120px);
+    width: min(100%, 1280px);
     height: clamp(280px, 33vw, 385px);
     margin: 0 auto;
     overflow: hidden;
@@ -10111,7 +10111,7 @@
     position: relative;
     z-index: 6;
     display: flex;
-    width: min(100%, 1120px);
+    width: min(100%, 1280px);
     min-height: 80px;
     align-items: center;
     justify-content: space-between;
@@ -10277,7 +10277,7 @@
 }
 
 @media (max-width: 900px) {
-    .clothing-rail { --rail-item-width: clamp(112px, 18vw, 160px); }
+    .clothing-rail { --rail-item-width: clamp(116px, 18vw, 170px); }
     .clothing-rail-shell { padding-inline: clamp(1rem, 4vw, 2.25rem); }
     .clothing-rail-heading {
         align-items: flex-start;
@@ -10313,6 +10313,16 @@
     .clothing-rail-details { min-height: 72px; }
     .clothing-rail-view { min-height: 38px; padding-inline: 0.8rem; font-size: 0.58rem; }
     .clothing-rail-counter { gap: 0.35rem; }
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .clothing-rail-track { transition-duration: 520ms; }
+    .clothing-rail-item { transition-duration: 420ms, 420ms, 100ms; }
+    .clothing-rail-garment img { transition-duration: 520ms, 420ms, 180ms; }
+    .clothing-rail.is-moving .clothing-rail-item .clothing-rail-image-stage { animation-duration: 650ms; }
+    .clothing-rail.is-moving .clothing-rail-item.is-active .clothing-rail-image-stage { animation-duration: 720ms; }
+    .clothing-rail-item.is-active.is-showing-back .rail-view-front,
+    .clothing-rail-item.is-active.is-showing-back .rail-view-back { animation-duration: 600ms; }
 }
 
 @media (max-width: 520px) {

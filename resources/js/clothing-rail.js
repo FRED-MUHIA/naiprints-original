@@ -25,6 +25,8 @@ export function mountClothingRails(scope = document) {
         let viewTimer = null;
         let anchorFrame = null;
         let pointerStart = null;
+        let suppressNextTouchClick = false;
+        let touchClickTimer = null;
         let temporaryPause = false;
         let userPaused = !autoRequested;
         let isVisible = true;
@@ -156,7 +158,14 @@ export function mountClothingRails(scope = document) {
         });
 
         items.forEach((item, index) => {
-            item.querySelector('[data-rail-select]')?.addEventListener('click', () => {
+            item.querySelector('[data-rail-select]')?.addEventListener('click', (event) => {
+                if (suppressNextTouchClick) {
+                    event.preventDefault();
+                    suppressNextTouchClick = false;
+                    if (touchClickTimer !== null) window.clearTimeout(touchClickTimer);
+                    touchClickTimer = null;
+                    return;
+                }
                 if (index === current && item.dataset.url) {
                     window.location.assign(item.dataset.url);
                     return;
@@ -205,7 +214,15 @@ export function mountClothingRails(scope = document) {
             if (pointerStart === null) return;
             const delta = event.clientX - pointerStart;
             pointerStart = null;
-            if (Math.abs(delta) > 38) select(current + (delta < 0 ? 1 : -1));
+            if (Math.abs(delta) > 38) {
+                suppressNextTouchClick = true;
+                if (touchClickTimer !== null) window.clearTimeout(touchClickTimer);
+                touchClickTimer = window.setTimeout(() => {
+                    suppressNextTouchClick = false;
+                    touchClickTimer = null;
+                }, 500);
+                select(current + (delta < 0 ? 1 : -1));
+            }
         }, { passive: true });
         viewport.addEventListener('pointercancel', () => { pointerStart = null; }, { passive: true });
         viewport.addEventListener('wheel', (event) => {
