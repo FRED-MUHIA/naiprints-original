@@ -83,4 +83,3 @@
     'globalPurchasePopups' => $globalPurchasePopups ?? [],
     'globalPurchasePopupProducts' => $globalPurchasePopupProducts ?? [],
 ])
-<script src="https://anywear.decart.ai/widget/latest/anywear.js?domain=naiprints.co.ke" async></script>
