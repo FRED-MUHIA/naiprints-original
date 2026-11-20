@@ -305,7 +305,7 @@ Route::get('/', function () {
         ? $requestedRailBackgroundColor
         : '#07090d';
     $clothingRailInterval = is_numeric($clothingRailSettings['autoplay_interval'] ?? null)
-        ? max(4000, min(12000, (int) $clothingRailSettings['autoplay_interval']))
+        ? max(3000, min(12000, (int) $clothingRailSettings['autoplay_interval']))
         : 6500;
     $clothingRailProducts = $clothingRailEnabled
         ? app(HomeClothingRailService::class)->products($clothingRailCategoryIds, $clothingRailLimit)

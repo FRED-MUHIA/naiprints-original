@@ -92,7 +92,7 @@ class PageBuilderController extends Controller
             'sections.*.data.clothing_rail.title' => ['nullable', 'string', 'max:255'],
             'sections.*.data.clothing_rail.background_image_file' => ['nullable', 'image', 'max:4096'],
             'sections.*.data.clothing_rail.remove_background_image' => ['nullable', 'boolean'],
-            'sections.*.data.clothing_rail.autoplay_interval' => ['nullable', 'integer', 'min:4000', 'max:12000'],
+            'sections.*.data.clothing_rail.autoplay_interval' => ['nullable', 'integer', 'min:3000', 'max:12000'],
             'sections.*.data.testimonials.items.*.rating' => ['nullable', 'integer', 'min:1', 'max:5'],
             'sections.*.data.gift_finder.product_category_id' => ['nullable', 'integer', 'exists:categories,id'],
             'sections.*.data.pattern_strip_image' => ['nullable', 'string', 'max:2048'],

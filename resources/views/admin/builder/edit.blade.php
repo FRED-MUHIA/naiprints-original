@@ -300,7 +300,7 @@
                                         </label>
                                         <label class="grid gap-1 text-xs font-semibold text-slate-600">
                                             Auto advance interval (ms)
-                                            <input type="number" name="sections[{{ $index }}][data][clothing_rail][autoplay_interval]" value="{{ $railSettings['autoplay_interval'] ?? 6500 }}" min="4000" max="12000" step="500" class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-normal">
+                                            <input type="number" name="sections[{{ $index }}][data][clothing_rail][autoplay_interval]" value="{{ $railSettings['autoplay_interval'] ?? 6500 }}" min="3000" max="12000" step="500" class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-normal">
                                         </label>
                                     </div>
                                     <label class="grid gap-1 text-xs font-semibold text-slate-600">

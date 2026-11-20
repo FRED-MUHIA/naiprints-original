@@ -17,7 +17,7 @@ export function mountClothingRails(scope = document) {
         const currentCounter = rail.querySelector('[data-rail-current]');
         const playButton = rail.querySelector('[data-rail-play]');
         const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-        const interval = Math.max(4000, Math.min(12000, Number(rail.dataset.interval) || 6500));
+        const interval = Math.max(3000, Math.min(12000, Number(rail.dataset.interval) || 6500));
         const autoRequested = rail.dataset.autoplay === 'true' && !reduceMotion.matches;
         let current = Math.max(0, items.findIndex((item) => item.classList.contains('is-active')));
         let timer = null;
