@@ -547,24 +547,17 @@
                             $bestSellers = $featuredProducts->count() ? $featuredProducts : collect($products ?? []);
                             $fallbackSwatches = ['#111827', '#f1f5f9', '#c4b5fd', '#fca5a5', '#fde68a', '#a7f3d0'];
                         @endphp
-                        <section class="mx-auto max-w-6xl px-4 py-10">
-                            <div class="flex flex-wrap items-end justify-between gap-4">
+                        <section class="home-trending mx-auto max-w-6xl px-4 py-10" aria-labelledby="home-trending-title">
+                            <div class="home-trending-heading">
                                 <div>
-                                    <p class="section-kicker">{{ $data['kicker'] ?? '' }}</p>
-                                    <h2 class="section-title">{{ $data['title'] ?? '' }}</h2>
+                                    <p class="home-trending-kicker">{{ $data['kicker'] ?? 'Trending at Nai Prints' }}</p>
+                                    <h2 id="home-trending-title">{{ $data['title'] ?? 'Featured Designs' }}</h2>
+                                    <p class="home-trending-intro">Original art, printed in Nairobi.</p>
                                 </div>
-                                <div class="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-slate-500">
-                                    @if (!empty($data['meta_left']))
-                                        <span>{{ $data['meta_left'] }}</span>
-                                    @endif
-                                    <span class="h-1 w-1 rounded-full bg-slate-400"></span>
-                                    @if (!empty($data['meta_right']))
-                                        <span>{{ $data['meta_right'] }}</span>
-                                    @endif
-                                </div>
+                                <a class="home-trending-shop-all" href="{{ route('shop') }}">Shop all <span aria-hidden="true">→</span></a>
                             </div>
 
-                            <div class="best-sellers-grid mt-6 grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
+                            <div class="best-sellers-grid home-trending-grid mt-6 grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
                                 @foreach ($bestSellers as $index => $product)
                                     @php
                                         $isModel = is_object($product);
@@ -592,6 +585,7 @@
                                             ? route('products.show', ['product' => ($product->slug ?: $product->id)])
                                             : route('shop');
                                         $productId = $isModel && isset($product->id) ? $product->id : ('fallback-' . md5((string) $name));
+                                        $designer = $product['designer'] ?? $product['brand_name'] ?? ($isModel ? ($product->brand?->name ?? null) : null);
                                         $hoverImage = null;
                                         if ($isModel) {
                                             $alt = $product->alternateImages->first() ?: $product->galleryImages->first();
@@ -613,7 +607,7 @@
                                         $rating = is_numeric($rating) ? (float) $rating : 4.8;
                                         $filledStars = max(0, min(5, (int) round($rating)));
                                     @endphp
-                                    <article class="product-card" data-product-panel>
+                                    <article class="product-card home-trending-card" data-product-panel>
                                         <div class="product-media">
                                             @if ($detailUrl)
                                                 <a href="{{ $detailUrl }}" class="product-media-link">
@@ -657,8 +651,8 @@
                                             </div>
                                         </div>
                                         <div class="product-quick">
-                                            <a class="product-quick-add product-quick-customize" href="{{ route('mockup') }}">
-                                                Customize Now
+                                            <a class="product-quick-add product-quick-customize" href="{{ $detailUrl }}">
+                                                Buy now <span aria-hidden="true">→</span>
                                             </a>
                                             @if (!empty($sizes))
                                                 <div class="product-sizes" data-option-group="size">
@@ -671,9 +665,10 @@
                                                 </div>
                                             @endif
                                         </div>
-                                        <div class="mt-4 space-y-2 product-card-body">
+                                        <div class="mt-4 space-y-2 product-card-body home-trending-info">
                                             <div>
                                                 <h3 class="product-card-title">{{ $name }}</h3>
+                                                <p class="home-trending-byline">{{ $designer ? 'with ' . $designer : 'Nai Prints original' }}</p>
                                             </div>
                                             <div class="product-card-price">
                                                 <span class="product-card-price-current">KSh {{ number_format($finalPrice, 0) }}</span>
