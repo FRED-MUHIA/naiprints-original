@@ -21,7 +21,7 @@
     }
 
     html {
-        font-size: clamp(18px, calc(16px + 0.28vw), 21px);
+        font-size: clamp(16px, calc(14px + 0.15vw), 18px);
         -webkit-text-size-adjust: 100%;
         text-rendering: optimizeLegibility;
         font-kerning: normal;
