@@ -172,9 +172,6 @@ export function mountClothingRails(scope = document) {
                 }
                 select(index);
             });
-            item.addEventListener('pointerenter', () => {
-                if (window.matchMedia('(hover: hover)').matches) select(index, false);
-            });
         });
 
         rail.addEventListener('mouseenter', () => {
