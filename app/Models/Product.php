@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Schema;
 use App\Support\ClothingRailCache;
 
 class Product extends Model
@@ -94,9 +95,15 @@ class Product extends Model
 
     public function railImages(): HasMany
     {
-        return $this->hasMany(ProductImage::class)
-            ->whereIn('view', ['side', 'back'])
-            ->orderBy('position');
+        $relation = $this->hasMany(ProductImage::class);
+
+        if (Schema::hasColumn('product_images', 'view')) {
+            $relation->whereIn('view', ['side', 'back']);
+        } else {
+            $relation->whereRaw('1 = 0');
+        }
+
+        return $relation->orderBy('position');
     }
 
     public function selectionImages(): HasMany

@@ -204,6 +204,13 @@ class ProductController extends Controller
         ]);
 
         $validator->after(function ($validator) use ($request) {
+            if (
+                ($request->hasFile('rail_side_image') || $request->hasFile('rail_back_image'))
+                && !Schema::hasColumn('product_images', 'view')
+            ) {
+                $validator->errors()->add('rail_side_image', 'Apply the latest database migrations before uploading side or back rail images.');
+            }
+
             if ($request->input('discount_type') !== 'none' && $request->input('discount_value') === null) {
                 $validator->errors()->add('discount_value', 'Discount value is required.');
             }
@@ -377,6 +384,10 @@ class ProductController extends Controller
 
     private function syncRailImages(Product $product, Request $request): void
     {
+        if (!Schema::hasColumn('product_images', 'view')) {
+            return;
+        }
+
         foreach (['side', 'back'] as $view) {
             $field = 'rail_' . $view . '_image';
             if (!$request->hasFile($field)) {
